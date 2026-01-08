@@ -9,6 +9,7 @@
     },
     "dependencies": {
         "@internationalized/date": "^3.10.0",
+        "@react-aria/i18n": "^3.12.14",
         "@react-aria/utils": "^3.31.0",
         "@react-stately/utils": "^3.10.8",
         "@supabase/ssr": "^0.8.0",
