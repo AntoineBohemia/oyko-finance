@@ -1,14 +1,61 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useRef, useState } from "react";
-import { ChevronDown } from "@untitledui/icons";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Moon01, Sun } from "@untitledui/icons";
+import { motion } from "motion/react";
+import { useTheme } from "next-themes";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import { Button } from "@/components/base/buttons/button";
+import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
-import { DropdownMenuSimple } from "@/components/marketing/header-navigation/dropdown-header-navigation";
 import { cx } from "@/utils/cx";
+import { DropdownMenuFeatureCard } from "./dropdown-menu-feature-card";
+import { DropdownMenuSimpleWithFooter } from "./dropdown-menu-simple-with-footer";
+import { DropdownMenuWithTwoColsAndLinksAndFooter } from "./dropdown-menu-with-two-cols-and-links-and-footer";
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const SCROLL_THRESHOLD = 50;
+
+// Spring config inspirée Dynamic Island - réactive mais smooth
+const springConfig = {
+    type: "spring" as const,
+    stiffness: 400,
+    damping: 30,
+    mass: 1,
+};
+
+// =============================================================================
+// COMPONENTS
+// =============================================================================
+
+const ThemeToggle = () => {
+    const [mounted, setMounted] = useState(false);
+    const { theme, setTheme } = useTheme();
+    const isDark = theme === "dark";
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <ButtonUtility size="sm" color="tertiary" icon={Moon01} tooltip="Mode sombre" />;
+    }
+
+    return (
+        <ButtonUtility
+            size="sm"
+            color="tertiary"
+            icon={isDark ? Sun : Moon01}
+            tooltip={isDark ? "Mode clair" : "Mode sombre"}
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+        />
+    );
+};
 
 type HeaderNavItem = {
     label: string;
@@ -17,10 +64,10 @@ type HeaderNavItem = {
 };
 
 const headerNavItems: HeaderNavItem[] = [
-    { label: "Products", href: "/products", menu: <DropdownMenuSimple /> },
-    { label: "Services", href: "/Services", menu: <DropdownMenuSimple /> },
+    { label: "Products", href: "/products", menu: <DropdownMenuSimpleWithFooter /> },
+    { label: "Services", href: "/Services", menu: <DropdownMenuFeatureCard /> },
     { label: "Pricing", href: "/pricing" },
-    { label: "Resources", href: "/resources", menu: <DropdownMenuSimple /> },
+    { label: "Resources", href: "/resources", menu: <DropdownMenuWithTwoColsAndLinksAndFooter /> },
     { label: "About", href: "/about" },
 ];
 
@@ -80,6 +127,10 @@ const MobileFooter = () => {
                 </ul>
             </div>
             <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between pb-2">
+                    <span className="text-sm text-tertiary">Theme</span>
+                    <ThemeToggle />
+                </div>
                 <Button size="lg">Sign up</Button>
                 <Button color="secondary" size="lg">
                     Log in
@@ -92,29 +143,55 @@ const MobileFooter = () => {
 interface HeaderProps {
     items?: HeaderNavItem[];
     isFullWidth?: boolean;
-    isFloating?: boolean;
     className?: string;
 }
 
-export const Header = ({ items = headerNavItems, isFullWidth, isFloating, className }: HeaderProps) => {
+export const Header = ({ items = headerNavItems, isFullWidth, className }: HeaderProps) => {
     const headerRef = useRef<HTMLElement>(null);
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > SCROLL_THRESHOLD);
+        };
+
+        // Check initial state
+        handleScroll();
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     return (
-        <header
-            ref={headerRef}
-            className={cx(
-                "relative flex h-18 w-full items-center justify-center md:h-20",
-                isFloating && "h-16 md:h-19 md:pt-3",
-                isFullWidth && !isFloating ? "has-aria-expanded:bg-primary" : "max-md:has-aria-expanded:bg-primary",
-                className,
-            )}
-        >
-            <div className="flex size-full max-w-container flex-1 items-center pr-3 pl-4 md:px-8">
-                <div
-                    className={cx(
-                        "flex w-full justify-between gap-4",
-                        isFloating && "ring-secondary_alt md:rounded-2xl md:bg-primary md:py-3 md:pr-3 md:pl-4 md:shadow-xs md:ring-1",
-                    )}
+        <header ref={headerRef} className={cx("fixed top-0 right-0 left-0 z-50", "flex w-full items-center justify-center", "h-16 md:h-20", className)}>
+            {/* Animated container - morphs between full-width and floating */}
+            <motion.div
+                layout
+                transition={springConfig}
+                className={cx("flex items-center", "w-full max-w-container px-4 md:px-8")}
+                style={{
+                    paddingTop: isScrolled ? 12 : 0,
+                }}
+            >
+                <motion.div
+                    layout
+                    transition={springConfig}
+                    className={cx("flex w-full items-center justify-between gap-4", "md:py-3 md:pr-3 md:pl-4")}
+                    // Animated styles pour l'effet glass
+                    animate={{
+                        // Background: transparent → glass
+                        backgroundColor: isScrolled ? "var(--glass-bg)" : "rgba(255, 255, 255, 0)",
+                        // Border radius: 0 → rounded
+                        borderRadius: isScrolled ? 16 : 0,
+                        // Shadow: none → soft shadow avec effet glass
+                        boxShadow: isScrolled ? "var(--glass-shadow)" : "0 0 0 0 rgba(0, 0, 0, 0)",
+                        // Backdrop blur pour l'effet glass
+                        backdropFilter: isScrolled ? "var(--glass-blur)" : "blur(0px) saturate(1)",
+                    }}
+                    style={{
+                        willChange: "transform, opacity",
+                        WebkitBackdropFilter: isScrolled ? "var(--glass-blur)" : "blur(0px) saturate(1)",
+                    }}
                 >
                     <div className="flex flex-1 items-center gap-5">
                         <UntitledLogo className="h-8 md:max-lg:hidden" />
@@ -127,9 +204,8 @@ export const Header = ({ items = headerNavItems, isFullWidth, isFloating, classN
                                     <li key={navItem.label}>
                                         {navItem.menu ? (
                                             <AriaDialogTrigger>
-                                                <AriaButton className="flex cursor-pointer items-center gap-0.5 rounded-lg px-1.5 py-1 text-md font-semibold text-secondary outline-focus-ring transition duration-100 ease-linear hover:text-secondary_hover focus-visible:outline-2 focus-visible:outline-offset-2">
+                                                <AriaButton className="flex cursor-pointer items-center gap-0.5 rounded-lg px-1.5 py-1 text-md font-semibold text-secondary outline-focus-ring transition duration-100 ease-linear hover:bg-black/[0.04] hover:text-secondary_hover focus-visible:outline-2 focus-visible:outline-offset-2">
                                                     <span className="px-0.5">{navItem.label}</span>
-
                                                     <ChevronDown className="size-4 rotate-0 stroke-[2.625px] text-fg-quaternary transition duration-100 ease-linear in-aria-expanded:-rotate-180" />
                                                 </AriaButton>
 
@@ -138,21 +214,18 @@ export const Header = ({ items = headerNavItems, isFullWidth, isFloating, classN
                                                         cx(
                                                             "hidden origin-top will-change-transform md:block",
                                                             isFullWidth && "w-full",
-                                                            isEntering && "duration-200 ease-out animate-in fade-in slide-in-from-top-1",
-                                                            isExiting && "duration-150 ease-in animate-out fade-out slide-out-to-top-1",
+                                                            isEntering && "duration-200 ease-out animate-in fade-in slide-in-from-top-2",
+                                                            isExiting && "duration-150 ease-in animate-out fade-out slide-out-to-top-2",
                                                         )
                                                     }
-                                                    offset={isFloating || isFullWidth ? 0 : 8}
-                                                    containerPadding={0}
-                                                    triggerRef={(isFloating && isFullWidth) || isFullWidth ? headerRef : undefined}
+                                                    offset={12}
+                                                    containerPadding={16}
+                                                    triggerRef={isFullWidth ? headerRef : undefined}
                                                 >
                                                     {({ isEntering, isExiting }) => (
                                                         <AriaDialog
                                                             className={cx(
                                                                 "mx-auto origin-top outline-hidden",
-                                                                isFloating && "max-w-7xl px-8 pt-3",
-                                                                // Have to use the scale animation inside the popover to avoid
-                                                                // miscalculating the popover's position when opening.
                                                                 isEntering && !isFullWidth && "duration-200 ease-out animate-in zoom-in-95",
                                                                 isExiting && !isFullWidth && "duration-150 ease-in animate-out zoom-out-95",
                                                             )}
@@ -165,7 +238,7 @@ export const Header = ({ items = headerNavItems, isFullWidth, isFloating, classN
                                         ) : (
                                             <a
                                                 href={navItem.href}
-                                                className="flex cursor-pointer items-center gap-0.5 rounded-lg px-1.5 py-1 text-md font-semibold text-secondary outline-focus-ring transition duration-100 ease-linear hover:text-secondary_hover focus:outline-offset-2 focus-visible:outline-2"
+                                                className="flex cursor-pointer items-center gap-0.5 rounded-lg px-1.5 py-1 text-md font-semibold text-secondary outline-focus-ring transition duration-100 ease-linear hover:bg-black/[0.04] hover:text-secondary_hover focus:outline-offset-2 focus-visible:outline-2"
                                             >
                                                 <span className="px-0.5">{navItem.label}</span>
                                             </a>
@@ -177,10 +250,11 @@ export const Header = ({ items = headerNavItems, isFullWidth, isFloating, classN
                     </div>
 
                     <div className="hidden items-center gap-3 md:flex">
-                        <Button color="secondary" size={isFloating ? "md" : "lg"}>
+                        <ThemeToggle />
+                        <Button color="secondary" size="md">
                             Log in
                         </Button>
-                        <Button color="primary" size={isFloating ? "md" : "lg"}>
+                        <Button color="primary" size="md">
                             Sign up
                         </Button>
                     </div>
@@ -192,7 +266,7 @@ export const Header = ({ items = headerNavItems, isFullWidth, isFloating, classN
                             className={({ isFocusVisible, isHovered }) =>
                                 cx(
                                     "group ml-auto cursor-pointer rounded-lg p-2 md:hidden",
-                                    isHovered && "bg-primary_hover",
+                                    isHovered && "bg-black/5",
                                     isFocusVisible && "outline-2 outline-offset-2 outline-focus-ring",
                                 )
                             }
@@ -218,14 +292,13 @@ export const Header = ({ items = headerNavItems, isFullWidth, isFloating, classN
                         </AriaButton>
                         <AriaPopover
                             triggerRef={headerRef}
-                            className="h-calc(100%-72px) scrollbar-hide w-full overflow-y-auto shadow-lg md:hidden"
+                            className="scrollbar-hide h-[calc(100vh-64px)] w-full overflow-y-auto md:hidden"
                             offset={0}
-                            crossOffset={20}
                             containerPadding={0}
                             placement="bottom left"
                         >
                             <AriaDialog className="outline-hidden">
-                                <nav className="w-full bg-primary shadow-lg">
+                                <nav className="w-full bg-white shadow-lg">
                                     <ul className="flex flex-col gap-0.5 py-5">
                                         {items.map((navItem) =>
                                             navItem.menu ? (
@@ -237,14 +310,13 @@ export const Header = ({ items = headerNavItems, isFullWidth, isFloating, classN
                                             ),
                                         )}
                                     </ul>
-
                                     <MobileFooter />
                                 </nav>
                             </AriaDialog>
                         </AriaPopover>
                     </AriaDialogTrigger>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
         </header>
     );
 };

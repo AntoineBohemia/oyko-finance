@@ -93,9 +93,24 @@ const pageMetadata: Record<string, { title: string; description: string; showSea
         description: "Suivez vos budgets par catégorie",
         showSearch: false,
     },
+    "/budget/charges-fixes": {
+        title: "Charges fixes",
+        description: "Gérez vos abonnements et charges récurrentes",
+        showSearch: true,
+    },
     "/patrimoine": {
         title: "Patrimoine",
         description: "Gérez vos comptes et investissements",
+        showSearch: true,
+    },
+    "/patrimoine/investissements": {
+        title: "Investissements",
+        description: "Suivez la performance de votre portfolio",
+        showSearch: true,
+    },
+    "/patrimoine/dettes": {
+        title: "Dettes",
+        description: "Suivez vos emprunts et remboursements",
         showSearch: true,
     },
     "/parametres": {

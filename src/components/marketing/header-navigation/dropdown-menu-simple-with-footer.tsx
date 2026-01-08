@@ -1,4 +1,7 @@
+"use client";
+
 import { BookClosed, FileCode01, LifeBuoy01, PlayCircle, Stars02 } from "@untitledui/icons";
+import { Button } from "@/components/base/buttons/button";
 import { NavMenuItemLink } from "./base-components/nav-menu-item";
 
 const items = [
@@ -34,11 +37,11 @@ const items = [
     },
 ];
 
-export const DropdownMenuSimple = () => {
+export const DropdownMenuSimpleWithFooter = () => {
     return (
         <div className="px-3 pb-2 md:max-w-84 md:p-0">
             <nav
-                className="overflow-hidden rounded-2xl py-2 md:p-2"
+                className="overflow-hidden rounded-xl md:rounded-2xl"
                 style={{
                     backgroundColor: "var(--glass-bg)",
                     backdropFilter: "var(--glass-blur)",
@@ -46,13 +49,18 @@ export const DropdownMenuSimple = () => {
                     boxShadow: "var(--glass-shadow)",
                 }}
             >
-                <ul className="flex flex-col gap-0.5">
+                <ul className="flex flex-col gap-0.5 rounded-xl py-2 md:rounded-t-2xl md:p-2">
                     {items.map(({ title, subtitle, href, Icon }) => (
                         <li key={title}>
                             <NavMenuItemLink icon={Icon} title={title} subtitle={subtitle} href={href} />
                         </li>
                     ))}
                 </ul>
+                <div className="px-4 py-5 text-center sm:px-5" style={{ backgroundColor: "var(--glass-bg-subtle)" }}>
+                    <Button href="#" color="link-color" size="lg">
+                        All resources
+                    </Button>
+                </div>
             </nav>
         </div>
     );

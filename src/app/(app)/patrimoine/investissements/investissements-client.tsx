@@ -305,12 +305,12 @@ export default function InvestissementsClient({ initialData }: InvestissementsCl
             <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12">
                 {/* Page header */}
                 <div className="flex flex-col gap-5 px-4 lg:px-8">
-                    <div className="flex flex-col justify-between gap-4 lg:flex-row">
-                        <div className="flex flex-col gap-0.5 lg:gap-1">
-                            <p className="text-xl font-semibold text-primary lg:text-display-xs">Investissements</p>
-                            <p className="text-md text-tertiary">Suivez la performance de votre portfolio.</p>
+                    <div className="flex flex-col gap-4 border-b border-secondary pb-5 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="flex flex-col gap-1">
+                            <h1 className="text-xl font-semibold text-primary lg:text-display-xs">Investissements</h1>
+                            <p className="text-sm text-tertiary">Suivez la performance de votre portfolio</p>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex items-center gap-3">
                             <Button size="md" color="secondary" iconLeading={DownloadCloud02}>
                                 Exporter
                             </Button>
