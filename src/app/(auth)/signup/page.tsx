@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { AlertCircle, Check, Mail01 } from "@untitledui/icons";
 import Link from "next/link";
-import { AlertCircle, Check, Wallet03 } from "@untitledui/icons";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/base/buttons/button";
 import { SocialButton } from "@/components/base/buttons/social-button";
 import { Form } from "@/components/base/form/form";
 import { Input } from "@/components/base/input/input";
-import { cx } from "@/utils/cx";
+import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
+import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
 import { createClient } from "@/lib/supabase/client";
+import { cx } from "@/utils/cx";
 
 const PASSWORD_REQUIREMENTS = [
     { id: "length", label: "Au moins 8 caractères", check: (p: string) => p.length >= 8 },
@@ -144,15 +146,18 @@ export default function SignupPage() {
     return (
         <section className="grid min-h-screen grid-cols-1 bg-primary lg:grid-cols-[640px_1fr]">
             <div className="flex flex-col bg-primary">
-                <div className="flex flex-1 justify-center px-4 py-12 md:items-center md:px-8 md:py-32">
+                <header className="hidden pt-8 pl-8 lg:block">
+                    <Link href="/">
+                        <UntitledLogo />
+                    </Link>
+                </header>
+                <div className="flex flex-1 justify-center px-4 py-12 md:items-center md:px-8 md:py-0">
                     <div className="flex w-full flex-col gap-8 sm:max-w-90">
-                        <div className="flex flex-col gap-6 md:gap-12">
-                            <Link href="/" className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600">
-                                    <Wallet03 className="h-5 w-5 text-white" />
-                                </div>
-                                <span className="text-lg font-semibold text-primary">Budget App</span>
+                        <div className="flex flex-col gap-6">
+                            <Link href="/" className="lg:hidden">
+                                <UntitledLogoMinimal className="size-10" />
                             </Link>
+
                             <div className="flex flex-col gap-2 md:gap-3">
                                 <h1 className="text-display-xs font-semibold text-primary md:text-display-md">
                                     {step === 1 ? "Créer un compte" : "Choisir un mot de passe"}
@@ -163,22 +168,23 @@ export default function SignupPage() {
                             </div>
                         </div>
 
+                        {/* Progress indicator */}
                         <div className="flex items-center gap-2">
-                            <div className={cx("h-2 flex-1 rounded-full", step >= 1 ? "bg-brand-600" : "bg-gray-200")} />
-                            <div className={cx("h-2 flex-1 rounded-full", step >= 2 ? "bg-brand-600" : "bg-gray-200")} />
+                            <div className={cx("h-2 flex-1 rounded-full", step >= 1 ? "bg-brand-600" : "bg-gray-200 dark:bg-gray-700")} />
+                            <div className={cx("h-2 flex-1 rounded-full", step >= 2 ? "bg-brand-600" : "bg-gray-200 dark:bg-gray-700")} />
                         </div>
 
                         {error && (
-                            <div className="flex items-center gap-3 rounded-lg bg-error-50 p-4">
-                                <AlertCircle className="h-5 w-5 shrink-0 text-error-600" />
-                                <p className="text-sm text-error-700">{error}</p>
+                            <div className="flex items-center gap-3 rounded-lg bg-error-50 p-4 dark:bg-error-900/20">
+                                <AlertCircle className="h-5 w-5 shrink-0 text-error-600 dark:text-error-400" />
+                                <p className="text-sm text-error-700 dark:text-error-300">{error}</p>
                             </div>
                         )}
 
                         {success && (
-                            <div className="flex items-center gap-3 rounded-lg bg-success-50 p-4">
-                                <Check className="h-5 w-5 shrink-0 text-success-600" />
-                                <p className="text-sm text-success-700">{success}</p>
+                            <div className="flex items-center gap-3 rounded-lg bg-success-50 p-4 dark:bg-success-900/20">
+                                <Check className="h-5 w-5 shrink-0 text-success-600 dark:text-success-400" />
+                                <p className="text-sm text-success-700 dark:text-success-300">{success}</p>
                             </div>
                         )}
 
@@ -241,13 +247,13 @@ export default function SignupPage() {
                                                     key={check.id}
                                                     className={cx(
                                                         "flex items-center gap-2 text-sm transition-colors",
-                                                        check.passed ? "text-success-600" : "text-tertiary",
+                                                        check.passed ? "text-success-600 dark:text-success-400" : "text-tertiary",
                                                     )}
                                                 >
                                                     <div
                                                         className={cx(
                                                             "flex h-4 w-4 items-center justify-center rounded-full transition-colors",
-                                                            check.passed ? "bg-success-100" : "bg-gray-100",
+                                                            check.passed ? "bg-success-100 dark:bg-success-900/30" : "bg-gray-100 dark:bg-gray-800",
                                                         )}
                                                     >
                                                         {check.passed && <Check className="h-3 w-3" />}
@@ -269,10 +275,10 @@ export default function SignupPage() {
                                         onChange={setConfirmPassword}
                                     />
                                     {confirmPassword && !passwordsMatch && (
-                                        <p className="text-sm text-error-600">Les mots de passe ne correspondent pas</p>
+                                        <p className="text-sm text-error-600 dark:text-error-400">Les mots de passe ne correspondent pas</p>
                                     )}
                                     {passwordsMatch && (
-                                        <p className="flex items-center gap-2 text-sm text-success-600">
+                                        <p className="flex items-center gap-2 text-sm text-success-600 dark:text-success-400">
                                             <Check className="h-4 w-4" />
                                             Les mots de passe correspondent
                                         </p>
@@ -299,39 +305,32 @@ export default function SignupPage() {
                     </div>
                 </div>
 
-                <footer className="hidden p-8 pt-11 lg:block">
+                <footer className="hidden justify-between px-8 pt-4 pb-8 lg:flex">
                     <p className="text-sm text-tertiary">© Budget App 2025</p>
+
+                    <a href="mailto:help@budgetapp.com" className="flex items-center gap-2 text-sm text-tertiary">
+                        <Mail01 className="size-4 text-fg-quaternary" />
+                        help@budgetapp.com
+                    </a>
                 </footer>
             </div>
 
-            <div className="relative hidden items-center overflow-hidden bg-gradient-to-br from-brand-600 to-brand-800 lg:flex">
-                <div className="flex flex-col items-center justify-center p-12 text-center">
-                    <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/20">
-                        <Wallet03 className="h-10 w-10 text-white" />
-                    </div>
-                    <h2 className="mb-4 text-display-sm font-semibold text-white">Prenez le contrôle de vos finances</h2>
-                    <p className="max-w-md text-lg text-white/80">
-                        En quelques minutes, configurez votre budget et commencez à épargner intelligemment.
-                    </p>
-
-                    <div className="mt-12 flex flex-col gap-4 text-left">
-                        <div className="flex items-center gap-3 rounded-lg bg-white/10 px-4 py-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
-                                <Check className="h-4 w-4 text-white" />
-                            </div>
-                            <span className="text-white">Budget hebdomadaire intelligent</span>
-                        </div>
-                        <div className="flex items-center gap-3 rounded-lg bg-white/10 px-4 py-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
-                                <Check className="h-4 w-4 text-white" />
-                            </div>
-                            <span className="text-white">Suivi des dépenses en temps réel</span>
-                        </div>
-                        <div className="flex items-center gap-3 rounded-lg bg-white/10 px-4 py-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
-                                <Check className="h-4 w-4 text-white" />
-                            </div>
-                            <span className="text-white">Objectifs d'épargne personnalisés</span>
+            <div className="relative hidden items-center overflow-hidden bg-tertiary pl-24 lg:flex">
+                <div className="rounded-[9.03px] bg-primary p-[0.9px] shadow-lg ring-[0.56px] ring-utility-gray-300 ring-inset md:rounded-[26.95px] md:p-[3.5px] md:ring-[1.68px]">
+                    <div className="rounded-[7.9px] bg-primary p-0.5 shadow-modern-mockup-inner-md md:rounded-[23.58px] md:p-1 md:shadow-modern-mockup-inner-lg">
+                        <div className="relative overflow-hidden rounded-[6.77px] bg-utility-gray-50 ring-[0.56px] ring-utility-gray-200 md:rounded-[20.21px] md:ring-[1.68px]">
+                            {/* Light mode image (hidden in dark mode) */}
+                            <img
+                                src="https://www.untitledui.com/marketing/screen-mockups/dashboard-desktop-mockup-light-01.webp"
+                                className="max-h-168.5 max-w-none object-cover object-left-top dark:hidden"
+                                alt="Dashboard mockup showing application interface"
+                            />
+                            {/* Dark mode image (hidden in light mode) */}
+                            <img
+                                src="https://www.untitledui.com/marketing/screen-mockups/dashboard-desktop-mockup-dark-01.webp"
+                                className="max-h-168.5 max-w-none object-cover object-left-top not-dark:hidden"
+                                alt="Dashboard mockup showing application interface"
+                            />
                         </div>
                     </div>
                 </div>

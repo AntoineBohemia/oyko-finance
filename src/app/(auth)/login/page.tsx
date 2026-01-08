@@ -1,14 +1,16 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { AlertCircle } from "@untitledui/icons";
 import Link from "next/link";
-import { AlertCircle, Wallet03 } from "@untitledui/icons";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/base/buttons/button";
 import { SocialButton } from "@/components/base/buttons/social-button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { Form } from "@/components/base/form/form";
 import { Input } from "@/components/base/input/input";
+import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
+import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
@@ -57,11 +59,7 @@ function LoginForm() {
 
             if (data.user) {
                 // Vérifier si le profil a été complété (onboarding)
-                const { data: profile } = await supabase
-                    .from("profiles")
-                    .select("revenus_mensuels")
-                    .eq("id", data.user.id)
-                    .single();
+                const { data: profile } = await supabase.from("profiles").select("revenus_mensuels").eq("id", data.user.id).single();
 
                 // Si le profil n'a pas de revenus configurés, rediriger vers onboarding
                 if (!profile?.revenus_mensuels || profile.revenus_mensuels === 0) {
@@ -104,12 +102,10 @@ function LoginForm() {
             <div className="flex flex-col bg-primary">
                 <div className="flex flex-1 justify-center px-4 py-12 md:items-center md:px-8 md:py-32">
                     <div className="flex w-full flex-col gap-8 sm:max-w-90">
-                        <div className="flex flex-col gap-6 md:gap-12">
-                            <Link href="/" className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600">
-                                    <Wallet03 className="h-5 w-5 text-white" />
-                                </div>
-                                <span className="text-lg font-semibold text-primary">Budget App</span>
+                        <div className="flex flex-col gap-6 md:gap-20">
+                            <Link href="/">
+                                <UntitledLogo className="max-md:hidden" />
+                                <UntitledLogoMinimal className="size-10 md:hidden" />
                             </Link>
                             <div className="flex flex-col gap-2 md:gap-3">
                                 <h1 className="text-display-xs font-semibold text-primary md:text-display-md">Connexion</h1>
@@ -118,9 +114,9 @@ function LoginForm() {
                         </div>
 
                         {error && (
-                            <div className="flex items-center gap-3 rounded-lg bg-error-50 p-4">
-                                <AlertCircle className="h-5 w-5 text-error-600" />
-                                <p className="text-sm text-error-700">{error}</p>
+                            <div className="flex items-center gap-3 rounded-lg bg-error-50 p-4 dark:bg-error-900/20">
+                                <AlertCircle className="h-5 w-5 shrink-0 text-error-600 dark:text-error-400" />
+                                <p className="text-sm text-error-700 dark:text-error-300">{error}</p>
                             </div>
                         )}
 
@@ -151,12 +147,7 @@ function LoginForm() {
                             </div>
 
                             <div className="flex items-center">
-                                <Checkbox
-                                    label="Se souvenir de moi"
-                                    name="remember"
-                                    isSelected={remember}
-                                    onChange={setRemember}
-                                />
+                                <Checkbox label="Se souvenir de moi" name="remember" isSelected={remember} onChange={setRemember} />
                                 <Button color="link-color" size="md" href="#" className="ml-auto">
                                     Mot de passe oublié
                                 </Button>
@@ -186,27 +177,22 @@ function LoginForm() {
                 </footer>
             </div>
 
-            <div className="relative hidden items-center overflow-hidden bg-brand-600 lg:flex">
-                <div className="flex flex-col items-center justify-center p-12 text-center">
-                    <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/20">
-                        <Wallet03 className="h-10 w-10 text-white" />
-                    </div>
-                    <h2 className="mb-4 text-display-sm font-semibold text-white">Gérez votre budget simplement</h2>
-                    <p className="max-w-md text-lg text-white/80">
-                        Suivez vos dépenses, planifiez votre épargne et atteignez vos objectifs financiers.
-                    </p>
-                    <div className="mt-12 grid grid-cols-3 gap-8 text-white/90">
-                        <div className="flex flex-col items-center gap-2">
-                            <span className="text-display-xs font-bold">10k+</span>
-                            <span className="text-sm text-white/70">Utilisateurs</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-2">
-                            <span className="text-display-xs font-bold">50M€</span>
-                            <span className="text-sm text-white/70">Gérés</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-2">
-                            <span className="text-display-xs font-bold">4.9</span>
-                            <span className="text-sm text-white/70">Note App</span>
+            <div className="relative hidden items-center overflow-hidden bg-tertiary pl-24 lg:flex">
+                <div className="rounded-[9.03px] bg-primary p-[0.9px] shadow-lg ring-[0.56px] ring-utility-gray-300 ring-inset md:rounded-[26.95px] md:p-[3.5px] md:ring-[1.68px]">
+                    <div className="rounded-[7.9px] bg-primary p-0.5 shadow-modern-mockup-inner-md md:rounded-[23.58px] md:p-1 md:shadow-modern-mockup-inner-lg">
+                        <div className="relative overflow-hidden rounded-[6.77px] bg-utility-gray-50 ring-[0.56px] ring-utility-gray-200 md:rounded-[20.21px] md:ring-[1.68px]">
+                            {/* Light mode image (hidden in dark mode) */}
+                            <img
+                                src="https://www.untitledui.com/marketing/screen-mockups/dashboard-desktop-mockup-light-01.webp"
+                                className="max-h-168.5 max-w-none object-cover object-left-top dark:hidden"
+                                alt="Dashboard mockup showing application interface"
+                            />
+                            {/* Dark mode image (hidden in light mode) */}
+                            <img
+                                src="https://www.untitledui.com/marketing/screen-mockups/dashboard-desktop-mockup-dark-01.webp"
+                                className="max-h-168.5 max-w-none object-cover object-left-top not-dark:hidden"
+                                alt="Dashboard mockup showing application interface"
+                            />
                         </div>
                     </div>
                 </div>
@@ -217,7 +203,7 @@ function LoginForm() {
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Chargement...</div>}>
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-primary text-primary">Chargement...</div>}>
             <LoginForm />
         </Suspense>
     );

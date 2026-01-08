@@ -1,39 +1,39 @@
 "use client";
 
-import { BookClosed, FileCode01, LifeBuoy01, PlayCircle, Stars02 } from "@untitledui/icons";
+import { BarChart07, CreditCard02, PieChart01, Target04, Wallet03 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { NavMenuItemLink } from "./base-components/nav-menu-item";
 
 const items = [
     {
-        title: "Blog",
-        subtitle: "The latest industry new and guides curated by our expert team.",
-        href: "/blog",
-        Icon: BookClosed,
+        title: "Tableau de bord",
+        subtitle: "Vue d'ensemble de votre patrimoine et de vos finances en temps réel.",
+        href: "/fonctionnalites/tableau-de-bord",
+        Icon: BarChart07,
     },
     {
-        title: "Customer stories",
-        subtitle: "Learn how our customers are using Untitled UI to 10x their growth.",
-        href: "/customer-stories",
-        Icon: Stars02,
+        title: "Suivi des dépenses",
+        subtitle: "Catégorisez et analysez vos dépenses automatiquement.",
+        href: "/fonctionnalites/depenses",
+        Icon: Wallet03,
     },
     {
-        title: "Video tutorials",
-        subtitle: "Get up and running on our newest features and in-depth guides.",
-        href: "/tutorials",
-        Icon: PlayCircle,
+        title: "Gestion du patrimoine",
+        subtitle: "Suivez vos investissements, immobilier et actifs en un seul endroit.",
+        href: "/fonctionnalites/patrimoine",
+        Icon: PieChart01,
     },
     {
-        title: "Documentation",
-        subtitle: "In-depth articles on our tools and technologies to empower teams.",
-        href: "/docs",
-        Icon: FileCode01,
+        title: "Objectifs financiers",
+        subtitle: "Définissez et atteignez vos objectifs d'épargne et d'investissement.",
+        href: "/fonctionnalites/objectifs",
+        Icon: Target04,
     },
     {
-        title: "Help and support",
-        subtitle: "Need help with something? Our expert team is here to help 24/7.",
-        href: "/help",
-        Icon: LifeBuoy01,
+        title: "Connexion bancaire",
+        subtitle: "Synchronisez vos comptes bancaires en toute sécurité.",
+        href: "/fonctionnalites/connexion-bancaire",
+        Icon: CreditCard02,
     },
 ];
 
@@ -57,8 +57,8 @@ export const DropdownMenuSimpleWithFooter = () => {
                     ))}
                 </ul>
                 <div className="px-4 py-5 text-center sm:px-5" style={{ backgroundColor: "var(--glass-bg-subtle)" }}>
-                    <Button href="#" color="link-color" size="lg">
-                        All resources
+                    <Button href="/fonctionnalites" color="link-color" size="lg">
+                        Toutes les fonctionnalités
                     </Button>
                 </div>
             </nav>

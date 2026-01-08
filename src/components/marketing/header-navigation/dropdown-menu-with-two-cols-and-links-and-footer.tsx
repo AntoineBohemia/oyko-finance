@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC, ReactNode } from "react";
-import { BookClosed, BookOpen01, Codepen, FileCode01, LifeBuoy01, PlayCircle, Stars02 } from "@untitledui/icons";
+import { BookClosed, BookOpen01, LifeBuoy01, MessageChatCircle, PlayCircle, ShieldTick, Stars02 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { NavMenuItemLink } from "./base-components/nav-menu-item";
 
@@ -20,24 +20,24 @@ type MenuColumn = {
 
 const columns: MenuColumn[] = [
     {
-        title: "Resources",
+        title: "Apprendre",
         items: [
             {
-                title: "Blogs",
-                subtitle: "The latest industry new and guides curated by our expert team.",
-                href: "/",
+                title: "Blog",
+                subtitle: "Conseils et actualités sur la gestion de vos finances personnelles.",
+                href: "/blog",
                 Icon: BookClosed,
             },
             {
-                title: "Customer stories",
-                subtitle: "Learn how our customers are using Untitled UI to 10x their growth.",
-                href: "/",
+                title: "Témoignages",
+                subtitle: "Découvrez comment nos utilisateurs gèrent leur patrimoine avec Oyko.",
+                href: "/temoignages",
                 Icon: Stars02,
             },
             {
-                title: "Video tutorials",
-                subtitle: "Get up and running on our newest features and in-depth guides.",
-                href: "/",
+                title: "Tutoriels vidéo",
+                subtitle: "Apprenez à utiliser toutes les fonctionnalités d'Oyko.",
+                href: "/tutoriels",
                 Icon: PlayCircle,
             },
         ],
@@ -46,22 +46,22 @@ const columns: MenuColumn[] = [
         title: "Support",
         items: [
             {
-                title: "Documentation",
-                subtitle: "In-depth articles on our tools and technologies to empower teams.",
-                href: "/",
-                Icon: FileCode01,
-            },
-            {
-                title: "Help and support",
-                subtitle: "Need help with something? Our expert team is here to help 24/7.",
-                href: "/",
+                title: "Centre d'aide",
+                subtitle: "Trouvez des réponses à toutes vos questions.",
+                href: "/aide",
                 Icon: LifeBuoy01,
             },
             {
-                title: "API reference",
-                subtitle: "In-depth reference doc and helpful guides for our API.",
-                href: "/",
-                Icon: Codepen,
+                title: "Nous contacter",
+                subtitle: "Notre équipe est disponible pour vous aider.",
+                href: "/contact",
+                Icon: MessageChatCircle,
+            },
+            {
+                title: "Sécurité",
+                subtitle: "Découvrez comment nous protégeons vos données.",
+                href: "/securite",
+                Icon: ShieldTick,
             },
         ],
     },
@@ -81,21 +81,21 @@ export const DropdownMenuWithTwoColsAndLinksAndFooter = () => {
             >
                 <div className="flex flex-col gap-5 rounded-xl pt-4 pb-5 md:gap-6 md:rounded-t-2xl md:p-6 md:pt-5">
                     <div className="flex flex-col gap-1 px-4 md:p-0">
-                        <p className="text-md font-semibold text-primary">Resources</p>
-                        <p className="text-sm text-tertiary">Get started and learn more about our products.</p>
+                        <p className="text-md font-semibold text-primary">Ressources</p>
+                        <p className="text-sm text-tertiary">Guides, tutoriels et support pour maîtriser Oyko.</p>
                     </div>
 
                     <div className="flex flex-col gap-5 md:flex-row md:gap-8 md:py-0">
                         <div className="-mb-px flex flex-col gap-4 border-b border-b-secondary px-4 pb-5 md:mb-0 md:gap-5 md:border-none md:p-0">
-                            <h3 className="text-sm font-semibold text-brand-tertiary">Get started</h3>
+                            <h3 className="text-sm font-semibold text-brand-tertiary">Démarrer</h3>
                             <ul className="flex flex-col gap-3">
                                 {[
-                                    { title: "Setup 101", href: "#" },
-                                    { title: "Adding users", href: "#" },
-                                    { title: "Video tutorials", href: "#" },
-                                    { title: "Libraries and SDKs", href: "#" },
-                                    { title: "Adding plugins", href: "#" },
-                                    { title: "Dashboard templates", href: "#" },
+                                    { title: "Guide de démarrage", href: "/guide-demarrage" },
+                                    { title: "Connecter sa banque", href: "/connecter-banque" },
+                                    { title: "Créer un budget", href: "/creer-budget" },
+                                    { title: "Suivre son patrimoine", href: "/suivre-patrimoine" },
+                                    { title: "Définir ses objectifs", href: "/definir-objectifs" },
+                                    { title: "FAQ", href: "/faq" },
                                 ].map((item) => (
                                     <li key={item.title}>
                                         <Button href={item.href} color="link-gray" size="lg">
@@ -124,14 +124,14 @@ export const DropdownMenuWithTwoColsAndLinksAndFooter = () => {
                 </div>
 
                 <div className="mx-auto flex max-w-container flex-col px-4 py-5 md:flex-row md:items-center md:justify-between md:px-6" style={{ backgroundColor: "var(--glass-bg-subtle)" }}>
-                    <Button href="#" color="secondary" size="md" iconLeading={BookOpen01} className="hidden md:flex">
-                        Documentation
+                    <Button href="/aide" color="secondary" size="md" iconLeading={BookOpen01} className="hidden md:flex">
+                        Centre d'aide
                     </Button>
-                    <Button href="#" color="primary" size="md" className="hidden md:flex">
-                        View all resources
+                    <Button href="/ressources" color="primary" size="md" className="hidden md:flex">
+                        Toutes les ressources
                     </Button>
-                    <Button href="#" color="primary" size="sm" className="md:hidden">
-                        View all resources
+                    <Button href="/ressources" color="primary" size="sm" className="md:hidden">
+                        Toutes les ressources
                     </Button>
                 </div>
             </nav>

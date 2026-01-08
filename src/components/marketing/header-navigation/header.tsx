@@ -11,9 +11,7 @@ import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
 import { cx } from "@/utils/cx";
-import { DropdownMenuFeatureCard } from "./dropdown-menu-feature-card";
 import { DropdownMenuSimpleWithFooter } from "./dropdown-menu-simple-with-footer";
-import { DropdownMenuWithTwoColsAndLinksAndFooter } from "./dropdown-menu-with-two-cols-and-links-and-footer";
 
 // =============================================================================
 // CONSTANTS
@@ -43,7 +41,7 @@ const ThemeToggle = () => {
     }, []);
 
     if (!mounted) {
-        return <ButtonUtility size="sm" color="tertiary" icon={Moon01} tooltip="Mode sombre" />;
+        return <ButtonUtility size="sm" color="tertiary" icon={Moon01} tooltip="Thème sombre" />;
     }
 
     return (
@@ -51,7 +49,7 @@ const ThemeToggle = () => {
             size="sm"
             color="tertiary"
             icon={isDark ? Sun : Moon01}
-            tooltip={isDark ? "Mode clair" : "Mode sombre"}
+            tooltip={isDark ? "Thème clair" : "Thème sombre"}
             onClick={() => setTheme(isDark ? "light" : "dark")}
         />
     );
@@ -64,22 +62,21 @@ type HeaderNavItem = {
 };
 
 const headerNavItems: HeaderNavItem[] = [
-    { label: "Products", href: "/products", menu: <DropdownMenuSimpleWithFooter /> },
-    { label: "Services", href: "/Services", menu: <DropdownMenuFeatureCard /> },
-    { label: "Pricing", href: "/pricing" },
-    { label: "Resources", href: "/resources", menu: <DropdownMenuWithTwoColsAndLinksAndFooter /> },
-    { label: "About", href: "/about" },
+    { label: "Fonctionnalités", href: "/fonctionnalites", menu: <DropdownMenuSimpleWithFooter /> },
+    { label: "Tarifs", href: "/tarifs" },
+    { label: "Blog", href: "/blog" },
+    { label: "À propos", href: "/a-propos" },
 ];
 
 const footerNavItems = [
-    { label: "About us", href: "/" },
-    { label: "Press", href: "/products" },
-    { label: "Careers", href: "/resources" },
-    { label: "Legal", href: "/pricing" },
-    { label: "Support", href: "/pricing" },
-    { label: "Contact", href: "/pricing" },
-    { label: "Sitemap", href: "/pricing" },
-    { label: "Cookie settings", href: "/pricing" },
+    { label: "À propos", href: "/a-propos" },
+    { label: "Blog", href: "/blog" },
+    { label: "Carrières", href: "/carrieres" },
+    { label: "Mentions légales", href: "/mentions-legales" },
+    { label: "Support", href: "/support" },
+    { label: "Contact", href: "/contact" },
+    { label: "Confidentialité", href: "/confidentialite" },
+    { label: "CGU", href: "/cgu" },
 ];
 
 const MobileNavItem = (props: { className?: string; label: string; href?: string; children?: ReactNode }) => {
@@ -128,12 +125,12 @@ const MobileFooter = () => {
             </div>
             <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between pb-2">
-                    <span className="text-sm text-tertiary">Theme</span>
+                    <span className="text-sm text-tertiary">Thème</span>
                     <ThemeToggle />
                 </div>
-                <Button size="lg">Sign up</Button>
+                <Button size="lg">Commencer</Button>
                 <Button color="secondary" size="lg">
-                    Log in
+                    Connexion
                 </Button>
             </div>
         </div>
@@ -252,10 +249,10 @@ export const Header = ({ items = headerNavItems, isFullWidth, className }: Heade
                     <div className="hidden items-center gap-3 md:flex">
                         <ThemeToggle />
                         <Button color="secondary" size="md">
-                            Log in
+                            Connexion
                         </Button>
                         <Button color="primary" size="md">
-                            Sign up
+                            Commencer
                         </Button>
                     </div>
 
