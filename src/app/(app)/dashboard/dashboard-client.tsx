@@ -15,107 +15,39 @@ import { Select } from "@/components/base/select/select";
 import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
 import { cx } from "@/utils/cx";
 import { formatCurrencySimple, formatDateRelative, getProgressColor, getProgressColorOnDark } from "@/utils/format";
+import { createClient } from "@/lib/supabase/client";
+import type { DashboardData, CategorieVariable, PatrimoineData, PatrimoineRepartition } from "@/lib/data/dashboard";
+import type { Profile, Compte } from "@/types/database.types";
 
-// ============================================
-// DONNÉES UTILISATEUR
-// ============================================
-
-const USER_PROFILE = {
-    prenom: "Antoine",
-    objectifEpargneMensuel: 200,
-    revenusMensuels: 1980, // Salaire + Freelance + Aides
-};
-
-// ============================================
-// CATÉGORIES VARIABLES (Enveloppes)
-// ============================================
-
-interface CategorieVariable {
-    id: string;
-    nom: string;
-    icone: string;
-    couleur: string;
-    budgetMensuel: number;
+// Types pour les données sérialisées (dates en string)
+interface SerializedDashboardData {
+    profile: Profile | null;
+    comptes: Compte[];
+    categories: CategorieVariable[];
+    chargesFixes: {
+        id: string;
+        nom: string;
+        montant: number;
+        icone: string;
+        dateProchain: string;
+    }[];
+    transactions: {
+        id: string;
+        description: string;
+        montant: number;
+        date: string;
+        categorieId: string;
+        type: "variable" | "fixe" | "revenu";
+    }[];
+    patrimoine: PatrimoineData;
 }
 
-const CATEGORIES_VARIABLES: CategorieVariable[] = [
-    { id: "alim", nom: "Alimentation", icone: "🍔", couleur: "#ef4444", budgetMensuel: 400 },
-    { id: "transport", nom: "Transport", icone: "🚇", couleur: "#f97316", budgetMensuel: 100 },
-    { id: "loisirs", nom: "Loisirs", icone: "🎮", couleur: "#3b82f6", budgetMensuel: 150 },
-    { id: "vetements", nom: "Vêtements", icone: "👕", couleur: "#ec4899", budgetMensuel: 80 },
-    { id: "autre", nom: "Autre", icone: "📦", couleur: "#6b7280", budgetMensuel: 53.15 },
-];
-
-const BUDGET_VARIABLE_MENSUEL = CATEGORIES_VARIABLES.reduce((acc, cat) => acc + cat.budgetMensuel, 0);
-
-// ============================================
-// CHARGES FIXES
-// ============================================
-
-interface ChargeFix {
-    id: string;
-    nom: string;
-    montant: number;
-    icone: string;
-    dateProchain: Date;
+interface DashboardClientProps {
+    initialData: SerializedDashboardData;
 }
 
-const CHARGES_FIXES: ChargeFix[] = [
-    { id: "loyer", nom: "Loyer", montant: 650, icone: "🏠", dateProchain: new Date(2026, 1, 3) },
-    { id: "navigo", nom: "Navigo", montant: 86.4, icone: "🚇", dateProchain: new Date(2026, 1, 5) },
-    { id: "spotify", nom: "Spotify", montant: 5.99, icone: "🎵", dateProchain: new Date(2026, 1, 4) },
-    { id: "netflix", nom: "Netflix", montant: 13.49, icone: "🎬", dateProchain: new Date(2026, 0, 15) },
-    { id: "mobile", nom: "Free Mobile", montant: 12.99, icone: "📱", dateProchain: new Date(2026, 0, 20) },
-    { id: "gym", nom: "Basic Fit", montant: 29.99, icone: "🏋️", dateProchain: new Date(2026, 1, 1) },
-    { id: "pret", nom: "Prêt étudiant", montant: 150, icone: "🎓", dateProchain: new Date(2026, 0, 25) },
-];
-
-const TOTAL_CHARGES_FIXES = CHARGES_FIXES.reduce((acc, c) => acc + c.montant, 0);
-
 // ============================================
-// TRANSACTIONS JANVIER 2026
-// ============================================
-
-interface TransactionJanvier {
-    id: string;
-    description: string;
-    montant: number;
-    date: Date;
-    categorieId: string;
-    type: "variable" | "fixe" | "revenu";
-}
-
-const TRANSACTIONS_JANVIER: TransactionJanvier[] = [
-    // Semaine 1 (1-5 janv)
-    { id: "tr-1", description: "Carrefour", montant: -32.5, date: new Date(2026, 0, 2), categorieId: "alim", type: "variable" },
-    { id: "tr-2", description: "Métro tickets", montant: -4.2, date: new Date(2026, 0, 3), categorieId: "transport", type: "variable" },
-    { id: "tr-3", description: "Loyer Janvier", montant: -650, date: new Date(2026, 0, 3), categorieId: "loyer", type: "fixe" },
-    { id: "tr-4", description: "Boulangerie", montant: -8.5, date: new Date(2026, 0, 4), categorieId: "alim", type: "variable" },
-    { id: "tr-5", description: "Spotify", montant: -5.99, date: new Date(2026, 0, 4), categorieId: "spotify", type: "fixe" },
-    { id: "tr-6", description: "Salaire", montant: 1450, date: new Date(2026, 0, 5), categorieId: "salaire", type: "revenu" },
-    { id: "tr-7", description: "Navigo", montant: -86.4, date: new Date(2026, 0, 5), categorieId: "navigo", type: "fixe" },
-
-    // Semaine 2 (6-12 janv)
-    { id: "tr-8", description: "Carrefour Market", montant: -47.82, date: new Date(2026, 0, 6), categorieId: "alim", type: "variable" },
-    { id: "tr-9", description: "Uber", montant: -12.5, date: new Date(2026, 0, 6), categorieId: "transport", type: "variable" },
-    { id: "tr-10", description: "Cinéma", montant: -11.5, date: new Date(2026, 0, 7), categorieId: "loisirs", type: "variable" },
-    { id: "tr-11", description: "Picard", montant: -23.4, date: new Date(2026, 0, 8), categorieId: "alim", type: "variable" },
-    { id: "tr-12", description: "Zara", montant: -45.0, date: new Date(2026, 0, 9), categorieId: "vetements", type: "variable" },
-    { id: "tr-13", description: "Amazon", montant: -19.99, date: new Date(2026, 0, 10), categorieId: "autre", type: "variable" },
-];
-
-// ============================================
-// COMPTES (pour la modale)
-// ============================================
-
-const COMPTES = [
-    { id: "courant", label: "Compte courant", solde: 1847.32 },
-    { id: "cash", label: "Cash", solde: 85 },
-    { id: "n26", label: "N26", solde: 124.5 },
-];
-
-// ============================================
-// CALCULS DE DATES ET SEMAINES
+// FONCTIONS UTILITAIRES
 // ============================================
 
 const getWeekNumber = (date: Date): number => {
@@ -143,30 +75,11 @@ const getMonthName = (date: Date): string => {
 };
 
 // ============================================
-// PATRIMOINE RAPIDE
-// ============================================
-
-const PATRIMOINE = {
-    valeurNette: 9518.62,
-    variationMois: 0.4, // +0.4% ce mois
-};
-
-// Données fictives pour la répartition du patrimoine par type d'actif
-// Utilise les nouvelles couleurs standardisées --color-asset-*
-const REPARTITION_PATRIMOINE = [
-    { name: "Liquidités", value: 2056.82, className: "text-asset-liquidity" },
-    { name: "Épargne", value: 4500, className: "text-asset-savings" },
-    { name: "Assurance vie", value: 1850, className: "text-asset-stocks" },
-    { name: "Actions", value: 890, className: "text-asset-real-estate" },
-    { name: "Crypto", value: 221.8, className: "text-asset-crypto" },
-];
-
-// ============================================
 // COMPOSANT PRINCIPAL
 // ============================================
 
-export default function AccueilPage() {
-    const today = new Date(2026, 0, 7); // Simule le 7 janvier 2026
+export default function DashboardClient({ initialData }: DashboardClientProps) {
+    const today = new Date();
     const currentWeekNum = getWeekNumber(today);
     const [selectedWeek, setSelectedWeek] = useState(currentWeekNum);
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
@@ -175,8 +88,46 @@ export default function AccueilPage() {
     const [expenseAmount, setExpenseAmount] = useState("");
     const [expenseCategory, setExpenseCategory] = useState<string | null>(null);
     const [expenseDescription, setExpenseDescription] = useState("");
-    const [expenseCompte, setExpenseCompte] = useState("courant");
+    const [expenseCompte, setExpenseCompte] = useState(initialData.comptes[0]?.id ?? "");
     const [expenseDate, setExpenseDate] = useState("today");
+
+    // Données du profil
+    const profile = initialData.profile;
+    const revenusMensuels = profile?.revenus_mensuels ?? 0;
+    const objectifEpargneMensuel = profile?.objectif_epargne ?? 0;
+    const prenom = profile?.prenom ?? "Utilisateur";
+
+    // Catégories (enveloppes)
+    const categories = initialData.categories;
+    const budgetVariableMensuel = categories.reduce((acc, cat) => acc + cat.budgetMensuel, 0);
+
+    // Charges fixes avec dates reconverties
+    const chargesFixes = useMemo(() => {
+        return initialData.chargesFixes.map((cf) => ({
+            ...cf,
+            dateProchain: new Date(cf.dateProchain),
+        }));
+    }, [initialData.chargesFixes]);
+
+    const totalChargesFixes = chargesFixes.reduce((acc, c) => acc + c.montant, 0);
+
+    // Transactions avec dates reconverties
+    const transactions = useMemo(() => {
+        return initialData.transactions.map((t) => ({
+            ...t,
+            date: new Date(t.date),
+        }));
+    }, [initialData.transactions]);
+
+    // Comptes pour la modale
+    const comptes = initialData.comptes.map((c) => ({
+        id: c.id,
+        label: c.nom,
+        solde: c.solde ?? 0,
+    }));
+
+    // Patrimoine
+    const patrimoine = initialData.patrimoine;
 
     const weekDates = getWeekDates(today.getFullYear(), selectedWeek);
     const daysRemaining = getDaysRemainingInMonth(today);
@@ -185,26 +136,28 @@ export default function AccueilPage() {
 
     // Calcul des dépenses de la semaine sélectionnée
     const weekTransactions = useMemo(() => {
-        return TRANSACTIONS_JANVIER.filter((t) => {
+        return transactions.filter((t) => {
             if (t.type !== "variable") return false;
             const transDate = t.date;
             return transDate >= weekDates.start && transDate <= weekDates.end;
         });
-    }, [selectedWeek, weekDates.start, weekDates.end]);
+    }, [transactions, weekDates.start, weekDates.end]);
 
     // Budget hebdomadaire
-    const budgetHebdo = BUDGET_VARIABLE_MENSUEL / 4;
+    const budgetHebdo = budgetVariableMensuel / 4;
     const depenseSemaine = weekTransactions.reduce((acc, t) => acc + Math.abs(t.montant), 0);
     const resteHebdo = budgetHebdo - depenseSemaine;
-    const pourcentageHebdo = (depenseSemaine / budgetHebdo) * 100;
+    const pourcentageHebdo = budgetHebdo > 0 ? (depenseSemaine / budgetHebdo) * 100 : 0;
 
     // Calcul par catégorie (enveloppe)
     const enveloppes = useMemo(() => {
-        return CATEGORIES_VARIABLES.map((cat) => {
+        return categories.map((cat) => {
             const budgetHebdoCat = cat.budgetMensuel / 4;
-            const depenseCat = weekTransactions.filter((t) => t.categorieId === cat.id).reduce((acc, t) => acc + Math.abs(t.montant), 0);
+            const depenseCat = weekTransactions
+                .filter((t) => t.categorieId === cat.id)
+                .reduce((acc, t) => acc + Math.abs(t.montant), 0);
             const resteCat = budgetHebdoCat - depenseCat;
-            const pourcentageCat = (depenseCat / budgetHebdoCat) * 100;
+            const pourcentageCat = budgetHebdoCat > 0 ? (depenseCat / budgetHebdoCat) * 100 : 0;
             return {
                 ...cat,
                 budgetHebdo: budgetHebdoCat,
@@ -213,17 +166,23 @@ export default function AccueilPage() {
                 pourcentage: pourcentageCat,
             };
         });
-    }, [weekTransactions]);
+    }, [categories, weekTransactions]);
 
     // Calcul du résumé du mois
-    const depensesMoisVariables = TRANSACTIONS_JANVIER.filter((t) => t.type === "variable").reduce((acc, t) => acc + Math.abs(t.montant), 0);
+    const depensesMoisVariables = transactions
+        .filter((t) => t.type === "variable")
+        .reduce((acc, t) => acc + Math.abs(t.montant), 0);
 
-    const chargesFixesMois = TRANSACTIONS_JANVIER.filter((t) => t.type === "fixe").reduce((acc, t) => acc + Math.abs(t.montant), 0);
+    const chargesFixesMois = transactions
+        .filter((t) => t.type === "fixe")
+        .reduce((acc, t) => acc + Math.abs(t.montant), 0);
 
-    const revenusMois = TRANSACTIONS_JANVIER.filter((t) => t.type === "revenu").reduce((acc, t) => acc + t.montant, 0);
+    const revenusMois = transactions
+        .filter((t) => t.type === "revenu")
+        .reduce((acc, t) => acc + t.montant, 0);
 
     // Prochains prélèvements (tri par date)
-    const prochainsPrelevements = [...CHARGES_FIXES]
+    const prochainsPrelevements = [...chargesFixes]
         .filter((c) => c.dateProchain >= today)
         .sort((a, b) => a.dateProchain.getTime() - b.dateProchain.getTime())
         .slice(0, 4);
@@ -237,22 +196,53 @@ export default function AccueilPage() {
         setExpenseAmount("");
         setExpenseCategory(null);
         setExpenseDescription("");
-        setExpenseCompte("courant");
+        setExpenseCompte(comptes[0]?.id ?? "");
         setExpenseDate("today");
     };
 
-    const handleAddExpense = () => {
-        // Ici on ajouterait la logique pour sauvegarder la dépense
-        console.log({
-            montant: parseFloat(expenseAmount),
-            categorie: expenseCategory,
-            description: expenseDescription,
-            compte: expenseCompte,
-            date: expenseDate,
+    const handleAddExpense = async () => {
+        if (!expenseAmount || !expenseCategory || !profile) return;
+
+        const supabase = createClient();
+
+        // Déterminer la date
+        let transactionDate = new Date();
+        if (expenseDate === "yesterday") {
+            transactionDate.setDate(transactionDate.getDate() - 1);
+        }
+
+        const { error } = await supabase.from("transactions").insert({
+            user_id: profile.id,
+            compte_id: expenseCompte || null,
+            categorie_id: expenseCategory,
+            type: "depense",
+            montant: -Math.abs(parseFloat(expenseAmount)),
+            description: expenseDescription || null,
+            date_transaction: transactionDate.toISOString(),
         });
+
+        if (error) {
+            console.error("Erreur lors de l'ajout:", error);
+            return;
+        }
+
         setIsExpenseModalOpen(false);
         resetModal();
+        // Recharger la page pour afficher la nouvelle transaction
+        window.location.reload();
     };
+
+    // Message si pas de données
+    if (!profile) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-primary">
+                <div className="text-center">
+                    <h1 className="text-xl font-semibold text-primary">Chargement...</h1>
+                    <p className="text-tertiary">Récupération de vos données...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-primary">
@@ -353,7 +343,7 @@ export default function AccueilPage() {
                                                 <div className="flex flex-col gap-2">
                                                     <label className="text-sm font-medium text-primary">Catégorie *</label>
                                                     <div className="flex flex-wrap gap-2">
-                                                        {CATEGORIES_VARIABLES.map((cat) => (
+                                                        {categories.map((cat) => (
                                                             <button
                                                                 key={cat.id}
                                                                 type="button"
@@ -387,7 +377,7 @@ export default function AccueilPage() {
                                                         label="Compte"
                                                         selectedKey={expenseCompte}
                                                         onSelectionChange={(key) => setExpenseCompte(key as string)}
-                                                        items={COMPTES}
+                                                        items={comptes}
                                                         size="md"
                                                     >
                                                         {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
@@ -438,27 +428,38 @@ export default function AccueilPage() {
                 {/* ============================================ */}
                 <div className="mb-8">
                     <h2 className="mb-4 text-lg font-semibold text-primary">Enveloppes</h2>
-                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
-                        {enveloppes.map((env) => (
-                            <button
-                                key={env.id}
-                                className="flex flex-col gap-3 rounded-xl bg-primary p-4 text-left shadow-xs ring-1 ring-secondary transition-all ring-inset hover:shadow-md hover:ring-brand-200"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xl">{env.icone}</span>
-                                    <span className="text-sm font-medium text-primary">{env.nom}</span>
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <p className="text-lg font-semibold text-primary">{formatCurrencySimple(env.depense)}</p>
-                                    <p className="text-xs text-tertiary">sur {formatCurrencySimple(env.budgetHebdo)}</p>
-                                </div>
-                                <ProgressBar value={Math.min(env.pourcentage, 100)} className="h-1.5" progressClassName={getProgressColor(env.pourcentage)} />
-                                <p className={cx("text-xs font-medium", env.reste >= 0 ? "text-finance-gain" : "text-finance-loss")}>
-                                    {env.reste >= 0 ? `${formatCurrencySimple(env.reste)} restant` : `${formatCurrencySimple(Math.abs(env.reste))} dépassé`}
-                                </p>
-                            </button>
-                        ))}
-                    </div>
+                    {enveloppes.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
+                            {enveloppes.map((env) => (
+                                <button
+                                    key={env.id}
+                                    className="flex flex-col gap-3 rounded-xl bg-primary p-4 text-left shadow-xs ring-1 ring-secondary transition-all ring-inset hover:shadow-md hover:ring-brand-200"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xl">{env.icone}</span>
+                                        <span className="text-sm font-medium text-primary">{env.nom}</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-lg font-semibold text-primary">{formatCurrencySimple(env.depense)}</p>
+                                        <p className="text-xs text-tertiary">sur {formatCurrencySimple(env.budgetHebdo)}</p>
+                                    </div>
+                                    <ProgressBar value={Math.min(env.pourcentage, 100)} className="h-1.5" progressClassName={getProgressColor(env.pourcentage)} />
+                                    <p className={cx("text-xs font-medium", env.reste >= 0 ? "text-finance-gain" : "text-finance-loss")}>
+                                        {env.reste >= 0 ? `${formatCurrencySimple(env.reste)} restant` : `${formatCurrencySimple(Math.abs(env.reste))} dépassé`}
+                                    </p>
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="rounded-xl bg-secondary p-8 text-center">
+                            <p className="text-tertiary">Aucune catégorie de dépense configurée.</p>
+                            <Link href="/settings">
+                                <Button size="sm" color="link-color" className="mt-2">
+                                    Configurer les catégories
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
 
                 {/* ============================================ */}
@@ -482,15 +483,15 @@ export default function AccueilPage() {
                         <div className="flex flex-col gap-1">
                             <span className="text-sm text-tertiary">Charges fixes</span>
                             <span className="text-xl font-semibold text-primary">{formatCurrencySimple(chargesFixesMois)}</span>
-                            <span className="text-xs text-tertiary">/{formatCurrencySimple(TOTAL_CHARGES_FIXES)}</span>
+                            <span className="text-xs text-tertiary">/{formatCurrencySimple(totalChargesFixes)}</span>
                         </div>
                         <div className="flex flex-col gap-1">
                             <span className="text-sm text-tertiary">Variable prévu</span>
-                            <span className="text-xl font-semibold text-primary">{formatCurrencySimple(BUDGET_VARIABLE_MENSUEL)}</span>
+                            <span className="text-xl font-semibold text-primary">{formatCurrencySimple(budgetVariableMensuel)}</span>
                         </div>
                         <div className="flex flex-col gap-1">
                             <span className="text-sm text-tertiary">Épargne</span>
-                            <span className="text-xl font-semibold text-utility-blue-500">{formatCurrencySimple(USER_PROFILE.objectifEpargneMensuel)}</span>
+                            <span className="text-xl font-semibold text-utility-blue-500">{formatCurrencySimple(objectifEpargneMensuel)}</span>
                         </div>
                     </div>
                 </div>
@@ -504,11 +505,11 @@ export default function AccueilPage() {
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-tertiary">Valeur nette</span>
                             <BadgeWithIcon type="pill-color" color="success" iconLeading={ArrowUp} size="sm" className="shrink-0 whitespace-nowrap">
-                                +{PATRIMOINE.variationMois}% ce mois
+                                {patrimoine.variationMois >= 0 ? "+" : ""}{patrimoine.variationMois.toFixed(1)}% ce mois
                             </BadgeWithIcon>
                         </div>
 
-                        {/* Donut Chart avec valeur au centre - Taille md */}
+                        {/* Donut Chart avec valeur au centre */}
                         <div className="relative mx-auto flex flex-1 items-center justify-center">
                             <ResponsiveContainer width={240} height={240}>
                                 <RechartsPieChart margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
@@ -518,7 +519,7 @@ export default function AccueilPage() {
                                         startAngle={-270}
                                         endAngle={-630}
                                         stroke="none"
-                                        data={REPARTITION_PATRIMOINE}
+                                        data={patrimoine.repartition}
                                         dataKey="value"
                                         nameKey="name"
                                         fill="currentColor"
@@ -530,14 +531,14 @@ export default function AccueilPage() {
                             </ResponsiveContainer>
                             {/* Valeur au centre */}
                             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                                <p className="text-xl font-semibold text-primary">{formatCurrencySimple(PATRIMOINE.valeurNette)}</p>
+                                <p className="text-xl font-semibold text-primary">{formatCurrencySimple(patrimoine.valeurNette)}</p>
                                 <p className="text-xs text-tertiary">Total</p>
                             </div>
                         </div>
 
                         {/* Légende compacte */}
                         <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
-                            {REPARTITION_PATRIMOINE.map((item) => (
+                            {patrimoine.repartition.map((item) => (
                                 <div key={item.name} className="flex items-center gap-1.5">
                                     <span className={cx("h-2 w-2 rounded-full", item.className, "bg-current")} />
                                     <span className="text-xs text-tertiary">{item.name}</span>
@@ -558,20 +559,26 @@ export default function AccueilPage() {
                             <p className="text-sm font-semibold text-primary">Prochains prélèvements</p>
                             <FeaturedIcon size="sm" color="gray" theme="modern" icon={Calendar} />
                         </div>
-                        <div className="flex flex-col gap-2">
-                            {prochainsPrelevements.map((charge) => (
-                                <div key={charge.id} className="flex items-center justify-between rounded-lg bg-secondary p-3">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-lg">{charge.icone}</span>
-                                        <div className="flex flex-col">
-                                            <p className="text-sm font-medium text-primary">{charge.nom}</p>
-                                            <p className="text-xs text-tertiary">{formatDateRelative(charge.dateProchain)}</p>
+                        {prochainsPrelevements.length > 0 ? (
+                            <div className="flex flex-col gap-2">
+                                {prochainsPrelevements.map((charge) => (
+                                    <div key={charge.id} className="flex items-center justify-between rounded-lg bg-secondary p-3">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-lg">{charge.icone}</span>
+                                            <div className="flex flex-col">
+                                                <p className="text-sm font-medium text-primary">{charge.nom}</p>
+                                                <p className="text-xs text-tertiary">{formatDateRelative(charge.dateProchain)}</p>
+                                            </div>
                                         </div>
+                                        <p className="text-sm font-semibold text-primary">{formatCurrencySimple(charge.montant)}</p>
                                     </div>
-                                    <p className="text-sm font-semibold text-primary">{formatCurrencySimple(charge.montant)}</p>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-1 items-center justify-center rounded-lg bg-secondary p-6">
+                                <p className="text-sm text-tertiary">Aucun prélèvement à venir</p>
+                            </div>
+                        )}
                         <Link href="/budget">
                             <Button size="sm" color="link-color" iconTrailing={ChevronRight} className="w-full justify-center">
                                 Voir tout
