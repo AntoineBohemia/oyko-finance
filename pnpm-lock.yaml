@@ -20,6 +20,9 @@ importers:
       '@react-stately/utils':
         specifier: ^3.10.8
         version: 3.11.0(react@19.2.3)
+      '@react-types/overlays':
+        specifier: ^3.9.2
+        version: 3.9.2(react@19.2.3)
       '@supabase/ssr':
         specifier: ^0.8.0
         version: 0.8.0(@supabase/supabase-js@2.90.0)
