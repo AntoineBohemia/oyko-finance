@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AlertCircle, Wallet03 } from "@untitledui/icons";
@@ -11,7 +11,7 @@ import { Form } from "@/components/base/form/form";
 import { Input } from "@/components/base/input/input";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get("redirectTo") || "/dashboard";
@@ -212,5 +212,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </section>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Chargement...</div>}>
+            <LoginForm />
+        </Suspense>
     );
 }
