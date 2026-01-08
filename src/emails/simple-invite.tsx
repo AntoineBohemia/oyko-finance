@@ -1,11 +1,11 @@
 import { Container, Html, Preview } from "@react-email/components";
-import { Body } from "./_components/body";
-import { Button } from "./_components/button";
-import { LeftAligned as Footer } from "./_components/footer";
-import { Head } from "./_components/head";
-import { LeftAligned as Header } from "./_components/header";
-import { Tailwind } from "./_components/tailwind";
-import { Text } from "./_components/text";
+import { Body } from "@/components/emails/_components/body";
+import { Button } from "@/components/emails/_components/button";
+import { LeftAligned as Footer } from "@/components/emails/_components/footer";
+import { Head } from "@/components/emails/_components/head";
+import { LeftAligned as Header } from "@/components/emails/_components/header";
+import { Tailwind } from "@/components/emails/_components/tailwind";
+import { Text } from "@/components/emails/_components/text";
 
 export const SimpleInvite = ({ theme }: { theme?: "light" | "dark" }) => {
     return (
