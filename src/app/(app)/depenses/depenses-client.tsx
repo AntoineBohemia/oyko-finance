@@ -192,6 +192,24 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
     const [compteFilter, setCompteFilter] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
 
+    // État édition transaction
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState<TransactionDepense | null>(null);
+    const [editCategorieId, setEditCategorieId] = useState<string | null>(null);
+
+    // État création catégorie
+    const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [newCategoryIcon, setNewCategoryIcon] = useState("📦");
+    const [newCategoryBudget, setNewCategoryBudget] = useState("");
+
+    // État sélection multiple
+    const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+    // Liste de catégories locales (pour ajouts dynamiques)
+    const [localCategories, setLocalCategories] = useState<CategorieDepense[]>(categoriesDepense);
+
     // Filtrage des transactions (local pour catégorie, compte, recherche)
     const filteredTransactions = useMemo(() => {
         let filtered = [...transactions];
@@ -339,6 +357,132 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
             router.refresh();
         } catch (error) {
             console.error("Erreur suppression:", error);
+        }
+    };
+
+    // Ouvrir modale d'édition
+    const handleOpenEdit = (transaction: TransactionDepense) => {
+        setEditingTransaction(transaction);
+        setEditCategorieId(transaction.categorieId);
+        setIsEditModalOpen(true);
+    };
+
+    // Sauvegarder modification de catégorie
+    const handleSaveEdit = async () => {
+        if (!editingTransaction) return;
+
+        const supabase = createClient();
+        setIsSubmitting(true);
+
+        try {
+            const { error } = await supabase
+                .from("transactions")
+                .update({ categorie_id: editCategorieId })
+                .eq("id", editingTransaction.id);
+
+            if (error) throw error;
+
+            setIsEditModalOpen(false);
+            setEditingTransaction(null);
+            router.refresh();
+        } catch (error) {
+            console.error("Erreur modification:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Créer nouvelle catégorie
+    const handleCreateCategory = async () => {
+        if (!newCategoryName.trim() || !profile) return;
+
+        const supabase = createClient();
+        setIsSubmitting(true);
+
+        try {
+            const { data, error } = await supabase
+                .from("categories")
+                .insert({
+                    user_id: profile.id,
+                    nom: newCategoryName.trim(),
+                    icone: newCategoryIcon,
+                    couleur: "#7F56D9",
+                    budget_mensuel: parseFloat(newCategoryBudget) || 0,
+                    type: "depense",
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // Ajouter à la liste locale
+            const newCat: CategorieDepense = {
+                id: data.id,
+                nom: data.nom,
+                icone: data.icone ?? "📦",
+                couleur: data.couleur ?? "#7F56D9",
+            };
+            setLocalCategories((prev) => [...prev, newCat]);
+
+            // Sélectionner la nouvelle catégorie
+            setEditCategorieId(data.id);
+
+            // Reset formulaire
+            setIsCreatingCategory(false);
+            setNewCategoryName("");
+            setNewCategoryIcon("📦");
+            setNewCategoryBudget("");
+        } catch (error) {
+            console.error("Erreur création catégorie:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Toggle sélection transaction
+    const toggleSelectTransaction = (id: string) => {
+        setSelectedTransactions((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
+
+    // Tout sélectionner / désélectionner
+    const toggleSelectAll = () => {
+        if (selectedTransactions.size === filteredTransactions.length) {
+            setSelectedTransactions(new Set());
+        } else {
+            setSelectedTransactions(new Set(filteredTransactions.map((t) => t.id)));
+        }
+    };
+
+    // Suppression en masse
+    const handleDeleteSelected = async () => {
+        if (selectedTransactions.size === 0) return;
+
+        const supabase = createClient();
+        setIsSubmitting(true);
+
+        try {
+            const { error } = await supabase
+                .from("transactions")
+                .delete()
+                .in("id", Array.from(selectedTransactions));
+
+            if (error) throw error;
+
+            setSelectedTransactions(new Set());
+            setIsDeleteConfirmOpen(false);
+            router.refresh();
+        } catch (error) {
+            console.error("Erreur suppression en masse:", error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -694,6 +838,31 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                 </div>
                             )}
 
+                            {/* Barre d'actions sélection */}
+                            {selectedTransactions.size > 0 && (
+                                <div className="flex items-center justify-between rounded-lg bg-brand-50 p-3">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedTransactions.size === filteredTransactions.length}
+                                            onChange={toggleSelectAll}
+                                            className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                        />
+                                        <span className="text-sm font-medium text-brand-700">
+                                            {selectedTransactions.size} sélectionnée{selectedTransactions.size > 1 ? "s" : ""}
+                                        </span>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        color="primary-destructive"
+                                        iconLeading={Trash01}
+                                        onClick={() => setIsDeleteConfirmOpen(true)}
+                                    >
+                                        Supprimer
+                                    </Button>
+                                </div>
+                            )}
+
                             {/* Liste groupée par jour */}
                             <div className="flex flex-col gap-6">
                                 {isPending ? (
@@ -715,16 +884,25 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                                 {group.transactions.map((t) => {
                                                     const isRevenu = t.type === "revenu";
                                                     const isFixe = t.type === "fixe";
+                                                    const isSelected = selectedTransactions.has(t.id);
 
                                                     return (
                                                         <div
                                                             key={t.id}
                                                             className={cx(
                                                                 "group flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-secondary/50",
-                                                                isFixe && "bg-secondary/30"
+                                                                isFixe && "bg-secondary/30",
+                                                                isSelected && "bg-brand-50"
                                                             )}
                                                         >
                                                             <div className="flex min-w-0 flex-1 items-center gap-3">
+                                                                {/* Checkbox de sélection */}
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isSelected}
+                                                                    onChange={() => toggleSelectTransaction(t.id)}
+                                                                    className="h-4 w-4 shrink-0 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                                                />
                                                                 <span className="text-xl">{t.categorieIcone || "📦"}</span>
                                                                 <div className="min-w-0 flex-1">
                                                                     <p className="truncate text-sm font-medium text-primary">
@@ -755,6 +933,13 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                                                 </Badge>
 
                                                                 <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                                                    <ButtonUtility
+                                                                        size="xs"
+                                                                        color="tertiary"
+                                                                        icon={Edit01}
+                                                                        onClick={() => handleOpenEdit(t)}
+                                                                        tooltip="Modifier catégorie"
+                                                                    />
                                                                     <ButtonUtility
                                                                         size="xs"
                                                                         color="tertiary"
@@ -862,6 +1047,213 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                     </div>
                 </div>
             </div>
+
+            {/* ============================================ */}
+            {/* MODALE ÉDITION CATÉGORIE */}
+            {/* ============================================ */}
+            <DialogTrigger isOpen={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <span className="hidden" />
+                <ModalOverlay isDismissable>
+                    <Modal className="max-w-md">
+                        <Dialog>
+                            <div className="w-full rounded-xl bg-primary shadow-xl">
+                                {/* Header */}
+                                <div className="flex items-center justify-between border-b border-secondary px-6 py-4">
+                                    <h3 className="text-lg font-semibold text-primary">Modifier la catégorie</h3>
+                                    <ButtonUtility
+                                        size="sm"
+                                        color="tertiary"
+                                        icon={X}
+                                        onClick={() => {
+                                            setIsEditModalOpen(false);
+                                            setEditingTransaction(null);
+                                            setIsCreatingCategory(false);
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Body */}
+                                <div className="flex flex-col gap-5 px-6 py-5">
+                                    {/* Transaction info */}
+                                    {editingTransaction && (
+                                        <div className="rounded-lg bg-secondary p-3">
+                                            <p className="text-sm font-medium text-primary">
+                                                {editingTransaction.description || "Transaction"}
+                                            </p>
+                                            <p className="text-xs text-tertiary">
+                                                {formatCurrencySimple(Math.abs(editingTransaction.montant))} · {editingTransaction.date.toLocaleDateString("fr-FR")}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {!isCreatingCategory ? (
+                                        <>
+                                            {/* Sélection catégorie */}
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-medium text-primary">Catégorie</label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {localCategories.map((cat) => (
+                                                        <button
+                                                            key={cat.id}
+                                                            type="button"
+                                                            onClick={() => setEditCategorieId(cat.id)}
+                                                            className={cx(
+                                                                "flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-all",
+                                                                editCategorieId === cat.id
+                                                                    ? "bg-brand-50 text-brand-700 ring-2 ring-brand-500"
+                                                                    : "bg-secondary text-tertiary hover:text-primary"
+                                                            )}
+                                                        >
+                                                            <span>{cat.icone}</span>
+                                                            <span>{cat.nom}</span>
+                                                        </button>
+                                                    ))}
+                                                    {/* Bouton nouvelle catégorie */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsCreatingCategory(true)}
+                                                        className="flex items-center gap-1 rounded-md border-2 border-dashed border-secondary px-3 py-2 text-sm font-medium text-tertiary transition-all hover:border-brand-300 hover:text-brand-600"
+                                                    >
+                                                        <Plus className="h-4 w-4" />
+                                                        <span>Nouvelle</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {/* Formulaire nouvelle catégorie */}
+                                            <div className="flex flex-col gap-4">
+                                                <p className="text-sm font-medium text-primary">Nouvelle catégorie</p>
+
+                                                {/* Nom */}
+                                                <Input
+                                                    label="Nom"
+                                                    placeholder="Ex: Transport"
+                                                    value={newCategoryName}
+                                                    onChange={(v) => setNewCategoryName(v)}
+                                                    size="md"
+                                                    autoFocus
+                                                />
+
+                                                {/* Icône (emoji picker simplifié) */}
+                                                <div className="flex flex-col gap-2">
+                                                    <label className="text-sm font-medium text-primary">Icône</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {["🛒", "🍔", "🚗", "🎮", "👕", "💊", "📱", "🏠", "✈️", "🎁", "💳", "📦"].map((emoji) => (
+                                                            <button
+                                                                key={emoji}
+                                                                type="button"
+                                                                onClick={() => setNewCategoryIcon(emoji)}
+                                                                className={cx(
+                                                                    "flex h-10 w-10 items-center justify-center rounded-lg text-xl transition-all",
+                                                                    newCategoryIcon === emoji
+                                                                        ? "bg-brand-100 ring-2 ring-brand-500"
+                                                                        : "bg-secondary hover:bg-secondary_hover"
+                                                                )}
+                                                            >
+                                                                {emoji}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Budget mensuel */}
+                                                <Input
+                                                    label="Budget mensuel (optionnel)"
+                                                    placeholder="Ex: 200"
+                                                    value={newCategoryBudget}
+                                                    onChange={(v) => setNewCategoryBudget(v)}
+                                                    type="number"
+                                                    size="md"
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Footer */}
+                                <div className="flex justify-end gap-3 border-t border-secondary px-6 py-4">
+                                    {isCreatingCategory ? (
+                                        <>
+                                            <Button size="md" color="secondary" onClick={() => setIsCreatingCategory(false)}>
+                                                Retour
+                                            </Button>
+                                            <Button
+                                                size="md"
+                                                onClick={handleCreateCategory}
+                                                isDisabled={!newCategoryName.trim() || isSubmitting}
+                                            >
+                                                {isSubmitting ? "Création..." : "Créer catégorie"}
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Button size="md" color="secondary" onClick={() => setIsEditModalOpen(false)}>
+                                                Annuler
+                                            </Button>
+                                            <Button size="md" onClick={handleSaveEdit} isDisabled={isSubmitting}>
+                                                {isSubmitting ? "Enregistrement..." : "Enregistrer"}
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </Dialog>
+                    </Modal>
+                </ModalOverlay>
+            </DialogTrigger>
+
+            {/* ============================================ */}
+            {/* MODALE CONFIRMATION SUPPRESSION */}
+            {/* ============================================ */}
+            <DialogTrigger isOpen={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+                <span className="hidden" />
+                <ModalOverlay isDismissable>
+                    <Modal className="max-w-sm">
+                        <Dialog>
+                            <div className="w-full rounded-xl bg-primary shadow-xl">
+                                {/* Header */}
+                                <div className="flex items-center justify-between border-b border-secondary px-6 py-4">
+                                    <h3 className="text-lg font-semibold text-primary">Confirmer la suppression</h3>
+                                    <ButtonUtility
+                                        size="sm"
+                                        color="tertiary"
+                                        icon={X}
+                                        onClick={() => setIsDeleteConfirmOpen(false)}
+                                    />
+                                </div>
+
+                                {/* Body */}
+                                <div className="px-6 py-5">
+                                    <p className="text-sm text-tertiary">
+                                        Êtes-vous sûr de vouloir supprimer{" "}
+                                        <span className="font-semibold text-primary">
+                                            {selectedTransactions.size} transaction{selectedTransactions.size > 1 ? "s" : ""}
+                                        </span>
+                                        {" "}? Cette action est irréversible.
+                                    </p>
+                                </div>
+
+                                {/* Footer */}
+                                <div className="flex justify-end gap-3 border-t border-secondary px-6 py-4">
+                                    <Button size="md" color="secondary" onClick={() => setIsDeleteConfirmOpen(false)}>
+                                        Annuler
+                                    </Button>
+                                    <Button
+                                        size="md"
+                                        color="primary-destructive"
+                                        onClick={handleDeleteSelected}
+                                        isDisabled={isSubmitting}
+                                    >
+                                        {isSubmitting ? "Suppression..." : "Supprimer"}
+                                    </Button>
+                                </div>
+                            </div>
+                        </Dialog>
+                    </Modal>
+                </ModalOverlay>
+            </DialogTrigger>
         </div>
     );
 }

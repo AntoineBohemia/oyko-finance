@@ -128,8 +128,8 @@ const MobileFooter = () => {
                     <span className="text-sm text-tertiary">Thème</span>
                     <ThemeToggle />
                 </div>
-                <Button size="lg">Commencer</Button>
-                <Button color="secondary" size="lg">
+                <Button size="lg" href="/signup">Commencer</Button>
+                <Button color="secondary" size="lg" href="/login">
                     Connexion
                 </Button>
             </div>
@@ -191,8 +191,10 @@ export const Header = ({ items = headerNavItems, isFullWidth, className }: Heade
                     }}
                 >
                     <div className="flex flex-1 items-center gap-5">
-                        <UntitledLogo className="h-8 md:max-lg:hidden" />
-                        <UntitledLogoMinimal className="hidden h-8 md:inline-block lg:hidden" />
+                        <a href="/" className="outline-focus-ring rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2">
+                            <UntitledLogo className="h-8 md:max-lg:hidden" />
+                            <UntitledLogoMinimal className="hidden h-8 md:inline-block lg:hidden" />
+                        </a>
 
                         {/* Desktop navigation */}
                         <nav className="max-md:hidden">
@@ -248,10 +250,10 @@ export const Header = ({ items = headerNavItems, isFullWidth, className }: Heade
 
                     <div className="hidden items-center gap-3 md:flex">
                         <ThemeToggle />
-                        <Button color="secondary" size="md">
+                        <Button color="secondary" size="md" href="/login">
                             Connexion
                         </Button>
-                        <Button color="primary" size="md">
+                        <Button color="primary" size="md" href="/signup">
                             Commencer
                         </Button>
                     </div>
