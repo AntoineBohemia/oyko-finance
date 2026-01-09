@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ShieldTick, Lock01, CheckVerified01 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
-import { Facebook, GitHub, LinkedIn, X } from "@/components/foundations/social-icons";
 import { cx } from "@/utils/cx";
 
 // =============================================================================
@@ -12,18 +11,7 @@ import { cx } from "@/utils/cx";
 
 const footerLinks = [
     { label: "Fonctionnalités", href: "#features" },
-    { label: "Tarifs", href: "/tarifs" },
-    { label: "À propos", href: "/a-propos" },
-    { label: "Blog", href: "/blog" },
     { label: "Contact", href: "mailto:contact@oyko.fr" },
-    { label: "Confidentialité", href: "/confidentialite" },
-];
-
-const footerSocials = [
-    { label: "X (Twitter)", icon: X, href: "https://x.com/oyko" },
-    { label: "LinkedIn", icon: LinkedIn, href: "https://www.linkedin.com/company/oyko" },
-    { label: "Facebook", icon: Facebook, href: "https://www.facebook.com/oyko" },
-    { label: "GitHub", icon: GitHub, href: "https://github.com/oyko" },
 ];
 
 const trustBadges = [
@@ -121,37 +109,16 @@ export const Footer = () => {
                                 </Button>
                             </form>
                             <p className="mt-3 text-xs text-quaternary">
-                                En vous inscrivant, vous acceptez notre{" "}
-                                <Link href="/confidentialite" className="underline hover:text-tertiary">
-                                    politique de confidentialité
-                                </Link>
-                                .
+                                En vous inscrivant, vous acceptez notre politique de confidentialité.
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {/* Bottom bar */}
-                <div className="flex flex-col gap-6 border-t border-secondary py-8 md:flex-row md:items-center md:justify-between">
+                <div className="border-t border-secondary py-8">
                     {/* Trust badges */}
                     <TrustBadges />
-
-                    {/* Social links */}
-                    <ul className="flex gap-5">
-                        {footerSocials.map(({ label, icon: Icon, href }) => (
-                            <li key={label}>
-                                <a
-                                    href={href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label={label}
-                                    className="flex text-fg-quaternary transition-colors hover:text-fg-tertiary"
-                                >
-                                    <Icon size={20} aria-hidden="true" />
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
                 </div>
 
                 {/* Copyright */}

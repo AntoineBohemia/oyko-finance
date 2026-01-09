@@ -11,7 +11,6 @@ import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
 import { cx } from "@/utils/cx";
-import { DropdownMenuSimpleWithFooter } from "./dropdown-menu-simple-with-footer";
 
 // =============================================================================
 // CONSTANTS
@@ -62,21 +61,7 @@ type HeaderNavItem = {
 };
 
 const headerNavItems: HeaderNavItem[] = [
-    { label: "Fonctionnalités", href: "/fonctionnalites", menu: <DropdownMenuSimpleWithFooter /> },
-    { label: "Tarifs", href: "/tarifs" },
-    { label: "Blog", href: "/blog" },
-    { label: "À propos", href: "/a-propos" },
-];
-
-const footerNavItems = [
-    { label: "À propos", href: "/a-propos" },
-    { label: "Blog", href: "/blog" },
-    { label: "Carrières", href: "/carrieres" },
-    { label: "Mentions légales", href: "/mentions-legales" },
-    { label: "Support", href: "/support" },
-    { label: "Contact", href: "/contact" },
-    { label: "Confidentialité", href: "/confidentialite" },
-    { label: "CGU", href: "/cgu" },
+    { label: "Fonctionnalités", href: "#features" },
 ];
 
 const MobileNavItem = (props: { className?: string; label: string; href?: string; children?: ReactNode }) => {
@@ -111,23 +96,12 @@ const MobileNavItem = (props: { className?: string; label: string; href?: string
 
 const MobileFooter = () => {
     return (
-        <div className="flex flex-col gap-8 border-t border-secondary px-4 py-6">
-            <div>
-                <ul className="grid grid-flow-col grid-cols-2 grid-rows-4 gap-x-6 gap-y-3">
-                    {footerNavItems.map((navItem) => (
-                        <li key={navItem.label}>
-                            <Button color="link-gray" size="lg" href={navItem.href}>
-                                {navItem.label}
-                            </Button>
-                        </li>
-                    ))}
-                </ul>
+        <div className="flex flex-col gap-6 border-t border-secondary px-4 py-6">
+            <div className="flex items-center justify-between">
+                <span className="text-sm text-tertiary">Thème</span>
+                <ThemeToggle />
             </div>
             <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between pb-2">
-                    <span className="text-sm text-tertiary">Thème</span>
-                    <ThemeToggle />
-                </div>
                 <Button size="lg" href="/signup">Commencer</Button>
                 <Button color="secondary" size="lg" href="/login">
                     Connexion
