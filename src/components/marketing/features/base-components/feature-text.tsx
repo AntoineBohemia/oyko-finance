@@ -103,8 +103,8 @@ export const FeatureTextFeaturedIconTopCentered = ({
 
 export const FeatureTextFeaturedIconTopLeft = ({ icon, title, subtitle, footer }: FeatureTextIcon) => (
     <div className="flex max-w-sm flex-col gap-4">
-        <FeaturedIcon icon={icon} size="lg" color="gray" theme="modern" className="hidden md:inline-flex" />
-        <FeaturedIcon icon={icon} size="md" color="gray" theme="modern" className="inline-flex md:hidden" />
+        <FeaturedIcon icon={icon} size="lg" color="gray" theme="light" className="hidden md:inline-flex" />
+        <FeaturedIcon icon={icon} size="md" color="gray" theme="light" className="inline-flex md:hidden" />
 
         <div>
             <h3 className="text-lg font-semibold text-primary">{title}</h3>
