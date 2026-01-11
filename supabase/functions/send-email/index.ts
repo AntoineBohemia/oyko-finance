@@ -226,7 +226,19 @@ const emailTemplates = {
 
 // Génère l'URL de confirmation
 function generateConfirmationUrl(emailData: WebhookPayload["email_data"], supabaseUrl: string): string {
-  const redirectTo = emailData.redirect_to || SITE_URL;
+  // Toujours utiliser SITE_URL pour éviter les redirections vers localhost
+  // On préserve le path de redirect_to s'il existe (ex: /auth/callback)
+  let redirectTo = SITE_URL;
+  if (emailData.redirect_to) {
+    try {
+      const redirectUrl = new URL(emailData.redirect_to);
+      // Remplacer l'origin par SITE_URL mais garder le path
+      redirectTo = `${SITE_URL}${redirectUrl.pathname}${redirectUrl.search}`;
+    } catch {
+      // Si l'URL est invalide, utiliser SITE_URL par défaut
+      redirectTo = SITE_URL;
+    }
+  }
   return `${supabaseUrl}/auth/v1/verify?token=${emailData.token_hash}&type=${emailData.email_action_type}&redirect_to=${encodeURIComponent(redirectTo)}`;
 }
 
