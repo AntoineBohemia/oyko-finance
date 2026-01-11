@@ -8,6 +8,7 @@ import { Button } from "@/components/base/buttons/button";
 import { SocialButton } from "@/components/base/buttons/social-button";
 import { Form } from "@/components/base/form/form";
 import { Input } from "@/components/base/input/input";
+import { PasswordInput } from "@/components/base/input/input-password";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
 import { createClient } from "@/lib/supabase/client";
@@ -91,7 +92,7 @@ export default function SignupPage() {
                         prenom,
                         nom,
                     },
-                    emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+                    emailRedirectTo: `${window.location.origin}/auth/callback?type=signup&next=/onboarding`,
                 },
             });
 
@@ -107,9 +108,8 @@ export default function SignupPage() {
 
             // Vérifier si la confirmation email est requise
             if (data.user && !data.session) {
-                // Email de confirmation envoyé
-                setSuccess("Un email de confirmation a été envoyé à votre adresse. Veuillez vérifier votre boîte de réception.");
-                setIsLoading(false);
+                // Email de confirmation envoyé - rediriger vers la page de vérification
+                router.push(`/verify-email?email=${encodeURIComponent(email)}`);
             } else if (data.session) {
                 // Connexion directe (si confirmation email désactivée)
                 router.push("/onboarding");
@@ -230,11 +230,10 @@ export default function SignupPage() {
                             <Form onSubmit={handleStep2Submit} className="flex flex-col gap-6">
                                 <div className="flex flex-col gap-5">
                                     <div className="flex flex-col gap-3">
-                                        <Input
+                                        <PasswordInput
                                             isRequired
                                             hideRequiredIndicator
                                             label="Mot de passe"
-                                            type="password"
                                             name="password"
                                             placeholder="Créez un mot de passe"
                                             size="md"
@@ -263,11 +262,10 @@ export default function SignupPage() {
                                             ))}
                                         </div>
                                     </div>
-                                    <Input
+                                    <PasswordInput
                                         isRequired
                                         hideRequiredIndicator
                                         label="Confirmer le mot de passe"
-                                        type="password"
                                         name="confirmPassword"
                                         placeholder="Confirmez votre mot de passe"
                                         size="md"
@@ -306,11 +304,11 @@ export default function SignupPage() {
                 </div>
 
                 <footer className="hidden justify-between px-8 pt-4 pb-8 lg:flex">
-                    <p className="text-sm text-tertiary">© Budget App 2025</p>
+                    <p className="text-sm text-tertiary">© Oyko 2025</p>
 
-                    <a href="mailto:help@budgetapp.com" className="flex items-center gap-2 text-sm text-tertiary">
+                    <a href="mailto:contact@oyko.fr" className="flex items-center gap-2 text-sm text-tertiary">
                         <Mail01 className="size-4 text-fg-quaternary" />
-                        help@budgetapp.com
+                        contact@oyko.fr
                     </a>
                 </footer>
             </div>

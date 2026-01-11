@@ -1,9 +1,6 @@
 # Supabase Configuration
 # https://supabase.com/docs/guides/cli/config
 
-[project]
-id = "your-project-ref"
-
 [api]
 enabled = true
 port = 54321
@@ -35,5 +32,5 @@ enabled = false
 # client_id = ""
 # secret = ""
 
-[functions]
+[functions.send-email]
 verify_jwt = false

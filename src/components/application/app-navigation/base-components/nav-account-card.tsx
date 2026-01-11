@@ -10,6 +10,7 @@ import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialog
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
 import { RadioButtonBase } from "@/components/base/radio-buttons/radio-buttons";
+import { useAuth } from "@/hooks/use-auth";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { cx } from "@/utils/cx";
 
@@ -43,6 +44,7 @@ export const NavAccountMenu = ({
 }: AriaDialogProps & { className?: string; accounts?: NavAccountType[]; selectedAccountId?: string }) => {
     const focusManager = useFocusManager();
     const dialogRef = useRef<HTMLDivElement>(null);
+    const { signOut } = useAuth();
 
     const onKeyDown = useCallback(
         (e: KeyboardEvent) => {
@@ -109,7 +111,7 @@ export const NavAccountMenu = ({
             </div>
 
             <div className="pt-1 pb-1.5">
-                <NavAccountCardMenuItem label="Déconnexion" icon={LogOut01} shortcut="⌥⇧Q" />
+                <NavAccountCardMenuItem label="Déconnexion" icon={LogOut01} shortcut="⌥⇧Q" onClick={signOut} />
             </div>
         </AriaDialog>
     );
@@ -134,10 +136,10 @@ const NavAccountCardMenuItem = ({
                     "outline-focus-ring group-focus-visible/item:outline-2 group-focus-visible/item:outline-offset-2",
                 )}
             >
+                Supabase Auth will send a HTTPS POST request to this URL each time the hook is triggered.
                 <div className="flex gap-2 text-sm font-semibold text-secondary group-hover/item:text-secondary_hover">
                     {Icon && <Icon className="size-5 text-fg-quaternary" />} {label}
                 </div>
-
                 {shortcut && (
                     <kbd className="flex rounded px-1 py-px font-body text-xs font-medium text-tertiary ring-1 ring-secondary ring-inset">{shortcut}</kbd>
                 )}

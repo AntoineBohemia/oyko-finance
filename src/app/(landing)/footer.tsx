@@ -14,6 +14,12 @@ const footerLinks = [
     { label: "Contact", href: "mailto:contact@oyko.fr" },
 ];
 
+const legalLinks = [
+    { label: "Mentions légales", href: "/mentions-legales" },
+    { label: "Politique de confidentialité", href: "/politique-confidentialite" },
+    { label: "CGU", href: "/cgu" },
+];
+
 const trustBadges = [
     { icon: ShieldTick, label: "Chiffrement AES-256" },
     { icon: Lock01, label: "Conforme RGPD" },
@@ -109,7 +115,10 @@ export const Footer = () => {
                                 </Button>
                             </form>
                             <p className="mt-3 text-xs text-quaternary">
-                                En vous inscrivant, vous acceptez notre politique de confidentialité.
+                                En vous inscrivant, vous acceptez notre{" "}
+                                <Link href="/politique-confidentialite" className="underline hover:text-tertiary">
+                                    politique de confidentialité
+                                </Link>.
                             </p>
                         </div>
                     </div>
@@ -121,11 +130,27 @@ export const Footer = () => {
                     <TrustBadges />
                 </div>
 
-                {/* Copyright */}
+                {/* Copyright & Legal Links */}
                 <div className="border-t border-secondary py-6">
-                    <p className="text-center text-xs text-quaternary md:text-left">
-                        © {new Date().getFullYear()} Oyko. Tous droits réservés. Fait avec ❤️ en France.
-                    </p>
+                    <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
+                        <p className="text-xs text-quaternary">
+                            © {new Date().getFullYear()} Oyko. Tous droits réservés. Fait avec ❤️ en France.
+                        </p>
+                        <nav>
+                            <ul className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+                                {legalLinks.map((link) => (
+                                    <li key={link.label}>
+                                        <Link
+                                            href={link.href}
+                                            className="text-xs text-quaternary transition-colors hover:text-tertiary"
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
             </div>
         </footer>

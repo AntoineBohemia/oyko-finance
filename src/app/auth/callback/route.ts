@@ -15,6 +15,7 @@ export async function GET(request: Request) {
   // Récupérer le code d'autorisation et la destination
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
+  const type = searchParams.get("type"); // Type de confirmation (signup, recovery, etc.)
 
   if (code) {
     const supabase = await createClient();
@@ -29,7 +30,24 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser();
 
       if (user) {
-        // Vérifier si le profil a été complété
+        // Si c'est une confirmation d'email après inscription
+        // Rediriger vers la page de succès
+        if (type === "signup" || type === "email") {
+          // Vérifier si le profil a été complété
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("revenus_mensuels")
+            .eq("id", user.id)
+            .single();
+
+          // Si pas de revenus configurés, c'est une nouvelle inscription
+          // Rediriger vers email-confirmed qui redirigera ensuite vers onboarding
+          if (!profile?.revenus_mensuels || profile.revenus_mensuels === 0) {
+            return NextResponse.redirect(`${origin}/email-confirmed?next=/onboarding`);
+          }
+        }
+
+        // Vérifier si le profil a été complété pour les autres cas
         const { data: profile } = await supabase
           .from("profiles")
           .select("revenus_mensuels")
