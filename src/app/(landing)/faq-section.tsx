@@ -40,19 +40,24 @@ const faqs = [
 // =============================================================================
 
 const AccordionItem = ({ question, answer, isOpen, onToggle }: { question: string; answer: string; isOpen: boolean; onToggle: () => void }) => (
-    <div className="border-t border-secondary pt-6 first:border-t-0 first:pt-0">
+    <div className="border-t border-secondary pt-5 first:border-t-0 first:pt-0 md:pt-6">
         <h3>
             <button
                 onClick={onToggle}
                 className={cx(
-                    "flex w-full cursor-pointer items-start justify-between gap-2 text-left",
-                    "rounded-md outline-focus-ring select-none",
+                    // Base
+                    "flex w-full cursor-pointer items-start justify-between gap-3 text-left",
+                    // Touch target étendu
+                    "-m-2 min-h-11 rounded-xl p-2",
+                    // States
+                    "outline-focus-ring transition-colors duration-150 select-none",
+                    "active:bg-secondary",
                     "focus-visible:outline-2 focus-visible:outline-offset-2",
                     "md:gap-6",
                 )}
             >
-                <span className="text-md font-semibold text-primary">{question}</span>
-                <span aria-hidden="true" className="flex size-6 shrink-0 items-center text-fg-quaternary">
+                <span className="text-sm font-semibold text-primary md:text-md">{question}</span>
+                <span aria-hidden="true" className="flex size-6 shrink-0 items-center justify-center text-fg-quaternary">
                     <svg
                         width="24"
                         height="24"
@@ -80,13 +85,12 @@ const AccordionItem = ({ question, answer, isOpen, onToggle }: { question: strin
             }}
             transition={{
                 type: "spring",
-                damping: 24,
-                stiffness: 240,
-                bounce: 0.4,
+                damping: 28,
+                stiffness: 300,
             }}
         >
-            <div className="pt-1 pr-8 md:pr-12">
-                <p className="text-md text-tertiary">{answer}</p>
+            <div className="pt-2 pr-10 md:pr-12">
+                <p className="text-sm text-tertiary md:text-md">{answer}</p>
             </div>
         </motion.div>
     </div>
@@ -110,8 +114,8 @@ export const FaqSection = () => {
     };
 
     return (
-        <section className="relative bg-primary py-16 md:py-24">
-            {/* Gradient de transition depuis la section précédente */}
+        <section className="relative bg-primary py-12 md:py-24">
+            {/* Gradient de transition */}
             <div
                 className="pointer-events-none absolute inset-x-0 -top-24 h-32"
                 style={{
@@ -119,17 +123,18 @@ export const FaqSection = () => {
                 }}
                 aria-hidden="true"
             />
+
             <div className="mx-auto max-w-container px-4 md:px-8">
                 {/* Header */}
-                <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
-                    <span className="text-sm font-semibold text-brand-secondary md:text-md">FAQ</span>
-                    <h2 className="mt-3 text-display-sm font-semibold text-primary md:text-display-md">Questions fréquentes</h2>
-                    <p className="mt-4 text-lg text-tertiary md:mt-5 md:text-xl">Tout ce que vous devez savoir sur Oyko.</p>
+                <div className="flex flex-col md:items-center md:text-center">
+                    <span className="text-sm font-semibold text-brand-secondary">FAQ</span>
+                    <h2 className="mt-2 text-display-xs font-semibold text-primary md:mt-3 md:text-display-md">Questions fréquentes</h2>
+                    <p className="mt-3 text-md text-tertiary md:mt-5 md:text-xl">Tout ce que vous devez savoir sur Oyko.</p>
                 </div>
 
                 {/* Accordion */}
-                <div className="mx-auto mt-12 max-w-3xl md:mt-16">
-                    <div className="flex flex-col gap-6">
+                <div className="mx-auto mt-8 max-w-3xl md:mt-16">
+                    <div className="flex flex-col gap-5 md:gap-6">
                         {faqs.map((faq, index) => (
                             <AccordionItem
                                 key={faq.question}

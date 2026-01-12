@@ -50,7 +50,7 @@ export const styles = sortCx({
     colors: {
         primary: {
             root: [
-                "bg-brand-solid text-white shadow-xs-skeumorphic ring-1 ring-transparent ring-inset hover:bg-brand-solid_hover data-loading:bg-brand-solid_hover",
+                "bg-brand-solid text-white shadow-xs-skeumorphic ring-1 ring-transparent ring-inset hover:bg-brand-solid_hover [data-pressed]:bg-brand-solid_hover [data-pressed]:scale-[0.98] data-loading:bg-brand-solid_hover",
                 // Inner border gradient
                 "before:absolute before:inset-px before:border before:border-white/12 before:mask-b-from-0%",
                 // Disabled styles
@@ -61,7 +61,7 @@ export const styles = sortCx({
         },
         secondary: {
             root: [
-                "bg-primary text-secondary shadow-xs-skeumorphic ring-1 ring-primary ring-inset hover:bg-primary_hover hover:text-secondary_hover data-loading:bg-primary_hover",
+                "bg-primary text-secondary shadow-xs-skeumorphic ring-1 ring-primary ring-inset hover:bg-primary_hover hover:text-secondary_hover [data-pressed]:bg-primary_hover [data-pressed]:scale-[0.98] data-loading:bg-primary_hover",
                 // Disabled styles
                 "disabled:shadow-xs disabled:ring-disabled_subtle",
                 // Icon styles
@@ -70,32 +70,32 @@ export const styles = sortCx({
         },
         tertiary: {
             root: [
-                "text-tertiary hover:bg-primary_hover hover:text-tertiary_hover data-loading:bg-primary_hover",
+                "text-tertiary hover:bg-primary_hover hover:text-tertiary_hover [data-pressed]:bg-primary_hover [data-pressed]:scale-[0.98] data-loading:bg-primary_hover",
                 // Icon styles
                 "*:data-icon:text-fg-quaternary hover:*:data-icon:text-fg-quaternary_hover",
             ].join(" "),
         },
         "link-gray": {
             root: [
-                "justify-normal rounded p-0! text-tertiary hover:text-tertiary_hover",
+                "justify-normal rounded p-0! text-tertiary hover:text-tertiary_hover [data-pressed]:text-tertiary_hover",
                 // Inner text underline
-                "*:data-text:underline *:data-text:decoration-transparent *:data-text:underline-offset-2 hover:*:data-text:decoration-current",
+                "*:data-text:underline *:data-text:decoration-transparent *:data-text:underline-offset-2 hover:*:data-text:decoration-current [data-pressed]:*:data-text:decoration-current",
                 // Icon styles
                 "*:data-icon:text-fg-quaternary hover:*:data-icon:text-fg-quaternary_hover",
             ].join(" "),
         },
         "link-color": {
             root: [
-                "justify-normal rounded p-0! text-brand-secondary hover:text-brand-secondary_hover",
+                "justify-normal rounded p-0! text-brand-secondary hover:text-brand-secondary_hover [data-pressed]:text-brand-secondary_hover",
                 // Inner text underline
-                "*:data-text:underline *:data-text:decoration-transparent *:data-text:underline-offset-2 hover:*:data-text:decoration-current",
+                "*:data-text:underline *:data-text:decoration-transparent *:data-text:underline-offset-2 hover:*:data-text:decoration-current [data-pressed]:*:data-text:decoration-current",
                 // Icon styles
                 "*:data-icon:text-fg-brand-secondary_alt hover:*:data-icon:text-fg-brand-secondary_hover",
             ].join(" "),
         },
         "primary-destructive": {
             root: [
-                "bg-error-solid text-white shadow-xs-skeumorphic ring-1 ring-transparent outline-error ring-inset hover:bg-error-solid_hover data-loading:bg-error-solid_hover",
+                "bg-error-solid text-white shadow-xs-skeumorphic ring-1 ring-transparent outline-error ring-inset hover:bg-error-solid_hover [data-pressed]:bg-error-solid_hover [data-pressed]:scale-[0.98] data-loading:bg-error-solid_hover",
                 // Inner border gradient
                 "before:absolute before:inset-px before:border before:border-white/12 before:mask-b-from-0%",
                 // Disabled styles
@@ -106,7 +106,7 @@ export const styles = sortCx({
         },
         "secondary-destructive": {
             root: [
-                "bg-primary text-error-primary shadow-xs-skeumorphic ring-1 ring-error_subtle outline-error ring-inset hover:bg-error-primary hover:text-error-primary_hover data-loading:bg-error-primary",
+                "bg-primary text-error-primary shadow-xs-skeumorphic ring-1 ring-error_subtle outline-error ring-inset hover:bg-error-primary hover:text-error-primary_hover [data-pressed]:bg-error-primary [data-pressed]:scale-[0.98] data-loading:bg-error-primary",
                 // Disabled styles
                 "disabled:bg-primary disabled:shadow-xs disabled:ring-disabled_subtle",
                 // Icon styles
@@ -115,16 +115,16 @@ export const styles = sortCx({
         },
         "tertiary-destructive": {
             root: [
-                "text-error-primary outline-error hover:bg-error-primary hover:text-error-primary_hover data-loading:bg-error-primary",
+                "text-error-primary outline-error hover:bg-error-primary hover:text-error-primary_hover [data-pressed]:bg-error-primary [data-pressed]:scale-[0.98] data-loading:bg-error-primary",
                 // Icon styles
                 "*:data-icon:text-fg-error-secondary hover:*:data-icon:text-fg-error-primary",
             ].join(" "),
         },
         "link-destructive": {
             root: [
-                "justify-normal rounded p-0! text-error-primary outline-error hover:text-error-primary_hover",
+                "justify-normal rounded p-0! text-error-primary outline-error hover:text-error-primary_hover [data-pressed]:text-error-primary_hover",
                 // Inner text underline
-                "*:data-text:underline *:data-text:decoration-transparent *:data-text:underline-offset-2 hover:*:data-text:decoration-current",
+                "*:data-text:underline *:data-text:decoration-transparent *:data-text:underline-offset-2 hover:*:data-text:decoration-current [data-pressed]:*:data-text:decoration-current",
                 // Icon styles
                 "*:data-icon:text-fg-error-secondary hover:*:data-icon:text-fg-error-primary",
             ].join(" "),

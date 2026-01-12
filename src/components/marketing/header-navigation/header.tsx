@@ -18,7 +18,6 @@ import { cx } from "@/utils/cx";
 
 const SCROLL_THRESHOLD = 50;
 
-// Spring config inspirée Dynamic Island - réactive mais smooth
 const springConfig = {
     type: "spring" as const,
     stiffness: 400,
@@ -30,7 +29,7 @@ const springConfig = {
 // COMPONENTS
 // =============================================================================
 
-const ThemeToggle = () => {
+const ThemeToggle = ({ size = "sm" }: { size?: "sm" | "md" }) => {
     const [mounted, setMounted] = useState(false);
     const { theme, setTheme } = useTheme();
     const isDark = theme === "dark";
@@ -40,12 +39,12 @@ const ThemeToggle = () => {
     }, []);
 
     if (!mounted) {
-        return <ButtonUtility size="sm" color="tertiary" icon={Moon01} tooltip="Thème sombre" />;
+        return <ButtonUtility size={size} color="tertiary" icon={Moon01} tooltip="Thème sombre" />;
     }
 
     return (
         <ButtonUtility
-            size="sm"
+            size={size}
             color="tertiary"
             icon={isDark ? Sun : Moon01}
             tooltip={isDark ? "Thème clair" : "Thème sombre"}
@@ -60,17 +59,23 @@ type HeaderNavItem = {
     menu?: ReactNode;
 };
 
-const headerNavItems: HeaderNavItem[] = [
-    { label: "Fonctionnalités", href: "#features" },
-];
+const headerNavItems: HeaderNavItem[] = [{ label: "Fonctionnalités", href: "#features" }];
 
-const MobileNavItem = (props: { className?: string; label: string; href?: string; children?: ReactNode }) => {
+const MobileNavItem = (props: { label: string; href?: string; children?: ReactNode; onClose?: () => void }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     if (props.href) {
         return (
             <li>
-                <a href={props.href} className="flex items-center justify-between px-4 py-3 text-md font-semibold text-primary hover:bg-primary_hover">
+                <a
+                    href={props.href}
+                    onClick={props.onClose}
+                    className={cx(
+                        "flex min-h-12 items-center px-5 text-md font-semibold text-primary",
+                        "transition-colors duration-150",
+                        "active:bg-secondary",
+                    )}
+                >
                     {props.label}
                 </a>
             </li>
@@ -78,33 +83,40 @@ const MobileNavItem = (props: { className?: string; label: string; href?: string
     }
 
     return (
-        <li className="flex flex-col gap-0.5">
+        <li className="flex flex-col">
             <button
                 aria-expanded={isOpen}
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex w-full items-center justify-between px-4 py-3 text-md font-semibold text-primary hover:bg-primary_hover"
+                className={cx(
+                    "flex min-h-12 w-full items-center justify-between px-5 text-md font-semibold text-primary",
+                    "transition-colors duration-150",
+                    "active:bg-secondary",
+                )}
             >
-                {props.label}{" "}
-                <ChevronDown
-                    className={cx("size-4 stroke-[2.625px] text-fg-quaternary transition duration-100 ease-linear", isOpen ? "-rotate-180" : "rotate-0")}
-                />
+                {props.label}
+                <ChevronDown className={cx("size-5 text-fg-quaternary transition-transform duration-200", isOpen && "-rotate-180")} />
             </button>
-            {isOpen && <div>{props.children}</div>}
+            {isOpen && <div className="px-5 pb-3">{props.children}</div>}
         </li>
     );
 };
 
 const MobileFooter = () => {
     return (
-        <div className="flex flex-col gap-6 border-t border-secondary px-4 py-6">
+        <div className="mt-auto border-t border-secondary px-5 py-6">
+            {/* Theme toggle row */}
             <div className="flex items-center justify-between">
-                <span className="text-sm text-tertiary">Thème</span>
-                <ThemeToggle />
+                <span className="text-sm font-medium text-tertiary">Apparence</span>
+                <ThemeToggle size="md" />
             </div>
-            <div className="flex flex-col gap-3">
-                <Button size="lg" href="/signup">Commencer</Button>
-                <Button color="secondary" size="lg" href="/login">
+
+            {/* CTA buttons */}
+            <div className="mt-5 flex flex-row gap-3">
+                <Button color="secondary" size="lg" href="/login" className="flex-1 justify-center">
                     Connexion
+                </Button>
+                <Button size="lg" href="/signup" className="flex-1 justify-center">
+                    Commencer
                 </Button>
             </div>
         </div>
@@ -120,54 +132,82 @@ interface HeaderProps {
 export const Header = ({ items = headerNavItems, isFullWidth, className }: HeaderProps) => {
     const headerRef = useRef<HTMLElement>(null);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > SCROLL_THRESHOLD);
         };
 
-        // Check initial state
         handleScroll();
 
         window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    // Lock body scroll when mobile menu is open
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [isMobileMenuOpen]);
+
+    // Determine header background state
+    const showSolidBg = isScrolled || isMobileMenuOpen;
+
     return (
-        <header ref={headerRef} className={cx("fixed top-0 right-0 left-0 z-50", "flex w-full items-center justify-center", "h-16 md:h-20", className)}>
-            {/* Animated container - morphs between full-width and floating */}
+        <header
+            ref={headerRef}
+            className={cx(
+                "fixed top-0 right-0 left-0 z-50",
+                "flex w-full items-center justify-center",
+                "h-16 md:h-20",
+                // Solid background when menu open on mobile
+                isMobileMenuOpen && "bg-primary md:bg-transparent",
+                className,
+            )}
+        >
+            {/* Animated container */}
             <motion.div
                 layout
                 transition={springConfig}
                 className={cx("flex items-center", "w-full max-w-container px-4 md:px-8")}
                 style={{
-                    paddingTop: isScrolled ? 12 : 0,
+                    paddingTop: isScrolled && !isMobileMenuOpen ? 12 : 0,
                 }}
             >
                 <motion.div
                     layout
                     transition={springConfig}
-                    className={cx("flex w-full items-center justify-between gap-4", "md:py-3 md:pr-3 md:pl-4")}
-                    // Animated styles pour l'effet glass
+                    className={cx("flex w-full items-center justify-between gap-4", "px-3 py-2 md:py-3 md:pr-3 md:pl-4")}
                     animate={{
-                        // Background: transparent → glass
-                        backgroundColor: isScrolled ? "var(--glass-bg)" : "rgba(255, 255, 255, 0)",
-                        // Border radius: 0 → rounded
-                        borderRadius: isScrolled ? 16 : 0,
-                        // Shadow: none → soft shadow avec effet glass
-                        boxShadow: isScrolled ? "var(--glass-shadow)" : "0 0 0 0 rgba(0, 0, 0, 0)",
-                        // Backdrop blur pour l'effet glass
-                        backdropFilter: isScrolled ? "var(--glass-blur)" : "blur(0px) saturate(1)",
+                        backgroundColor: isMobileMenuOpen ? "transparent" : isScrolled ? "var(--glass-bg)" : "rgba(255, 255, 255, 0)",
+                        borderRadius: isScrolled && !isMobileMenuOpen ? 16 : 0,
+                        boxShadow: isScrolled && !isMobileMenuOpen ? "var(--glass-shadow)" : "0 0 0 0 rgba(0, 0, 0, 0)",
+                        backdropFilter: isScrolled && !isMobileMenuOpen ? "var(--glass-blur)" : "blur(0px) saturate(1)",
                     }}
                     style={{
                         willChange: "transform, opacity",
-                        WebkitBackdropFilter: isScrolled ? "var(--glass-blur)" : "blur(0px) saturate(1)",
+                        WebkitBackdropFilter: isScrolled && !isMobileMenuOpen ? "var(--glass-blur)" : "blur(0px) saturate(1)",
                     }}
                 >
+                    {/* Logo + nav */}
                     <div className="flex flex-1 items-center gap-5">
-                        <a href="/" className="outline-focus-ring rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2">
-                            <UntitledLogo className="h-8 md:max-lg:hidden" />
-                            <UntitledLogoMinimal className="hidden h-8 md:inline-block lg:hidden" />
+                        <a
+                            href="/"
+                            className={cx(
+                                "-m-2 rounded-xl p-2",
+                                "outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2",
+                                "transition-opacity active:opacity-70",
+                            )}
+                        >
+                            <UntitledLogo className="h-7 md:h-8 md:max-lg:hidden" />
+                            <UntitledLogoMinimal className="hidden h-7 md:inline-block md:h-8 lg:hidden" />
                         </a>
 
                         {/* Desktop navigation */}
@@ -222,6 +262,7 @@ export const Header = ({ items = headerNavItems, isFullWidth, className }: Heade
                         </nav>
                     </div>
 
+                    {/* Desktop actions */}
                     <div className="hidden items-center gap-3 md:flex">
                         <ThemeToggle />
                         <Button color="secondary" size="md" href="/login">
@@ -232,14 +273,15 @@ export const Header = ({ items = headerNavItems, isFullWidth, className }: Heade
                         </Button>
                     </div>
 
-                    {/* Mobile menu and menu trigger */}
+                    {/* Mobile menu trigger */}
                     <AriaDialogTrigger>
                         <AriaButton
-                            aria-label="Toggle navigation menu"
-                            className={({ isFocusVisible, isHovered }) =>
+                            aria-label="Menu de navigation"
+                            className={({ isFocusVisible }) =>
                                 cx(
-                                    "group ml-auto cursor-pointer rounded-lg p-2 md:hidden",
-                                    isHovered && "bg-black/5",
+                                    "group flex size-11 items-center justify-center rounded-xl md:hidden",
+                                    "transition-colors duration-150",
+                                    "active:bg-black/5",
                                     isFocusVisible && "outline-2 outline-offset-2 outline-focus-ring",
                                 )
                             }
@@ -263,29 +305,44 @@ export const Header = ({ items = headerNavItems, isFullWidth, className }: Heade
                                 />
                             </svg>
                         </AriaButton>
+
                         <AriaPopover
                             triggerRef={headerRef}
-                            className="scrollbar-hide h-[calc(100vh-64px)] w-full overflow-y-auto md:hidden"
+                            className={({ isEntering, isExiting }) =>
+                                cx(
+                                    "w-full md:hidden",
+                                    isEntering && "duration-200 ease-out animate-in fade-in slide-in-from-top-2",
+                                    isExiting && "duration-150 ease-in animate-out fade-out slide-out-to-top-2",
+                                )
+                            }
                             offset={0}
                             containerPadding={0}
                             placement="bottom left"
+                            onOpenChange={(isOpen) => setIsMobileMenuOpen(isOpen)}
                         >
-                            <AriaDialog className="outline-hidden">
-                                <nav className="w-full bg-white shadow-lg">
-                                    <ul className="flex flex-col gap-0.5 py-5">
-                                        {items.map((navItem) =>
-                                            navItem.menu ? (
-                                                <MobileNavItem key={navItem.label} label={navItem.label}>
-                                                    {navItem.menu}
-                                                </MobileNavItem>
-                                            ) : (
-                                                <MobileNavItem key={navItem.label} label={navItem.label} href={navItem.href} />
-                                            ),
-                                        )}
-                                    </ul>
-                                    <MobileFooter />
-                                </nav>
-                            </AriaDialog>
+                            {({ close }) => (
+                                <AriaDialog className="outline-hidden">
+                                    <div className={cx("flex h-[calc(100dvh-64px)] flex-col", "bg-primary", "overflow-y-auto overscroll-contain")}>
+                                        {/* Nav items */}
+                                        <nav>
+                                            <ul className="flex flex-col py-2">
+                                                {items.map((navItem) =>
+                                                    navItem.menu ? (
+                                                        <MobileNavItem key={navItem.label} label={navItem.label} onClose={close}>
+                                                            {navItem.menu}
+                                                        </MobileNavItem>
+                                                    ) : (
+                                                        <MobileNavItem key={navItem.label} label={navItem.label} href={navItem.href} onClose={close} />
+                                                    ),
+                                                )}
+                                            </ul>
+                                        </nav>
+
+                                        {/* Footer pinned at bottom */}
+                                        <MobileFooter />
+                                    </div>
+                                </AriaDialog>
+                            )}
                         </AriaPopover>
                     </AriaDialogTrigger>
                 </motion.div>
