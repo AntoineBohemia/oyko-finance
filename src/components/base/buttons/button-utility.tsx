@@ -22,7 +22,7 @@ export interface CommonProps {
     /** Disables the button and shows a disabled state */
     isDisabled?: boolean;
     /** The size variant of the button */
-    size?: "xs" | "sm";
+    size?: "xs" | "sm" | "md";
     /** The color variant of the button */
     color?: "secondary" | "tertiary";
     /** The icon to display in the button */
@@ -89,12 +89,19 @@ export const ButtonUtility = ({
             aria-label={tooltip}
             {...props}
             className={cx(
-                "group relative inline-flex h-max cursor-pointer items-center justify-center rounded-md p-1.5 outline-focus-ring transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:text-fg-disabled_subtle",
+                "group relative inline-flex h-max cursor-pointer items-center justify-center rounded-md outline-focus-ring transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:text-fg-disabled_subtle",
                 styles[color],
+
+                // Size styles
+                size === "xs" && "p-1.5",
+                size === "sm" && "p-1.5",
+                size === "md" && "p-2",
 
                 // Icon styles
                 "*:data-icon:pointer-events-none *:data-icon:shrink-0 *:data-icon:text-current *:data-icon:transition-inherit-all",
-                size === "xs" ? "*:data-icon:size-4" : "*:data-icon:size-5",
+                size === "xs" && "*:data-icon:size-4",
+                size === "sm" && "*:data-icon:size-5",
+                size === "md" && "*:data-icon:size-6",
 
                 className,
             )}
@@ -106,7 +113,7 @@ export const ButtonUtility = ({
 
     if (tooltip) {
         return (
-            <Tooltip title={tooltip} placement={tooltipPlacement} isDisabled={isDisabled} offset={size === "xs" ? 4 : 6}>
+            <Tooltip title={tooltip} placement={tooltipPlacement} isDisabled={isDisabled} offset={size === "xs" ? 4 : size === "sm" ? 6 : 8}>
                 {content}
             </Tooltip>
         );

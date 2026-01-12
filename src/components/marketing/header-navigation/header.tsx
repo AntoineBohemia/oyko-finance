@@ -320,8 +320,8 @@ export const Header = ({ items = headerNavItems, isFullWidth, className }: Heade
                             placement="bottom left"
                             onOpenChange={(isOpen) => setIsMobileMenuOpen(isOpen)}
                         >
-                            {({ close }) => (
-                                <AriaDialog className="outline-hidden">
+                            <AriaDialog className="outline-hidden">
+                                {({ close }) => (
                                     <div className={cx("flex h-[calc(100dvh-64px)] flex-col", "bg-primary", "overflow-y-auto overscroll-contain")}>
                                         {/* Nav items */}
                                         <nav>
@@ -341,8 +341,8 @@ export const Header = ({ items = headerNavItems, isFullWidth, className }: Heade
                                         {/* Footer pinned at bottom */}
                                         <MobileFooter />
                                     </div>
-                                </AriaDialog>
-                            )}
+                                )}
+                            </AriaDialog>
                         </AriaPopover>
                     </AriaDialogTrigger>
                 </motion.div>
