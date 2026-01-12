@@ -304,13 +304,39 @@ const MobileUseCaseCard = ({ useCase }: { useCase: UseCase }) => {
 };
 
 // =============================================================================
+// DECORATIVE ELEMENTS
+// =============================================================================
+
+const BrandGlowBar = () => (
+    <div
+        className={cx(
+            "pointer-events-none absolute -bottom-6 inset-x-0 mx-auto",
+            "h-24 w-full max-w-xl",
+            "rounded-[32px]",
+            "bg-gradient-to-r from-brand-300/40 via-brand-400/50 to-brand-300/40",
+            "blur-3xl",
+            // Hidden on mobile
+            "hidden md:block",
+            // Dark mode
+            "dark:from-brand-600/30 dark:via-brand-500/40 dark:to-brand-600/30",
+        )}
+        style={{
+            animation: "gradient-pulse 4s ease-in-out infinite",
+        }}
+        aria-hidden="true"
+    />
+);
+
+// =============================================================================
 // DESKTOP USE CASE CARD - Original with mockup
 // =============================================================================
 
 const DesktopUseCaseCard = ({ useCase }: { useCase: UseCase }) => {
     return (
-        <div className="mx-auto w-full max-w-4xl px-4">
-            <div className={cx("overflow-hidden rounded-3xl", "bg-white shadow-2xl ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800")}>
+        <div className="relative mx-auto w-full max-w-4xl px-4">
+            {/* Glow effect under the card */}
+            <BrandGlowBar />
+            <div className={cx("relative overflow-hidden rounded-3xl", "bg-white shadow-2xl ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800")}>
                 <div className="grid grid-cols-1 lg:grid-cols-2">
                     {/* Left side - Content */}
                     <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-10">
@@ -368,28 +394,6 @@ const DesktopUseCaseCard = ({ useCase }: { useCase: UseCase }) => {
         </div>
     );
 };
-
-// =============================================================================
-// DECORATIVE ELEMENTS
-// =============================================================================
-
-const RainbowGradientBar = () => (
-    <div
-        className={cx(
-            "pointer-events-none absolute -bottom-6 left-1/2",
-            "h-24 w-full max-w-xl",
-            "rounded-[32px]",
-            "bg-gradient-to-r from-amber-200/50 via-pink-300/50 via-50% to-cyan-300/50",
-            "blur-3xl",
-            // Hidden on mobile
-            "hidden md:block",
-        )}
-        style={{
-            animation: "gradient-pulse 4s ease-in-out infinite",
-        }}
-        aria-hidden="true"
-    />
-);
 
 // =============================================================================
 // TAB SELECTOR
@@ -536,8 +540,6 @@ export const FeaturesCarousel = () => {
                             </motion.div>
                         </AnimatePresence>
                     </div>
-
-                    <RainbowGradientBar />
                 </div>
 
                 {/* Navigation arrows + dots - mobile only */}
