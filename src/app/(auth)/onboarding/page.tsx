@@ -405,11 +405,11 @@ export default function OnboardingPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-start gap-3 rounded-lg bg-brand-50 p-4">
-                                    <Lightbulb02 className="h-5 w-5 shrink-0 text-brand-600" />
+                                <div className="flex items-start gap-3 rounded-lg bg-brand-50 p-4 dark:bg-brand-900/20">
+                                    <Lightbulb02 className="h-5 w-5 shrink-0 text-brand-600 dark:text-brand-400" />
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-sm font-medium text-brand-700">Conseil</p>
-                                        <p className="text-sm text-brand-600">
+                                        <p className="text-sm font-medium text-brand-700 dark:text-brand-300">Conseil</p>
+                                        <p className="text-sm text-brand-600 dark:text-brand-400">
                                             Incluez tous vos revenus réguliers : salaire, aides, pensions...
                                         </p>
                                     </div>
@@ -445,7 +445,7 @@ export default function OnboardingPage() {
                                             <button
                                                 key={suggestion.nom}
                                                 onClick={() => handleAddSuggestion(suggestion)}
-                                                className="flex items-center gap-2 rounded-full border border-secondary bg-primary px-3 py-1.5 text-sm text-primary transition-colors hover:border-brand hover:bg-brand-50"
+                                                className="flex items-center gap-2 rounded-full border border-secondary bg-primary px-3 py-1.5 text-sm text-primary transition-colors hover:border-brand hover:bg-brand-50 dark:hover:bg-brand-900/30"
                                             >
                                                 <Plus className="h-3.5 w-3.5" />
                                                 {suggestion.nom}
@@ -456,8 +456,8 @@ export default function OnboardingPage() {
 
                                 {/* Formulaire ajout */}
                                 {newCharge.nom && (
-                                    <div className="flex flex-col gap-4 rounded-lg border border-brand bg-brand-50 p-4">
-                                        <p className="text-sm font-medium text-brand-700">{newCharge.nom}</p>
+                                    <div className="flex flex-col gap-4 rounded-lg border border-brand bg-brand-50 p-4 dark:bg-brand-900/20">
+                                        <p className="text-sm font-medium text-brand-700 dark:text-brand-300">{newCharge.nom}</p>
                                         <div className="grid grid-cols-2 gap-3">
                                             <Input
                                                 type="number"
@@ -546,13 +546,13 @@ export default function OnboardingPage() {
                             </div>
 
                             {/* Info disponible */}
-                            <div className="flex items-center justify-between rounded-xl bg-brand-50 p-4">
+                            <div className="flex items-center justify-between rounded-xl bg-brand-50 p-4 dark:bg-brand-900/20">
                                 <div className="flex flex-col">
-                                    <span className="text-sm text-brand-600">Disponible après charges</span>
-                                    <span className="text-xl font-bold text-brand-700">{formatCurrency(revenusNum - totalChargesFixes)}</span>
+                                    <span className="text-sm text-brand-600 dark:text-brand-400">Disponible après charges</span>
+                                    <span className="text-xl font-bold text-brand-700 dark:text-brand-300">{formatCurrency(revenusNum - totalChargesFixes)}</span>
                                 </div>
                                 <div className="flex flex-col items-end">
-                                    <span className="text-sm text-brand-600">Reste pour épargne</span>
+                                    <span className="text-sm text-brand-600 dark:text-brand-400">Reste pour épargne</span>
                                     <span className={cx("text-xl font-bold", (revenusNum - totalChargesFixes - totalEnveloppes) >= 0 ? "text-finance-gain" : "text-finance-loss")}>
                                         {formatCurrency(revenusNum - totalChargesFixes - totalEnveloppes)}
                                     </span>
@@ -599,7 +599,7 @@ export default function OnboardingPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
+                                                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                                                         <div
                                                             className={cx("h-full rounded-full transition-all", isMandatory ? "bg-error-400" : "bg-brand-500")}
                                                             style={{ width: `${Math.min(percent, 100)}%` }}
@@ -650,9 +650,9 @@ export default function OnboardingPage() {
                                 </div>
 
                                 {/* Conseil */}
-                                <div className="flex items-start gap-3 rounded-lg bg-brand-50 p-4">
-                                    <Lightbulb02 className="h-5 w-5 shrink-0 text-brand-600" />
-                                    <p className="text-sm text-brand-700">
+                                <div className="flex items-start gap-3 rounded-lg bg-brand-50 p-4 dark:bg-brand-900/20">
+                                    <Lightbulb02 className="h-5 w-5 shrink-0 text-brand-600 dark:text-brand-400" />
+                                    <p className="text-sm text-brand-700 dark:text-brand-300">
                                         Astuce : La catégorie <strong>Imprévus</strong> vous protège des dépenses inattendues. Ne la supprimez pas !
                                     </p>
                                 </div>
@@ -678,7 +678,7 @@ export default function OnboardingPage() {
                                         <button
                                             type="button"
                                             onClick={() => setObjectifEpargne(Math.max(0, epargneNum - 50).toString())}
-                                            className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-secondary bg-primary text-tertiary transition-colors hover:border-error-300 hover:bg-error-50 hover:text-error-600 active:scale-95"
+                                            className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-secondary bg-primary text-tertiary transition-colors hover:border-error-300 hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-900/30 dark:hover:text-error-400 active:scale-95"
                                         >
                                             <Minus className="h-6 w-6" />
                                         </button>
@@ -710,7 +710,7 @@ export default function OnboardingPage() {
                                         <button
                                             type="button"
                                             onClick={() => setObjectifEpargne((epargneNum + 50).toString())}
-                                            className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-secondary bg-primary text-tertiary transition-colors hover:border-success-300 hover:bg-success-50 hover:text-success-600 active:scale-95"
+                                            className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-secondary bg-primary text-tertiary transition-colors hover:border-success-300 hover:bg-success-50 hover:text-success-600 dark:hover:bg-success-900/30 dark:hover:text-success-400 active:scale-95"
                                         >
                                             <Plus className="h-6 w-6" />
                                         </button>
@@ -718,11 +718,11 @@ export default function OnboardingPage() {
                                 </div>
 
                                 {epargneNum >= revenusNum * 0.1 && (
-                                    <div className="flex items-start gap-3 rounded-lg bg-success-50 p-4">
-                                        <Check className="h-5 w-5 shrink-0 text-success-600" />
+                                    <div className="flex items-start gap-3 rounded-lg bg-success-50 p-4 dark:bg-success-900/20">
+                                        <Check className="h-5 w-5 shrink-0 text-success-600 dark:text-success-400" />
                                         <div className="flex flex-col gap-1">
-                                            <p className="text-sm font-medium text-success-700">Excellent objectif !</p>
-                                            <p className="text-sm text-success-600">
+                                            <p className="text-sm font-medium text-success-700 dark:text-success-300">Excellent objectif !</p>
+                                            <p className="text-sm text-success-600 dark:text-success-400">
                                                 Vous épargnez plus de 10% de vos revenus, c'est une très bonne habitude.
                                             </p>
                                         </div>
@@ -730,11 +730,11 @@ export default function OnboardingPage() {
                                 )}
 
                                 {epargneNum < revenusNum * 0.1 && epargneNum > 0 && (
-                                    <div className="flex items-start gap-3 rounded-lg bg-warning-50 p-4">
-                                        <Lightbulb02 className="h-5 w-5 shrink-0 text-warning-600" />
+                                    <div className="flex items-start gap-3 rounded-lg bg-warning-50 p-4 dark:bg-warning-900/20">
+                                        <Lightbulb02 className="h-5 w-5 shrink-0 text-warning-600 dark:text-warning-400" />
                                         <div className="flex flex-col gap-1">
-                                            <p className="text-sm font-medium text-warning-700">Conseil</p>
-                                            <p className="text-sm text-warning-600">
+                                            <p className="text-sm font-medium text-warning-700 dark:text-warning-300">Conseil</p>
+                                            <p className="text-sm text-warning-600 dark:text-warning-400">
                                                 Essayez d'atteindre 10% de vos revenus ({formatCurrency(revenusNum * 0.1)}) pour une épargne efficace.
                                             </p>
                                         </div>
@@ -790,7 +790,7 @@ export default function OnboardingPage() {
                                     className={cx(
                                         "flex flex-col gap-3 rounded-xl p-6 text-left transition-all ring-1 ring-inset",
                                         modeGestion === "semaine"
-                                            ? "bg-brand-50 ring-2 ring-brand"
+                                            ? "bg-brand-50 ring-2 ring-brand dark:bg-brand-900/20"
                                             : "bg-primary_alt ring-secondary hover:ring-brand",
                                     )}
                                 >
@@ -820,7 +820,7 @@ export default function OnboardingPage() {
                                     className={cx(
                                         "flex flex-col gap-3 rounded-xl p-6 text-left transition-all ring-1 ring-inset",
                                         modeGestion === "mois"
-                                            ? "bg-brand-50 ring-2 ring-brand"
+                                            ? "bg-brand-50 ring-2 ring-brand dark:bg-brand-900/20"
                                             : "bg-primary_alt ring-secondary hover:ring-brand",
                                     )}
                                 >
@@ -913,7 +913,7 @@ export default function OnboardingPage() {
                                                     className="flex items-center justify-between rounded-lg border border-secondary bg-primary p-3"
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
                                                             {compte.type === "courant" && <Bank className="h-5 w-5 text-brand-600" />}
                                                             {compte.type === "epargne" && <PiggyBank01 className="h-5 w-5 text-success-600" />}
                                                             {compte.type === "cash" && <Wallet03 className="h-5 w-5 text-warning-600" />}
@@ -950,8 +950,8 @@ export default function OnboardingPage() {
                                 )}
 
                                 {comptes.length === 0 && (
-                                    <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-4">
-                                        <Lightbulb02 className="h-5 w-5 text-gray-500" />
+                                    <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
+                                        <Lightbulb02 className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                                         <p className="text-sm text-tertiary">
                                             Vous pourrez ajouter vos comptes plus tard dans les paramètres.
                                         </p>
@@ -965,8 +965,8 @@ export default function OnboardingPage() {
                     {currentStep === 7 && (
                         <div className="flex flex-col gap-8">
                             <div className="flex flex-col items-center gap-4 text-center">
-                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-100">
-                                    <Check className="h-8 w-8 text-success-600" />
+                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/30">
+                                    <Check className="h-8 w-8 text-success-600 dark:text-success-400" />
                                 </div>
                                 <h1 className="text-2xl font-semibold text-primary">Tout est prêt !</h1>
                                 <p className="text-tertiary">Voici le récapitulatif de votre configuration</p>
@@ -1035,9 +1035,9 @@ export default function OnboardingPage() {
                             </div>
 
                             {error && (
-                                <div className="flex items-center gap-3 rounded-lg bg-error-50 p-4">
-                                    <AlertCircle className="h-5 w-5 shrink-0 text-error-600" />
-                                    <p className="text-sm text-error-700">{error}</p>
+                                <div className="flex items-center gap-3 rounded-lg bg-error-50 p-4 dark:bg-error-900/20">
+                                    <AlertCircle className="h-5 w-5 shrink-0 text-error-600 dark:text-error-400" />
+                                    <p className="text-sm text-error-700 dark:text-error-300">{error}</p>
                                 </div>
                             )}
 
