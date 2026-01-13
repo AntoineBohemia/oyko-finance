@@ -1,5 +1,7 @@
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
 
 /**
  * Route handler pour le callback OAuth et la confirmation email
@@ -18,7 +20,24 @@ export async function GET(request: Request) {
   const type = searchParams.get("type"); // Type de confirmation (signup, recovery, etc.)
 
   if (code) {
-    const supabase = await createClient();
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          },
+        },
+      }
+    );
 
     // Échanger le code contre une session
     const { error } = await supabase.auth.exchangeCodeForSession(code);
