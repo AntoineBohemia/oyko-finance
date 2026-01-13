@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
     AlertCircle,
@@ -112,6 +112,25 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 // ============================================
 
 export default function OnboardingPage() {
+    return (
+        <Suspense fallback={<OnboardingLoading />}>
+            <OnboardingContent />
+        </Suspense>
+    );
+}
+
+function OnboardingLoading() {
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-secondary_alt">
+            <div className="flex flex-col items-center gap-4">
+                <Loading02 className="h-8 w-8 animate-spin text-brand-600" />
+                <p className="text-tertiary">Chargement...</p>
+            </div>
+        </div>
+    );
+}
+
+function OnboardingContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClient();
