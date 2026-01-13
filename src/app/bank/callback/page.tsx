@@ -1,12 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, AlertCircle, Loading02, Bank } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { createClient } from "@/lib/supabase/client";
 
 export default function BankCallbackPage() {
+    return (
+        <Suspense fallback={<CallbackLoading />}>
+            <BankCallbackContent />
+        </Suspense>
+    );
+}
+
+function CallbackLoading() {
+    return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-secondary_alt p-4">
+            <div className="w-full max-w-md rounded-xl bg-primary_alt p-8 shadow-lg ring-1 ring-secondary ring-inset">
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/30">
+                        <Loading02 className="h-8 w-8 animate-spin text-brand-600 dark:text-brand-400" />
+                    </div>
+                    <h1 className="text-xl font-semibold text-primary">Chargement...</h1>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function BankCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClient();
