@@ -156,7 +156,14 @@ export default function OnboardingPage() {
             .order("created_at", { ascending: false });
 
         if (accounts && accounts.length > 0) {
-            setConnectedBankAccounts(accounts);
+            setConnectedBankAccounts(
+                accounts.map((acc) => ({
+                    id: acc.id,
+                    name: acc.name || "Compte sans nom",
+                    balance: acc.balance ?? 0,
+                    iban: acc.iban,
+                }))
+            );
         }
     };
 
