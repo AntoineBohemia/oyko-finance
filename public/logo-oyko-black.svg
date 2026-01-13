@@ -1,0 +1,19 @@
+<svg width="480" height="400" viewBox="0 0 480 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Logo icon centered and scaled 4x -->
+  <g transform="translate(160, 20) scale(4)">
+    <path
+      d="m27.6627 4h-15.3253l-12.3374 12.3373v15.3253l12.3374 12.3374h15.3253l12.3373-12.3374v-15.3253zm-13.2049 27.8554-7.90357-7.9036 7.90357-7.9036c2.988-2.988 7.9037-2.988 10.8916 0l7.9036 7.9036-7.9036 7.9036c-2.9879 2.988-7.8072 2.988-10.8916 0z"
+      fill="#000000"
+    />
+  </g>
+  <!-- Oyko text centered below -->
+  <text
+    x="240"
+    y="320"
+    text-anchor="middle"
+    font-family="'Space Grotesk', system-ui, sans-serif"
+    font-size="72"
+    font-weight="600"
+    fill="#000000"
+  >Oyko</text>
+</svg>

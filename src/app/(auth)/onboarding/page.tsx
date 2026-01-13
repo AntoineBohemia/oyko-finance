@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     AlertCircle,
     ArrowLeft,
@@ -12,6 +12,8 @@ import {
     CreditCard01,
     Home02,
     Lightbulb02,
+    Link01,
+    Loading02,
     Minus,
     MusicNote01,
     Phone02,
@@ -111,6 +113,7 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 
 export default function OnboardingPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const supabase = createClient();
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
@@ -123,6 +126,39 @@ export default function OnboardingPage() {
     const [enveloppes, setEnveloppes] = useState<Enveloppe[]>(ENVELOPPES_DEFAULT);
     const [modeGestion, setModeGestion] = useState<"semaine" | "mois">("semaine");
     const [comptes, setComptes] = useState<Compte[]>([]);
+
+    // États connexion bancaire
+    const [isBankConnecting, setIsBankConnecting] = useState(false);
+    const [bankConnected, setBankConnected] = useState(false);
+    const [bankConnectionError, setBankConnectionError] = useState("");
+    const [connectedBankAccounts, setConnectedBankAccounts] = useState<{id: string; name: string; balance: number; iban: string | null}[]>([]);
+
+    // Gérer le retour de Bridge callback
+    useEffect(() => {
+        const step = searchParams.get("step");
+        const bankConnectedParam = searchParams.get("bank_connected");
+
+        if (step === "6") {
+            setCurrentStep(6);
+        }
+
+        if (bankConnectedParam === "true") {
+            setBankConnected(true);
+            // Charger les comptes connectés
+            loadConnectedBankAccounts();
+        }
+    }, [searchParams]);
+
+    const loadConnectedBankAccounts = async () => {
+        const { data: accounts } = await supabase
+            .from("bank_accounts")
+            .select("id, name, balance, iban")
+            .order("created_at", { ascending: false });
+
+        if (accounts && accounts.length > 0) {
+            setConnectedBankAccounts(accounts);
+        }
+    };
 
     // États formulaires temporaires
     const [newCharge, setNewCharge] = useState({ nom: "", montant: "", jourPrelevement: "1", categorie: "" });
@@ -332,6 +368,51 @@ export default function OnboardingPage() {
 
     const handleRemoveCompte = (id: string) => {
         setComptes(comptes.filter((c) => c.id !== id));
+    };
+
+    // Handler connexion bancaire Bridge
+    const handleConnectBank = async () => {
+        setIsBankConnecting(true);
+        setBankConnectionError("");
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session) {
+                setBankConnectionError("Session expirée. Veuillez vous reconnecter.");
+                setIsBankConnecting(false);
+                return;
+            }
+
+            // Sauvegarder qu'on vient de l'onboarding
+            sessionStorage.setItem("bank_connect_from_onboarding", "true");
+
+            // Appeler l'Edge Function pour obtenir l'URL de connexion
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/bridge-connect`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || "Erreur de connexion");
+            }
+
+            const { connect_url } = await response.json();
+
+            // Rediriger vers Bridge Connect
+            window.location.href = connect_url;
+        } catch (error) {
+            console.error("Bank connection error:", error);
+            setBankConnectionError((error as Error).message || "Erreur lors de la connexion");
+            setIsBankConnecting(false);
+        }
     };
 
     const progressPercent = ((currentStep - 1) / 6) * 100;
@@ -853,13 +934,109 @@ export default function OnboardingPage() {
                             <div className="flex flex-col gap-2 text-center">
                                 <span className="text-4xl">🏦</span>
                                 <h1 className="text-2xl font-semibold text-primary">Vos comptes</h1>
-                                <p className="text-tertiary">Ajoutez vos comptes bancaires pour suivre vos soldes</p>
+                                <p className="text-tertiary">Connectez votre banque ou ajoutez vos comptes manuellement</p>
                             </div>
 
+                            {/* Option 1: Connexion bancaire automatique */}
+                            <div className="flex flex-col gap-4 rounded-xl bg-primary_alt p-6 shadow-xs ring-1 ring-secondary ring-inset">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/30">
+                                        <Link01 className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="font-medium text-primary">Connexion automatique</p>
+                                        <p className="text-sm text-tertiary">Synchronisez vos comptes et transactions en temps réel</p>
+                                    </div>
+                                    <Badge size="sm" type="pill-color" color="success">Recommandé</Badge>
+                                </div>
+
+                                {bankConnected ? (
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center gap-2 rounded-lg bg-success-50 p-3 dark:bg-success-900/20">
+                                            <Check className="h-5 w-5 text-success-600 dark:text-success-400" />
+                                            <span className="text-sm font-medium text-success-700 dark:text-success-300">
+                                                Banque connectée avec succès
+                                            </span>
+                                        </div>
+
+                                        {/* Comptes synchronisés */}
+                                        {connectedBankAccounts.length > 0 && (
+                                            <div className="flex flex-col gap-2">
+                                                {connectedBankAccounts.map((account) => (
+                                                    <div
+                                                        key={account.id}
+                                                        className="flex items-center justify-between rounded-lg border border-secondary bg-primary p-3"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Bank className="h-5 w-5 text-brand-600" />
+                                                            <div>
+                                                                <p className="text-sm font-medium text-primary">{account.name}</p>
+                                                                {account.iban && (
+                                                                    <p className="text-xs text-tertiary">
+                                                                        {account.iban.slice(-8)}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <span className="font-semibold text-primary">
+                                                            {formatCurrency(account.balance)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Button
+                                            size="lg"
+                                            color="primary"
+                                            iconLeading={isBankConnecting ? Loading02 : Bank}
+                                            onClick={handleConnectBank}
+                                            isDisabled={isBankConnecting}
+                                            className={cx("w-full", isBankConnecting && "[&_svg]:animate-spin")}
+                                        >
+                                            {isBankConnecting ? "Connexion en cours..." : "Connecter ma banque"}
+                                        </Button>
+
+                                        {bankConnectionError && (
+                                            <div className="flex items-center gap-2 rounded-lg bg-error-50 p-3 dark:bg-error-900/20">
+                                                <AlertCircle className="h-5 w-5 text-error-600 dark:text-error-400" />
+                                                <span className="text-sm text-error-700 dark:text-error-300">
+                                                    {bankConnectionError}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-start gap-2 text-xs text-tertiary">
+                                            <Check className="h-4 w-4 shrink-0 text-success-500" />
+                                            <span>Connexion sécurisée via Bridge - Agréé par l'ACPR Banque de France</span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Séparateur */}
+                            <div className="flex items-center gap-4">
+                                <div className="h-px flex-1 bg-secondary" />
+                                <span className="text-sm text-tertiary">ou</span>
+                                <div className="h-px flex-1 bg-secondary" />
+                            </div>
+
+                            {/* Option 2: Ajout manuel */}
                             <div className="flex flex-col gap-6 rounded-xl bg-primary_alt p-6 shadow-xs ring-1 ring-secondary ring-inset">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                                        <Wallet03 className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-primary">Ajout manuel</p>
+                                        <p className="text-sm text-tertiary">Ajoutez vos comptes un par un</p>
+                                    </div>
+                                </div>
+
                                 {/* Formulaire ajout compte */}
                                 <div className="flex flex-col gap-4">
-                                    <p className="text-sm font-medium text-tertiary">Nouveau compte</p>
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         <Input
                                             placeholder="Nom du compte"
@@ -902,10 +1079,10 @@ export default function OnboardingPage() {
                                     </Button>
                                 </div>
 
-                                {/* Liste des comptes */}
+                                {/* Liste des comptes manuels */}
                                 {comptes.length > 0 && (
                                     <div className="flex flex-col gap-3 border-t border-secondary pt-4">
-                                        <p className="text-sm font-medium text-tertiary">Vos comptes</p>
+                                        <p className="text-sm font-medium text-tertiary">Comptes manuels</p>
                                         <div className="grid gap-3 sm:grid-cols-2">
                                             {comptes.map((compte) => (
                                                 <div
@@ -943,21 +1120,21 @@ export default function OnboardingPage() {
                                 {comptes.length > 0 && (
                                     <div className="border-t border-secondary pt-4">
                                         <div className="flex justify-between">
-                                            <span className="text-tertiary">Solde total</span>
+                                            <span className="text-tertiary">Solde total (manuel)</span>
                                             <span className="text-xl font-semibold text-finance-gain">{formatCurrency(totalComptes)}</span>
                                         </div>
                                     </div>
                                 )}
-
-                                {comptes.length === 0 && (
-                                    <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
-                                        <Lightbulb02 className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                                        <p className="text-sm text-tertiary">
-                                            Vous pourrez ajouter vos comptes plus tard dans les paramètres.
-                                        </p>
-                                    </div>
-                                )}
                             </div>
+
+                            {!bankConnected && comptes.length === 0 && (
+                                <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
+                                    <Lightbulb02 className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                    <p className="text-sm text-tertiary">
+                                        Vous pourrez ajouter vos comptes plus tard dans les paramètres.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
 

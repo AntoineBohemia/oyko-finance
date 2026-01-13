@@ -1,24 +1,22 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { ArrowUp, Calendar, ChevronLeft, ChevronRight, Plus, Upload01, X, File06, AlertCircle, CheckCircle } from "@untitledui/icons";
+import { Bank, Calendar, ChevronLeft, ChevronRight, Plus, Upload01, X, AlertCircle, CheckCircle, Link01 } from "@untitledui/icons";
 import * as XLSX from "xlsx";
 import Link from "next/link";
-import { Pie, PieChart as RechartsPieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { ChartTooltipContent } from "@/components/application/charts/charts-base";
 import { Dialog, DialogTrigger, Modal, ModalOverlay } from "@/components/application/modals/modal";
-import { BadgeWithIcon } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { Input } from "@/components/base/input/input";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { Select } from "@/components/base/select/select";
-import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
 import { cx } from "@/utils/cx";
 import { formatCurrencySimple, formatDateRelative, getProgressColor, getProgressColorOnDark } from "@/utils/format";
 import { createClient } from "@/lib/supabase/client";
-import type { DashboardData, CategorieVariable, PatrimoineData, PatrimoineRepartition } from "@/lib/data/dashboard";
+import type { CategorieVariable, PatrimoineData } from "@/lib/data/dashboard";
 import type { Profile, Compte } from "@/types/database.types";
+
+type ViewMode = "semaine" | "mois";
 
 // Types pour les données sérialisées (dates en string)
 interface SerializedDashboardData {
@@ -83,10 +81,16 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     const today = new Date();
     const currentYear = today.getFullYear();
     const currentWeekNum = getWeekNumber(today);
+    const currentMonth = today.getMonth();
+
+    // View mode toggle
+    const [viewMode, setViewMode] = useState<ViewMode>("semaine");
     const [selectedWeek, setSelectedWeek] = useState(currentWeekNum);
     const [selectedYear, setSelectedYear] = useState(currentYear);
+    const [selectedMonth, setSelectedMonth] = useState(currentMonth);
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isBankConnecting, setIsBankConnecting] = useState(false);
 
     // État de l'import
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -169,32 +173,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         });
     }, [transactions, weekDates.start, weekDates.end]);
 
-    // Budget hebdomadaire
-    const budgetHebdo = budgetVariableMensuel / 4;
-    const depenseSemaine = weekTransactions.reduce((acc, t) => acc + Math.abs(t.montant), 0);
-    const resteHebdo = budgetHebdo - depenseSemaine;
-    const pourcentageHebdo = budgetHebdo > 0 ? (depenseSemaine / budgetHebdo) * 100 : 0;
-
-    // Calcul par catégorie (enveloppe)
-    const enveloppes = useMemo(() => {
-        return categories.map((cat) => {
-            const budgetHebdoCat = cat.budgetMensuel / 4;
-            const depenseCat = weekTransactions
-                .filter((t) => t.categorieId === cat.id)
-                .reduce((acc, t) => acc + Math.abs(t.montant), 0);
-            const resteCat = budgetHebdoCat - depenseCat;
-            const pourcentageCat = budgetHebdoCat > 0 ? (depenseCat / budgetHebdoCat) * 100 : 0;
-            return {
-                ...cat,
-                budgetHebdo: budgetHebdoCat,
-                depense: depenseCat,
-                reste: resteCat,
-                pourcentage: pourcentageCat,
-            };
-        });
-    }, [categories, weekTransactions]);
-
-    // Calcul du résumé du mois
+    // Calcul du résumé du mois (calculé d'abord car utilisé par budgetData)
     const depensesMoisVariables = transactions
         .filter((t) => t.type === "variable")
         .reduce((acc, t) => acc + Math.abs(t.montant), 0);
@@ -206,6 +185,71 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     const revenusMois = transactions
         .filter((t) => t.type === "revenu")
         .reduce((acc, t) => acc + t.montant, 0);
+
+    // Budget hebdomadaire
+    const budgetHebdo = budgetVariableMensuel / 4;
+    const depenseSemaine = weekTransactions.reduce((acc, t) => acc + Math.abs(t.montant), 0);
+    const resteHebdo = budgetHebdo - depenseSemaine;
+    const pourcentageHebdo = budgetHebdo > 0 ? (depenseSemaine / budgetHebdo) * 100 : 0;
+
+    // Budget mensuel
+    const budgetMensuel = budgetVariableMensuel;
+    const depenseMois = depensesMoisVariables;
+    const resteMois = budgetMensuel - depenseMois;
+    const pourcentageMois = budgetMensuel > 0 ? (depenseMois / budgetMensuel) * 100 : 0;
+
+    // Disponible mensuel (Revenus - Charges fixes - Épargne = Budget variable)
+    const disponibleMensuel = revenusMois - chargesFixesMois;
+
+    // Budget data selon le mode
+    const budgetData = viewMode === "semaine"
+        ? {
+            total: budgetHebdo,
+            spent: depenseSemaine,
+            remaining: resteHebdo,
+            percentage: pourcentageHebdo,
+            label: "Budget Semaine"
+        }
+        : {
+            total: budgetMensuel,
+            spent: depenseMois,
+            remaining: resteMois,
+            percentage: pourcentageMois,
+            label: "Budget Mois"
+        };
+
+    // Calcul par catégorie (enveloppe) - adapté au viewMode
+    const enveloppes = useMemo(() => {
+        // Calculer les dépenses mensuelles par catégorie
+        const monthTransactions = transactions.filter((t) => t.type === "variable");
+
+        return categories.map((cat) => {
+            const budgetCat = viewMode === "semaine" ? cat.budgetMensuel / 4 : cat.budgetMensuel;
+            const relevantTransactions = viewMode === "semaine" ? weekTransactions : monthTransactions;
+            const depenseCat = relevantTransactions
+                .filter((t) => t.categorieId === cat.id)
+                .reduce((acc, t) => acc + Math.abs(t.montant), 0);
+            const resteCat = budgetCat - depenseCat;
+            const pourcentageCat = budgetCat > 0 ? (depenseCat / budgetCat) * 100 : 0;
+            return {
+                ...cat,
+                budgetHebdo: budgetCat,
+                depense: depenseCat,
+                reste: resteCat,
+                pourcentage: pourcentageCat,
+            };
+        });
+    }, [categories, weekTransactions, transactions, viewMode]);
+
+    // Dernières transactions (5 max)
+    const lastTransactions = useMemo(() => {
+        return [...transactions]
+            .sort((a, b) => b.date.getTime() - a.date.getTime())
+            .slice(0, 5);
+    }, [transactions]);
+
+    // Vérifier si l'utilisateur a une connexion bancaire
+    const hasBankConnection = initialData.comptes.length > 0; // Simplifié pour l'instant
 
     // Prochains prélèvements (tri par date)
     const prochainsPrelevements = [...chargesFixes]
@@ -234,6 +278,39 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     // Limites de navigation (pas plus d'un an dans le passé, pas dans le futur)
     const canGoPrevious = selectedYear > currentYear - 1 || (selectedYear === currentYear - 1 && selectedWeek > currentWeekNum);
     const canGoNext = selectedYear < currentYear || (selectedYear === currentYear && selectedWeek < currentWeekNum);
+
+    // Handler connexion bancaire
+    const handleConnectBank = async () => {
+        setIsBankConnecting(true);
+        try {
+            const { data: { session } } = await createClient().auth.getSession();
+            if (!session) {
+                setIsBankConnecting(false);
+                return;
+            }
+
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/bridge-connect`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Erreur de connexion");
+            }
+
+            const { connect_url } = await response.json();
+            window.location.href = connect_url;
+        } catch (error) {
+            console.error("Bank connection error:", error);
+            setIsBankConnecting(false);
+        }
+    };
 
     // Reset modal state
     const resetModal = () => {
@@ -686,60 +763,122 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 {/* SECTION 1: HEADER */}
                 {/* ============================================ */}
                 <div className="mb-6 flex flex-col gap-4 border-b border-secondary pb-5 lg:mb-8">
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h1 className="text-xl font-semibold text-primary lg:text-display-xs">
-                                Semaine {selectedWeek} · {monthName.charAt(0).toUpperCase() + monthName.slice(1)} {displayYear}
+                                {viewMode === "semaine"
+                                    ? `Semaine ${selectedWeek} · ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${displayYear}`
+                                    : `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${displayYear}`
+                                }
                             </h1>
                             <p className="text-sm text-tertiary">
-                                {selectedYear === currentYear && selectedWeek === currentWeekNum
-                                    ? `${daysRemaining} jours restants ce mois`
-                                    : `Du ${weekDates.start.toLocaleDateString("fr-FR")} au ${weekDates.end.toLocaleDateString("fr-FR")}`}
+                                {daysRemaining} jours restants ce mois
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button size="sm" color="secondary" iconLeading={ChevronLeft} onClick={goToPreviousWeek} isDisabled={!canGoPrevious}>
-                                {selectedWeek <= 1 ? `S52 ${selectedYear - 1}` : `Sem. ${selectedWeek - 1}`}
-                            </Button>
-                            <Button size="sm" color="secondary" iconTrailing={ChevronRight} onClick={goToNextWeek} isDisabled={!canGoNext}>
-                                {selectedWeek >= 52 ? `S1 ${selectedYear + 1}` : `Sem. ${selectedWeek + 1}`}
-                            </Button>
+                        <div className="flex items-center gap-3">
+                            {/* Toggle Hebdo/Mois */}
+                            <div className="flex rounded-lg border border-secondary bg-primary">
+                                <button
+                                    onClick={() => setViewMode("semaine")}
+                                    className={cx(
+                                        "px-3 py-1.5 text-sm font-medium rounded-l-md transition-all",
+                                        viewMode === "semaine"
+                                            ? "bg-brand-600 text-white"
+                                            : "text-tertiary hover:text-primary hover:bg-secondary"
+                                    )}
+                                >
+                                    Semaine
+                                </button>
+                                <button
+                                    onClick={() => setViewMode("mois")}
+                                    className={cx(
+                                        "px-3 py-1.5 text-sm font-medium rounded-r-md transition-all",
+                                        viewMode === "mois"
+                                            ? "bg-brand-600 text-white"
+                                            : "text-tertiary hover:text-primary hover:bg-secondary"
+                                    )}
+                                >
+                                    Mois
+                                </button>
+                            </div>
+
+                            {/* Navigation semaine (visible uniquement en mode semaine) */}
+                            {viewMode === "semaine" && (
+                                <div className="flex items-center gap-1">
+                                    <ButtonUtility
+                                        size="sm"
+                                        color="secondary"
+                                        icon={ChevronLeft}
+                                        onClick={goToPreviousWeek}
+                                        isDisabled={!canGoPrevious}
+                                        tooltip={selectedWeek <= 1 ? `S52 ${selectedYear - 1}` : `Sem. ${selectedWeek - 1}`}
+                                    />
+                                    <ButtonUtility
+                                        size="sm"
+                                        color="secondary"
+                                        icon={ChevronRight}
+                                        onClick={goToNextWeek}
+                                        isDisabled={!canGoNext}
+                                        tooltip={selectedWeek >= 52 ? `S1 ${selectedYear + 1}` : `Sem. ${selectedWeek + 1}`}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
                 {/* ============================================ */}
-                {/* SECTION 2: CARD BUDGET SEMAINE (Hero) */}
+                {/* SECTION 2: CARD BUDGET (Hero) */}
                 {/* ============================================ */}
                 <div className="mb-8 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 p-6 shadow-lg lg:p-8">
                     <div className="flex flex-col gap-6">
                         <div className="flex flex-col gap-2">
-                            <h2 className="text-lg font-semibold text-white/90">Budget Semaine</h2>
+                            <h2 className="text-lg font-semibold text-white/90">{budgetData.label}</h2>
                             <div className="flex flex-wrap items-baseline gap-2">
-                                <span className="text-display-md font-bold text-white lg:text-display-lg">{formatCurrencySimple(depenseSemaine)}</span>
-                                <span className="text-lg text-white/70">/ {formatCurrencySimple(budgetHebdo)}</span>
-                                <span className="text-sm text-white/60">({pourcentageHebdo.toFixed(0)}%)</span>
+                                <span className="text-display-md font-bold text-white lg:text-display-lg">{formatCurrencySimple(budgetData.spent)}</span>
+                                <span className="text-lg text-white/70">/ {formatCurrencySimple(budgetData.total)}</span>
+                                <span className="text-sm text-white/60">({budgetData.percentage.toFixed(0)}%)</span>
                             </div>
                             <p className="text-md text-white/80">
-                                Reste : <span className="font-semibold">{formatCurrencySimple(Math.max(0, resteHebdo))}</span>
+                                Reste : <span className="font-semibold">{formatCurrencySimple(Math.max(0, budgetData.remaining))}</span>
                             </p>
                         </div>
 
                         <ProgressBar
-                            value={Math.min(pourcentageHebdo, 100)}
+                            value={Math.min(budgetData.percentage, 100)}
                             className="h-3 bg-white/20"
-                            progressClassName={getProgressColorOnDark(pourcentageHebdo)}
+                            progressClassName={getProgressColorOnDark(budgetData.percentage)}
                         />
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                            {/* Bouton principal: Connexion banque (si pas connecté) */}
+                            {!hasBankConnection && (
+                                <Button
+                                    size="lg"
+                                    color="secondary"
+                                    iconLeading={isBankConnecting ? undefined : Link01}
+                                    onClick={handleConnectBank}
+                                    isDisabled={isBankConnecting}
+                                    className="w-full justify-center bg-white text-brand-700 hover:bg-white/90 sm:w-auto"
+                                >
+                                    {isBankConnecting ? "Connexion..." : "Connecter ma banque"}
+                                </Button>
+                            )}
+
+                            {/* Bouton Dépense cash */}
                             <DialogTrigger isOpen={isExpenseModalOpen} onOpenChange={setIsExpenseModalOpen}>
                                 <Button
                                     size="lg"
                                     color="secondary"
                                     iconLeading={Plus}
-                                    className="w-full justify-center bg-white text-brand-700 hover:bg-white/90 sm:w-auto"
+                                    className={cx(
+                                        "w-full justify-center sm:w-auto",
+                                        hasBankConnection
+                                            ? "bg-white text-brand-700 hover:bg-white/90"
+                                            : "bg-white/20 text-white hover:bg-white/30"
+                                    )}
                                 >
-                                    Ajouter une dépense
+                                    Dépense cash
                                 </Button>
 
                                 <ModalOverlay isDismissable>
@@ -867,10 +1006,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                                 if (!open) resetImportModal();
                             }}>
                                 <Button
-                                    size="sm"
+                                    size="lg"
                                     color="secondary"
                                     iconLeading={Upload01}
-                                    className="bg-white/20 text-white hover:bg-white/30 sm:ml-auto"
+                                    className="w-full justify-center bg-white/20 text-white hover:bg-white/30 sm:ml-auto sm:w-auto"
                                 >
                                     Importer
                                 </Button>
@@ -1291,13 +1430,20 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 </div>
 
                 {/* ============================================ */}
-                {/* SECTION 3: ENVELOPPES */}
+                {/* SECTION 3: ENVELOPPES (max 4) */}
                 {/* ============================================ */}
                 <div className="mb-8">
-                    <h2 className="mb-4 text-lg font-semibold text-primary">Enveloppes</h2>
+                    <div className="mb-4 flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-primary">Enveloppes</h2>
+                        {enveloppes.length > 4 && (
+                            <Link href="/parametres" className="text-sm font-medium text-brand-600 hover:text-brand-700">
+                                Voir toutes ({enveloppes.length})
+                            </Link>
+                        )}
+                    </div>
                     {enveloppes.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
-                            {enveloppes.map((env) => (
+                        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                            {enveloppes.slice(0, 4).map((env) => (
                                 <button
                                     key={env.id}
                                     className="flex flex-col gap-3 rounded-xl bg-primary p-4 text-left shadow-xs ring-1 ring-secondary transition-all ring-inset hover:shadow-md hover:ring-brand-200"
@@ -1320,7 +1466,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                     ) : (
                         <div className="rounded-xl bg-secondary p-8 text-center">
                             <p className="text-tertiary">Aucune catégorie de dépense configurée.</p>
-                            <Link href="/settings">
+                            <Link href="/parametres">
                                 <Button size="sm" color="link-color" className="mt-2">
                                     Configurer les catégories
                                 </Button>
@@ -1330,35 +1476,23 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 </div>
 
                 {/* ============================================ */}
-                {/* SECTION 4: RÉSUMÉ DU MOIS */}
+                {/* SECTION 4: RÉSUMÉ DU MOIS (compact) */}
                 {/* ============================================ */}
-                <div className="mb-8 rounded-xl bg-secondary p-5 ring-1 ring-secondary ring-inset lg:p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-primary">Résumé du mois</h2>
-                        <Link href="/budget">
-                            <Button size="sm" color="link-color" iconTrailing={ChevronRight}>
-                                Voir le budget complet
-                            </Button>
-                        </Link>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                        <div className="flex flex-col gap-1">
+                <div className="mb-8 rounded-xl bg-secondary/50 p-4 ring-1 ring-secondary ring-inset">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
                             <span className="text-sm text-tertiary">Revenus</span>
-                            <span className="text-xl font-semibold text-finance-gain">{formatCurrencySimple(revenusMois)}</span>
+                            <span className="font-semibold text-finance-gain">{formatCurrencySimple(revenusMois)}</span>
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <span className="text-sm text-tertiary">Charges fixes</span>
-                            <span className="text-xl font-semibold text-primary">{formatCurrencySimple(chargesFixesMois)}</span>
-                            <span className="text-xs text-tertiary">/{formatCurrencySimple(totalChargesFixes)}</span>
+                        <span className="text-tertiary">−</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-tertiary">Charges</span>
+                            <span className="font-semibold text-primary">{formatCurrencySimple(chargesFixesMois)}</span>
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <span className="text-sm text-tertiary">Variable prévu</span>
-                            <span className="text-xl font-semibold text-primary">{formatCurrencySimple(budgetVariableMensuel)}</span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <span className="text-sm text-tertiary">Épargne</span>
-                            <span className="text-xl font-semibold text-utility-blue-500">{formatCurrencySimple(objectifEpargneMensuel)}</span>
+                        <span className="text-tertiary">=</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-tertiary">Disponible</span>
+                            <span className="text-lg font-bold text-brand-600">{formatCurrencySimple(disponibleMensuel)}</span>
                         </div>
                     </div>
                 </div>
@@ -1367,64 +1501,43 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 {/* SECTION 5: DEUX COLONNES */}
                 {/* ============================================ */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    {/* Colonne gauche: PATRIMOINE RAPIDE */}
+                    {/* Colonne gauche: DERNIÈRES TRANSACTIONS */}
                     <div className="flex flex-col gap-4 rounded-xl p-5 shadow-xs ring-1 ring-secondary ring-inset">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-tertiary">Valeur nette</span>
-                            <BadgeWithIcon type="pill-color" color="success" iconLeading={ArrowUp} size="sm" className="shrink-0 whitespace-nowrap">
-                                {patrimoine.variationMois >= 0 ? "+" : ""}{patrimoine.variationMois.toFixed(1)}% ce mois
-                            </BadgeWithIcon>
+                            <h2 className="text-lg font-semibold text-primary">Dernières transactions</h2>
+                            <Link href="/depenses" className="text-sm font-medium text-brand-600 hover:text-brand-700">
+                                Voir tout
+                            </Link>
                         </div>
-
-                        {/* Donut Chart avec valeur au centre */}
-                        <div className="relative mx-auto flex flex-1 items-center justify-center">
-                            <ResponsiveContainer width={240} height={240}>
-                                <RechartsPieChart margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
-                                    <Tooltip content={<ChartTooltipContent isPieChart />} formatter={(value) => formatCurrencySimple(value as number)} />
-                                    <Pie
-                                        isAnimationActive={false}
-                                        startAngle={-270}
-                                        endAngle={-630}
-                                        stroke="none"
-                                        data={patrimoine.repartition}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        fill="currentColor"
-                                        innerRadius={72}
-                                        outerRadius={115}
-                                        className="[&_.recharts-sector]:cursor-pointer [&_.recharts-sector]:transition-[filter,opacity] [&_.recharts-sector]:duration-200 [&_.recharts-sector:hover]:brightness-110 [&_.recharts-sector:hover]:drop-shadow-md"
-                                    />
-                                </RechartsPieChart>
-                            </ResponsiveContainer>
-                            {/* Valeur au centre */}
-                            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                                <p className="text-xl font-semibold text-primary">{formatCurrencySimple(patrimoine.valeurNette)}</p>
-                                <p className="text-xs text-tertiary">Total</p>
+                        {lastTransactions.length > 0 ? (
+                            <div className="flex flex-col gap-2">
+                                {lastTransactions.map((tx) => (
+                                    <div key={tx.id} className="flex items-center justify-between rounded-lg bg-secondary p-3">
+                                        <div className="flex flex-col gap-0.5">
+                                            <p className="text-sm font-medium text-primary">{tx.description || "Sans description"}</p>
+                                            <p className="text-xs text-tertiary">{formatDateRelative(tx.date)}</p>
+                                        </div>
+                                        <p className={cx(
+                                            "text-sm font-semibold",
+                                            tx.montant < 0 ? "text-finance-loss" : "text-finance-gain"
+                                        )}>
+                                            {formatCurrencySimple(tx.montant)}
+                                        </p>
+                                    </div>
+                                ))}
                             </div>
-                        </div>
-
-                        {/* Légende compacte */}
-                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
-                            {patrimoine.repartition.map((item) => (
-                                <div key={item.name} className="flex items-center gap-1.5">
-                                    <span className={cx("h-2 w-2 rounded-full", item.className, "bg-current")} />
-                                    <span className="text-xs text-tertiary">{item.name}</span>
-                                </div>
-                            ))}
-                        </div>
-
-                        <Link href="/patrimoine">
-                            <Button size="sm" color="link-color" iconTrailing={ChevronRight} className="w-full justify-center">
-                                Voir détails
-                            </Button>
-                        </Link>
+                        ) : (
+                            <div className="flex flex-1 items-center justify-center rounded-lg bg-secondary p-6">
+                                <p className="text-sm text-tertiary">Aucune transaction</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Colonne droite: PROCHAINS PRÉLÈVEMENTS */}
                     <div className="flex flex-col gap-4 rounded-xl p-5 shadow-xs ring-1 ring-secondary ring-inset">
                         <div className="flex items-center justify-between">
-                            <p className="text-sm font-semibold text-primary">Prochains prélèvements</p>
-                            <FeaturedIcon size="sm" color="gray" theme="modern" icon={Calendar} />
+                            <h2 className="text-lg font-semibold text-primary">Prochains prélèvements</h2>
+                            <Calendar className="h-5 w-5 text-tertiary" />
                         </div>
                         {prochainsPrelevements.length > 0 ? (
                             <div className="flex flex-col gap-2">
@@ -1446,7 +1559,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                                 <p className="text-sm text-tertiary">Aucun prélèvement à venir</p>
                             </div>
                         )}
-                        <Link href="/budget">
+                        <Link href="/budget/charges-fixes">
                             <Button size="sm" color="link-color" iconTrailing={ChevronRight} className="w-full justify-center">
                                 Voir tout
                             </Button>

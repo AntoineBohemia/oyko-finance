@@ -12,6 +12,156 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_accounts: {
+        Row: {
+          account_type: string | null
+          balance: number | null
+          connection_id: string | null
+          created_at: string | null
+          currency: string | null
+          external_id: string
+          iban: string | null
+          id: string
+          is_included_in_budget: boolean | null
+          last_sync_at: string | null
+          name: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_type?: string | null
+          balance?: number | null
+          connection_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          external_id: string
+          iban?: string | null
+          id?: string
+          is_included_in_budget?: boolean | null
+          last_sync_at?: string | null
+          name?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_type?: string | null
+          balance?: number | null
+          connection_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          external_id?: string
+          iban?: string | null
+          id?: string
+          is_included_in_budget?: boolean | null
+          last_sync_at?: string | null
+          name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "bank_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_patrimoine_total"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "bank_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_resume_mensuel"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      bank_connections: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          expires_at: string | null
+          id: string
+          institution_id: string | null
+          institution_logo: string | null
+          institution_name: string | null
+          last_sync_at: string | null
+          provider: string
+          provider_user_id: string | null
+          requisition_id: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          expires_at?: string | null
+          id?: string
+          institution_id?: string | null
+          institution_logo?: string | null
+          institution_name?: string | null
+          last_sync_at?: string | null
+          provider: string
+          provider_user_id?: string | null
+          requisition_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          expires_at?: string | null
+          id?: string
+          institution_id?: string | null
+          institution_logo?: string | null
+          institution_name?: string | null
+          last_sync_at?: string | null
+          provider?: string
+          provider_user_id?: string | null
+          requisition_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_patrimoine_total"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "bank_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_resume_mensuel"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       budgets_mensuels: {
         Row: {
           annee: number
@@ -165,6 +315,9 @@ export type Database = {
           icone: string | null
           id: string
           jour_prelevement: number | null
+          last_matched_at: string | null
+          last_matched_transaction_id: string | null
+          match_patterns: string[] | null
           montant: number
           nom: string
           notes: string | null
@@ -183,6 +336,9 @@ export type Database = {
           icone?: string | null
           id?: string
           jour_prelevement?: number | null
+          last_matched_at?: string | null
+          last_matched_transaction_id?: string | null
+          match_patterns?: string[] | null
           montant: number
           nom: string
           notes?: string | null
@@ -201,6 +357,9 @@ export type Database = {
           icone?: string | null
           id?: string
           jour_prelevement?: number | null
+          last_matched_at?: string | null
+          last_matched_transaction_id?: string | null
+          match_patterns?: string[] | null
           montant?: number
           nom?: string
           notes?: string | null
@@ -227,6 +386,13 @@ export type Database = {
             columns: ["compte_id"]
             isOneToOne: false
             referencedRelation: "comptes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "charges_fixes_last_matched_transaction_id_fkey"
+            columns: ["last_matched_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
             referencedColumns: ["id"]
           },
           {
@@ -641,8 +807,12 @@ export type Database = {
           mode_gestion: string | null
           nom: string | null
           objectif_epargne: number | null
+          premier_jour_semaine: number | null
           prenom: string | null
           revenus_mensuels: number | null
+          salaire_attendu: number | null
+          salaire_patterns: string[] | null
+          salaire_recu_ce_mois: boolean | null
           updated_at: string | null
         }
         Insert: {
@@ -654,8 +824,12 @@ export type Database = {
           mode_gestion?: string | null
           nom?: string | null
           objectif_epargne?: number | null
+          premier_jour_semaine?: number | null
           prenom?: string | null
           revenus_mensuels?: number | null
+          salaire_attendu?: number | null
+          salaire_patterns?: string[] | null
+          salaire_recu_ce_mois?: boolean | null
           updated_at?: string | null
         }
         Update: {
@@ -667,14 +841,61 @@ export type Database = {
           mode_gestion?: string | null
           nom?: string | null
           objectif_epargne?: number | null
+          premier_jour_semaine?: number | null
           prenom?: string | null
           revenus_mensuels?: number | null
+          salaire_attendu?: number | null
+          salaire_patterns?: string[] | null
+          salaire_recu_ce_mois?: boolean | null
           updated_at?: string | null
         }
         Relationships: []
       }
+      regles_categorisation: {
+        Row: {
+          categorie_id: string | null
+          created_at: string | null
+          id: string
+          pattern: string
+          priorite: number | null
+          user_id: string | null
+        }
+        Insert: {
+          categorie_id?: string | null
+          created_at?: string | null
+          id?: string
+          pattern: string
+          priorite?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          categorie_id?: string | null
+          created_at?: string | null
+          id?: string
+          pattern?: string
+          priorite?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regles_categorisation_categorie_id_fkey"
+            columns: ["categorie_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "regles_categorisation_categorie_id_fkey"
+            columns: ["categorie_id"]
+            isOneToOne: false
+            referencedRelation: "v_depenses_par_categorie"
+            referencedColumns: ["categorie_id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
+          bank_account_id: string | null
           categorie_id: string | null
           charge_fixe_id: string | null
           compte_id: string | null
@@ -682,15 +903,22 @@ export type Database = {
           date_transaction: string
           description: string | null
           est_recurrent: boolean | null
+          external_id: string | null
           id: string
+          is_reviewed: boolean | null
+          merchant_name: string | null
           montant: number
           notes: string | null
+          provider_category: string | null
+          raw_description: string | null
+          source: string | null
           tags: string[] | null
           type: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          bank_account_id?: string | null
           categorie_id?: string | null
           charge_fixe_id?: string | null
           compte_id?: string | null
@@ -698,15 +926,22 @@ export type Database = {
           date_transaction?: string
           description?: string | null
           est_recurrent?: boolean | null
+          external_id?: string | null
           id?: string
+          is_reviewed?: boolean | null
+          merchant_name?: string | null
           montant: number
           notes?: string | null
+          provider_category?: string | null
+          raw_description?: string | null
+          source?: string | null
           tags?: string[] | null
           type: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          bank_account_id?: string | null
           categorie_id?: string | null
           charge_fixe_id?: string | null
           compte_id?: string | null
@@ -714,15 +949,28 @@ export type Database = {
           date_transaction?: string
           description?: string | null
           est_recurrent?: boolean | null
+          external_id?: string | null
           id?: string
+          is_reviewed?: boolean | null
+          merchant_name?: string | null
           montant?: number
           notes?: string | null
+          provider_category?: string | null
+          raw_description?: string | null
+          source?: string | null
           tags?: string[] | null
           type?: string
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_categorie_id_fkey"
             columns: ["categorie_id"]
@@ -995,3 +1243,5 @@ export type Dette = Tables<"dettes">
 export type HistoriqueSolde = Tables<"historique_soldes">
 export type Objectif = Tables<"objectifs">
 export type BudgetMensuel = Tables<"budgets_mensuels">
+export type BankConnection = Tables<"bank_connections">
+export type BankAccount = Tables<"bank_accounts">
