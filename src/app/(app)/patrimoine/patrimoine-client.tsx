@@ -31,8 +31,7 @@ import {
 import { ChartLegendContent, ChartTooltipContent } from "@/components/application/charts/charts-base";
 import { MetricChangeIndicator } from "@/components/application/metrics/metrics";
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
-import { Table, TableRowActionsDropdown } from "@/components/application/table/table";
-import { TabList, Tabs } from "@/components/application/tabs/tabs";
+import { TableRowActionsDropdown } from "@/components/application/table/table";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
@@ -40,10 +39,8 @@ import { Input } from "@/components/base/input/input";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { cx } from "@/utils/cx";
 import type {
-    PatrimoineData,
     ComptePatrimoine,
     InvestissementPatrimoine,
-    DettePatrimoine,
     EvolutionPatrimoine,
     TotauxPatrimoine,
 } from "@/lib/data/patrimoine";
@@ -80,7 +77,7 @@ interface PatrimoineClientProps {
 const formatCurrency = (amount: number): string => amount.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
 
 const formatCurrencyCompact = (amount: number): string => {
-    if (Math.abs(amount) >= 1000) return `${(amount / 1000).toFixed(1)}k €`;
+    if (Math.abs(amount) >= 1000) return `${(amount / 1000).toFixed(1).replace(".0", "")}k €`;
     return `${amount.toFixed(0)} €`;
 };
 
@@ -109,111 +106,85 @@ const getJMoinsBadge = (date: Date): { label: string; color: "success" | "warnin
 };
 
 const getTypeLabel = (type: string): string => {
-    const labels: Record<string, string> = {
-        etudiant: "Étudiant",
-        immobilier: "Immobilier",
-        conso: "Conso",
-        auto: "Auto",
-        personnel: "Personnel",
-        autre: "Autre",
-    };
+    const labels: Record<string, string> = { etudiant: "Étudiant", immobilier: "Immobilier", conso: "Conso", auto: "Auto", personnel: "Personnel", autre: "Autre" };
     return labels[type] || type;
 };
 
 const getTypeColor = (type: string): "brand" | "warning" | "error" => {
-    const colors: Record<string, "brand" | "warning" | "error"> = {
-        etudiant: "brand",
-        immobilier: "brand",
-        conso: "warning",
-        auto: "warning",
-        personnel: "error",
-        autre: "error",
-    };
+    const colors: Record<string, "brand" | "warning" | "error"> = { etudiant: "brand", immobilier: "brand", conso: "warning", auto: "warning", personnel: "error", autre: "error" };
     return colors[type] || "brand";
 };
 
 const getCompteIcon = (type: string) => {
     switch (type) {
-        case "epargne":
-            return PiggyBank01;
-        case "cash":
-            return Wallet03;
-        default:
-            return Bank;
+        case "epargne": return PiggyBank01;
+        case "cash": return Wallet03;
+        default: return Bank;
     }
 };
 
 const getCompteIconColor = (type: string) => {
     switch (type) {
-        case "epargne":
-            return "text-success-600";
-        case "cash":
-            return "text-warning-600";
-        default:
-            return "text-gray-600";
+        case "epargne": return "text-success-600 bg-success-50";
+        case "cash": return "text-warning-600 bg-amber-50";
+        default: return "text-gray-600 bg-gray-100";
     }
 };
-
-// ============================================
-// TABS
-// ============================================
-
-const tabs = [
-    { id: "liquidites", label: "Liquidités" },
-    { id: "investissements", label: "Investissements" },
-    { id: "dettes", label: "Dettes" },
-];
 
 // ============================================
 // COMPOSANT PRINCIPAL
 // ============================================
 
 export default function PatrimoineClient({ initialData }: PatrimoineClientProps) {
-    const [selectedTab, setSelectedTab] = useState("liquidites");
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [soldesUpdate, setSoldesUpdate] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
 
-    // Données
     const profile = initialData.profile;
     const comptes = initialData.comptes;
     const investissements = initialData.investissements;
     const evolutionPatrimoine = initialData.evolutionPatrimoine;
     const totaux = initialData.totaux;
 
-    // Reconvertir les dates des dettes
     const dettes = initialData.dettes.map((d) => ({
         ...d,
         prochainPrelevement: new Date(d.prochainPrelevement),
     }));
 
-    // Répartition actifs pour le donut
+    // Répartition pour le donut
     const repartitionActifs = [
         { name: "Liquidités", value: totaux.totalLiquidites, color: "#1C1917" },
         { name: "Investissements", value: totaux.totalInvestissements, color: "#BEFF00" },
     ];
 
-    // Initialiser les soldes pour la modale
+    // Variation mensuelle
+    const variationMois = evolutionPatrimoine.length >= 2
+        ? ((evolutionPatrimoine[evolutionPatrimoine.length - 1]?.net ?? 0) -
+           (evolutionPatrimoine[evolutionPatrimoine.length - 2]?.net ?? 0)) /
+          Math.abs(evolutionPatrimoine[evolutionPatrimoine.length - 2]?.net || 1) * 100
+        : 0;
+
+    const totalMensualitesDettes = dettes.reduce((acc, d) => acc + d.mensualite, 0);
+    const pctActifs = totaux.totalActifs + totaux.totalDettes > 0
+        ? (totaux.totalActifs / (totaux.totalActifs + totaux.totalDettes)) * 100
+        : 100;
+
+    // Modale mise à jour
     const openUpdateModal = () => {
         const initial: Record<string, string> = {};
-        comptes.forEach((c) => {
-            initial[c.id] = c.solde.toString();
-        });
+        comptes.forEach((c) => { initial[c.id] = c.solde.toString(); });
         setSoldesUpdate(initial);
         setIsUpdateModalOpen(true);
     };
 
     const handleUpdateSoldes = async () => {
         if (!profile) return;
-
         setIsSaving(true);
-
         try {
             const { updateCompteSolde } = await import("@/lib/data/patrimoine");
             for (const [compteId, solde] of Object.entries(soldesUpdate)) {
                 await updateCompteSolde(compteId, parseFloat(solde) || 0);
             }
-
             setIsUpdateModalOpen(false);
             window.location.reload();
         } catch (error) {
@@ -223,452 +194,361 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
         }
     };
 
-    // Plus de blocage sur !profile — on affiche le contenu même sans profil
-
-    // Calcul de la variation mensuelle
-    const variationMois = evolutionPatrimoine.length >= 2
-        ? ((evolutionPatrimoine[evolutionPatrimoine.length - 1]?.net ?? 0) -
-           (evolutionPatrimoine[evolutionPatrimoine.length - 2]?.net ?? 0)) /
-          Math.abs(evolutionPatrimoine[evolutionPatrimoine.length - 2]?.net || 1) * 100
-        : 0;
-
     return (
         <PageTransition className="min-h-screen bg-primary">
             <div className="mx-auto max-w-container px-4 py-6 lg:px-8 lg:py-8">
-                <div className="flex flex-col gap-8">
-                    {/* SECTION 1: HEADER */}
-                    <div className="flex flex-col gap-4 border-b border-secondary pb-5 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex flex-col gap-1">
-                            <h1 className="text-xl font-semibold text-primary lg:text-display-xs">Patrimoine</h1>
-                            <p className="text-sm text-tertiary">Vue consolidée de vos actifs et passifs</p>
-                        </div>
-                        <Button size="md" color="secondary" iconLeading={RefreshCw01} onClick={openUpdateModal}>
-                            Mettre à jour les soldes
-                        </Button>
+                {/* ============================================ */}
+                {/* HEADER                                       */}
+                {/* ============================================ */}
+                <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <h1 className="text-display-xs font-semibold text-primary lg:text-display-sm">Patrimoine</h1>
+                        <p className="text-md text-tertiary">Vue consolidée de vos actifs et passifs</p>
                     </div>
+                    <Button size="md" color="secondary" iconLeading={RefreshCw01} onClick={openUpdateModal}>
+                        Mettre à jour
+                    </Button>
+                </div>
 
-                    {/* SECTION 2: VALEUR NETTE HERO */}
-                    <div className="flex flex-col gap-6 rounded-xl bg-primary_alt p-6 border border-[#E5E2DC] lg:p-8">
-                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                            <div className="flex flex-col gap-2">
-                                <p className="text-sm font-medium text-tertiary">Valeur nette</p>
-                                <div className="flex items-end gap-3">
-                                    <p className="text-display-md font-semibold text-primary lg:text-display-lg">
-                                        {formatCurrency(totaux.valeurNette)}
-                                    </p>
-                                    <MetricChangeIndicator
-                                        trend={variationMois >= 0 ? "positive" : "negative"}
-                                        type="trend"
-                                        value={`${variationMois >= 0 ? "+" : ""}${variationMois.toFixed(1)}%`}
-                                        className="mb-2"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Mini donut répartition */}
-                            <div className="flex items-center gap-4">
-                                <div className="h-20 w-20">
-                                    <ResponsiveContainer>
-                                        <PieChart>
-                                            <Pie
-                                                data={repartitionActifs}
-                                                dataKey="value"
-                                                nameKey="name"
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={25}
-                                                outerRadius={38}
-                                                paddingAngle={2}
-                                            >
-                                                {repartitionActifs.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                                ))}
-                                            </Pie>
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    {repartitionActifs.map((item) => (
-                                        <div key={item.name} className="flex items-center gap-2">
-                                            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
-                                            <span className="text-xs text-tertiary">{item.name}</span>
-                                            <span className="text-xs font-medium text-primary">{formatCurrencyCompact(item.value)}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Barre Actifs vs Passifs */}
-                        <div className="flex flex-col gap-3">
-                            <div className="flex justify-between text-sm">
-                                <div className="flex items-center gap-2">
-                                    <TrendUp01 className="h-4 w-4 text-finance-gain-subtle" />
-                                    <span className="text-tertiary">Actifs</span>
-                                    <span className="font-semibold text-finance-gain">{formatCurrency(totaux.totalActifs)}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-finance-loss">{formatCurrency(totaux.totalDettes)}</span>
-                                    <span className="text-tertiary">Passifs</span>
-                                    <TrendDown01 className="h-4 w-4 text-finance-loss-subtle" />
-                                </div>
-                            </div>
-                            <div className="flex h-3 w-full overflow-hidden rounded-full bg-error-100">
-                                <div
-                                    className="h-full bg-success-500 transition-all"
-                                    style={{ width: `${(totaux.totalActifs / (totaux.totalActifs + totaux.totalDettes)) * 100}%` }}
+                {/* ============================================ */}
+                {/* HERO — Valeur nette + Donut (bg-white)       */}
+                {/* ============================================ */}
+                <div className="mb-8 rounded-2xl border border-[#E5E2DC] bg-white p-6 lg:p-8">
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                        {/* Left — Valeur nette */}
+                        <div className="flex flex-col gap-2">
+                            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-tertiary">Valeur nette</p>
+                            <div className="flex flex-wrap items-baseline gap-3">
+                                <span className="font-mono text-4xl font-bold tracking-tight text-primary lg:text-5xl">
+                                    {formatCurrency(totaux.valeurNette)}
+                                </span>
+                                <MetricChangeIndicator
+                                    trend={variationMois >= 0 ? "positive" : "negative"}
+                                    type="trend"
+                                    value={`${variationMois >= 0 ? "+" : ""}${variationMois.toFixed(1)}%`}
                                 />
                             </div>
-                            <div className="flex justify-between text-xs text-tertiary">
-                                <span>{((totaux.totalActifs / (totaux.totalActifs + totaux.totalDettes)) * 100).toFixed(0)}% actifs</span>
-                                <span>{((totaux.totalDettes / (totaux.totalActifs + totaux.totalDettes)) * 100).toFixed(0)}% passifs</span>
-                            </div>
                         </div>
-                    </div>
 
-                    {/* SECTION 3: TABS */}
-                    <Tabs selectedKey={selectedTab} onSelectionChange={(key) => setSelectedTab(key as string)}>
-                        <TabList size="md" type="underline" items={tabs} />
-                    </Tabs>
-
-                    {/* SECTION 4: CONTENU TABS */}
-                    <>
-                        {/* TAB LIQUIDITÉS */}
-                        {selectedTab === "liquidites" && (
-                            <div className="flex flex-col gap-6">
-                                {/* Total liquidités */}
-                                <div className="flex items-center justify-between rounded-xl bg-primary_alt p-4 border border-[#E5E2DC]">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                                            <Wallet03 className="h-5 w-5 text-gray-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-tertiary">Total liquidités</p>
-                                            <p className="text-lg font-semibold text-primary">{formatCurrency(totaux.totalLiquidites)}</p>
-                                        </div>
-                                    </div>
-                                    <Link href="/comptes">
-                                        <Button size="sm" color="secondary" iconLeading={Plus}>
-                                            Nouveau compte
-                                        </Button>
-                                    </Link>
-                                </div>
-
-                                {/* Liste comptes */}
-                                {comptes.length > 0 ? (
-                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                        {comptes.map((compte) => {
-                                            const Icon = getCompteIcon(compte.type);
-                                            const iconColor = getCompteIconColor(compte.type);
-                                            return (
-                                                <div
-                                                    key={compte.id}
-                                                    className="flex flex-col gap-4 rounded-xl bg-primary_alt p-5 border border-[#E5E2DC]"
-                                                >
-                                                    <div className="flex items-start justify-between">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                                                                <Icon className={cx("h-5 w-5", iconColor)} />
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-sm font-medium text-primary">{compte.nom}</p>
-                                                                <p className="text-xs text-tertiary">{compte.banque}</p>
-                                                            </div>
-                                                        </div>
-                                                        <TableRowActionsDropdown />
-                                                    </div>
-                                                    <div className="flex items-end justify-between">
-                                                        <p className="text-xl font-semibold text-primary">{formatCurrency(compte.solde)}</p>
-                                                        <Badge size="sm" type="pill-color" color={compte.type === "epargne" ? "success" : "gray"}>
-                                                            {compte.type === "courant" ? "Courant" : compte.type === "epargne" ? "Épargne" : "Cash"}
-                                                        </Badge>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <div className="rounded-xl bg-secondary p-8 text-center">
-                                        <p className="text-tertiary">Aucun compte configuré.</p>
-                                        <Link href="/comptes">
-                                            <Button size="sm" color="link-color" className="mt-2">
-                                                Ajouter un compte
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* TAB INVESTISSEMENTS */}
-                        {selectedTab === "investissements" && (
-                            <div className="flex flex-col gap-6">
-                                {/* Total investissements */}
-                                <div className="flex items-center justify-between rounded-xl bg-primary_alt p-4 border border-[#E5E2DC]">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-50">
-                                            <LineChartUp01 className="h-5 w-5 text-success-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-tertiary">Total investissements</p>
-                                            <p className="text-lg font-semibold text-primary">{formatCurrency(totaux.totalInvestissements)}</p>
-                                        </div>
-                                        <div className="ml-4 flex flex-col">
-                                            <span className="text-xs text-tertiary">Plus-value</span>
-                                            <span className={cx("text-sm font-medium", totaux.totalPlusValue >= 0 ? "text-finance-gain" : "text-finance-loss")}>
-                                                {formatCurrency(totaux.totalPlusValue)} ({formatPercent(totaux.totalPlusValuePercent)})
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <Link href="/investissements">
-                                        <Button size="sm" color="secondary" iconLeading={Plus}>
-                                            Nouvel investissement
-                                        </Button>
-                                    </Link>
-                                </div>
-
-                                {/* Table investissements */}
-                                {investissements.length > 0 ? (
-                                    <div className="overflow-hidden rounded-xl bg-primary_alt border border-[#E5E2DC]">
-                                        <Table aria-label="Investissements">
-                                            <Table.Header>
-                                                <Table.Head id="nom" isRowHeader label="Actif" className="w-full" />
-                                                <Table.Head id="type" label="Type" />
-                                                <Table.Head id="valeur" label="Valeur" />
-                                                <Table.Head id="plusValue" label="+/- Value" />
-                                            </Table.Header>
-                                            <Table.Body items={investissements}>
-                                                {(inv) => (
-                                                    <Table.Row id={inv.id}>
-                                                        <Table.Cell>
-                                                            <div className="flex items-center gap-3">
-                                                                <Avatar src={inv.imageUrl ?? undefined} alt={inv.nom} size="sm" initials={inv.ticker.substring(0, 2)} />
-                                                                <div>
-                                                                    <p className="text-sm font-medium text-primary">{inv.nom}</p>
-                                                                    <p className="text-xs text-tertiary">{inv.ticker}</p>
-                                                                </div>
-                                                            </div>
-                                                        </Table.Cell>
-                                                        <Table.Cell>
-                                                            <Badge size="sm" type="pill-color" color={inv.type === "ETF" ? "brand" : inv.type === "Crypto" ? "warning" : "gray"}>
-                                                                {inv.type}
-                                                            </Badge>
-                                                        </Table.Cell>
-                                                        <Table.Cell>
-                                                            <span className="text-sm font-medium text-primary">{formatCurrency(inv.valeurActuelle)}</span>
-                                                        </Table.Cell>
-                                                        <Table.Cell>
-                                                            <div className="flex items-center gap-1.5">
-                                                                <span className={cx("text-sm font-medium", inv.plusValuePercent >= 0 ? "text-finance-gain" : "text-finance-loss")}>
-                                                                    {formatPercent(inv.plusValuePercent)}
-                                                                </span>
-                                                                {inv.plusValuePercent >= 0 ? (
-                                                                    <ArrowUp className="h-3.5 w-3.5 text-finance-gain-subtle" />
-                                                                ) : (
-                                                                    <ArrowDown className="h-3.5 w-3.5 text-finance-loss-subtle" />
-                                                                )}
-                                                            </div>
-                                                        </Table.Cell>
-                                                    </Table.Row>
-                                                )}
-                                            </Table.Body>
-                                        </Table>
-                                    </div>
-                                ) : (
-                                    <div className="rounded-xl bg-secondary p-8 text-center">
-                                        <p className="text-tertiary">Aucun investissement configuré.</p>
-                                        <Link href="/investissements">
-                                            <Button size="sm" color="link-color" className="mt-2">
-                                                Ajouter un investissement
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* TAB DETTES */}
-                        {selectedTab === "dettes" && (
-                            <div className="flex flex-col gap-6">
-                                {/* Total dettes */}
-                                <div className="flex items-center justify-between rounded-xl bg-primary_alt p-4 border border-[#E5E2DC]">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-error-50">
-                                            <CreditCard01 className="h-5 w-5 text-error-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-tertiary">Total dettes</p>
-                                            <p className="text-lg font-semibold text-finance-loss">{formatCurrency(totaux.totalDettes)}</p>
-                                        </div>
-                                        <div className="ml-4 flex flex-col">
-                                            <span className="text-xs text-tertiary">Mensualités totales</span>
-                                            <span className="text-sm font-medium text-primary">
-                                                {formatCurrency(totaux.totalMensualitesDettes)}/mois
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <Link href="/dettes">
-                                        <Button size="sm" color="secondary" iconLeading={Plus}>
-                                            Nouvelle dette
-                                        </Button>
-                                    </Link>
-                                </div>
-
-                                {/* Liste dettes */}
-                                {dettes.length > 0 ? (
-                                    <div className="flex flex-col gap-4">
-                                        {dettes.map((dette) => {
-                                            const progression = ((dette.capitalInitial - dette.capitalRestant) / dette.capitalInitial) * 100;
-                                            const jMoins = getJMoinsBadge(dette.prochainPrelevement);
-
-                                            return (
-                                                <div
-                                                    key={dette.id}
-                                                    className="flex flex-col gap-4 rounded-xl bg-primary_alt p-5 border border-[#E5E2DC]"
-                                                >
-                                                    <div className="flex items-start justify-between">
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar src={dette.imageUrl ?? undefined} alt={dette.nom} size="md" initials={dette.nom.substring(0, 2)} />
-                                                            <div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <p className="text-sm font-medium text-primary">{dette.nom}</p>
-                                                                    <Badge size="sm" type="pill-color" color={getTypeColor(dette.type)}>
-                                                                        {getTypeLabel(dette.type)}
-                                                                    </Badge>
-                                                                </div>
-                                                                <p className="text-xs text-tertiary">{dette.preteur}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="text-lg font-semibold text-primary">{formatCurrency(dette.capitalRestant)}</p>
-                                                            <p className="text-xs text-tertiary">sur {formatCurrency(dette.capitalInitial)}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex flex-col gap-2">
-                                                        <div className="flex justify-between text-xs text-tertiary">
-                                                            <span>{progression.toFixed(0)}% remboursé</span>
-                                                            <span>{formatCurrency(dette.mensualite)}/mois</span>
-                                                        </div>
-                                                        <ProgressBar min={0} max={100} value={progression} />
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between border-t border-secondary pt-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs text-tertiary">Prochain prélèvement:</span>
-                                                            <span className="text-xs font-medium text-primary">{formatDate(dette.prochainPrelevement)}</span>
-                                                        </div>
-                                                        <Badge size="sm" type="pill-color" color={jMoins.color}>
-                                                            {jMoins.label}
-                                                        </Badge>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <div className="rounded-xl bg-secondary p-8 text-center">
-                                        <p className="text-tertiary">Aucune dette enregistrée.</p>
-                                        <Link href="/dettes">
-                                            <Button size="sm" color="link-color" className="mt-2">
-                                                Ajouter une dette
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </>
-
-                    {/* SECTION 5: ÉVOLUTION DU PATRIMOINE */}
-                    {evolutionPatrimoine.length > 0 && (
-                        <div className="flex flex-col gap-6 rounded-xl bg-primary_alt p-6 border border-[#E5E2DC]">
-                            <div className="flex items-start justify-between">
-                                <div className="flex flex-col gap-1">
-                                    <p className="text-lg font-semibold text-primary">Évolution du patrimoine</p>
-                                    <p className="text-sm text-tertiary">Progression sur les 12 derniers mois</p>
-                                </div>
-                                <TableRowActionsDropdown />
-                            </div>
-
-                            <div className="flex h-64 w-full flex-col gap-2 lg:h-80">
-                                <ResponsiveContainer className="h-full">
-                                    <AreaChart data={evolutionPatrimoine} className="text-tertiary [&_.recharts-text]:text-xs">
-                                        <defs>
-                                            <linearGradient id="gradientActifs" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#1C1917" stopOpacity="0.15" />
-                                                <stop offset="95%" stopColor="#1C1917" stopOpacity="0" />
-                                            </linearGradient>
-                                            <linearGradient id="gradientNet" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#BEFF00" stopOpacity="0.3" />
-                                                <stop offset="95%" stopColor="#BEFF00" stopOpacity="0" />
-                                            </linearGradient>
-                                        </defs>
-
-                                        <CartesianGrid vertical={false} stroke="currentColor" className="text-utility-gray-100" />
-
-                                        <Legend verticalAlign="top" align="right" layout="horizontal" content={<ChartLegendContent className="-translate-y-2" />} />
-
-                                        <XAxis
-                                            fill="currentColor"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tickMargin={10}
-                                            padding={{ left: 10, right: 10 }}
-                                            interval="preserveStartEnd"
-                                            dataKey="date"
-                                            tickFormatter={(value) => new Date(value).toLocaleDateString("fr-FR", { month: "short" })}
-                                        />
-
+                        {/* Right — Donut Recharts interactif */}
+                        <div className="flex items-center gap-5">
+                            <div className="h-24 w-24">
+                                <ResponsiveContainer>
+                                    <PieChart>
+                                        <Pie
+                                            data={repartitionActifs}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={28}
+                                            outerRadius={44}
+                                            paddingAngle={3}
+                                        >
+                                            {repartitionActifs.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
                                         <RechartsTooltip
                                             content={<ChartTooltipContent />}
                                             formatter={(value) => formatCurrency(value as number)}
-                                            labelFormatter={(value) => new Date(value).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
-                                            cursor={{ className: "stroke-utility-brand-600 stroke-2" }}
                                         />
-
-                                        <Area
-                                            isAnimationActive={false}
-                                            className="text-gray-400"
-                                            dataKey="actifs"
-                                            name="Actifs"
-                                            type="monotone"
-                                            stroke="currentColor"
-                                            strokeWidth={2}
-                                            fill="url(#gradientActifs)"
-                                            activeDot={{ className: "fill-white stroke-gray-400 stroke-2" }}
-                                        />
-
-                                        <Area
-                                            isAnimationActive={false}
-                                            className="text-gray-300"
-                                            dataKey="passifs"
-                                            name="Passifs"
-                                            type="monotone"
-                                            stroke="currentColor"
-                                            strokeWidth={2}
-                                            fill="none"
-                                            strokeDasharray="4 4"
-                                            activeDot={{ className: "fill-white stroke-gray-300 stroke-2" }}
-                                        />
-
-                                        <Area
-                                            isAnimationActive={false}
-                                            className="text-[#BEFF00]"
-                                            dataKey="net"
-                                            name="Valeur nette"
-                                            type="monotone"
-                                            stroke="currentColor"
-                                            strokeWidth={3}
-                                            fill="url(#gradientNet)"
-                                            activeDot={{ className: "fill-white stroke-[#BEFF00] stroke-2" }}
-                                        />
-                                    </AreaChart>
+                                    </PieChart>
                                 </ResponsiveContainer>
                             </div>
+                            <div className="flex flex-col gap-1.5">
+                                {repartitionActifs.map((item) => (
+                                    <div key={item.name} className="flex items-center gap-2">
+                                        <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                                        <span className="text-sm text-tertiary">{item.name}</span>
+                                        <span className="font-mono text-sm font-semibold text-primary">{formatCurrencyCompact(item.value)}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    )}
+                    </div>
+
+                    {/* Barre Actifs vs Passifs */}
+                    <div className="mt-8 flex flex-col gap-3">
+                        <div className="flex justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                                <TrendUp01 className="h-4 w-4 text-success-500" />
+                                <span className="text-tertiary">Actifs</span>
+                                <span className="font-semibold text-finance-gain">{formatCurrency(totaux.totalActifs)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="font-semibold text-primary">{formatCurrency(totaux.totalDettes)}</span>
+                                <span className="text-tertiary">Passifs</span>
+                                <TrendDown01 className="h-4 w-4 text-rose-400" />
+                            </div>
+                        </div>
+                        <div className="flex h-3 w-full overflow-hidden rounded-full bg-rose-100">
+                            <div className="h-full bg-success-500 transition-all" style={{ width: `${pctActifs}%` }} />
+                        </div>
+                        <div className="flex justify-between text-xs text-tertiary">
+                            <span>{pctActifs.toFixed(0)}% actifs</span>
+                            <span>{(100 - pctActifs).toFixed(0)}% passifs</span>
+                        </div>
+                    </div>
                 </div>
+
+                {/* ============================================ */}
+                {/* 3 KPI CARDS                                  */}
+                {/* ============================================ */}
+                <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="flex items-center gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5">
+                        <div className="flex size-11 items-center justify-center rounded-full bg-gray-100">
+                            <Wallet03 className="size-5 text-gray-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-tertiary">Liquidités</p>
+                            <p className="font-mono text-lg font-bold text-primary">{formatCurrency(totaux.totalLiquidites)}</p>
+                            <p className="text-xs text-tertiary">{comptes.length} compte{comptes.length > 1 ? "s" : ""}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5">
+                        <div className="flex size-11 items-center justify-center rounded-full bg-[#BEFF00]/10">
+                            <LineChartUp01 className="size-5 text-[#5C7A00]" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-tertiary">Investissements</p>
+                            <p className="font-mono text-lg font-bold text-primary">{formatCurrency(totaux.totalInvestissements)}</p>
+                            <p className="text-xs font-medium text-[#5C7A00]">{formatPercent(totaux.totalPlusValuePercent)}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5">
+                        <div className="flex size-11 items-center justify-center rounded-full bg-rose-50">
+                            <CreditCard01 className="size-5 text-rose-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-tertiary">Dettes</p>
+                            <p className="font-mono text-lg font-bold text-primary">{formatCurrency(totaux.totalDettes)}</p>
+                            <p className="text-xs text-tertiary">{formatCurrency(totalMensualitesDettes)}/mois</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ============================================ */}
+                {/* 3 COLONNES DÉTAIL — No tabs                  */}
+                {/* ============================================ */}
+                <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
+
+                    {/* ---- LIQUIDITÉS ---- */}
+                    <div className="flex flex-col overflow-hidden rounded-xl border border-[#E5E2DC] bg-white">
+                        <div className="flex items-center justify-between border-b border-[#E5E2DC] px-5 py-4">
+                            <div className="flex items-center gap-2.5">
+                                <Wallet03 className="size-4 text-gray-500" />
+                                <span className="text-sm font-semibold text-primary">Liquidités</span>
+                            </div>
+                            <span className="font-mono text-sm font-bold tabular-nums text-primary">{formatCurrency(totaux.totalLiquidites)}</span>
+                        </div>
+
+                        <div className="flex flex-1 flex-col divide-y divide-gray-100">
+                            {comptes.length > 0 ? comptes.map((compte) => {
+                                const Icon = getCompteIcon(compte.type);
+                                const colorClasses = getCompteIconColor(compte.type);
+                                return (
+                                    <div key={compte.id} className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-gray-50">
+                                        <div className={cx("flex size-8 items-center justify-center rounded-full", colorClasses)}>
+                                            <Icon className="size-4" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-medium text-primary">{compte.nom}</p>
+                                            <p className="text-xs text-tertiary">{compte.banque}</p>
+                                        </div>
+                                        <span className="font-mono text-sm font-semibold tabular-nums text-primary">{formatCurrency(compte.solde)}</span>
+                                    </div>
+                                );
+                            }) : (
+                                <div className="flex flex-1 items-center justify-center p-6">
+                                    <p className="text-sm text-tertiary">Aucun compte</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="border-t border-[#E5E2DC] p-3">
+                            <Link href="/patrimoine?tab=liquidites">
+                                <Button size="sm" color="link-color" iconLeading={Plus} className="w-full justify-center">
+                                    Nouveau compte
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* ---- INVESTISSEMENTS ---- */}
+                    <div className="flex flex-col overflow-hidden rounded-xl border border-[#E5E2DC] bg-white">
+                        <div className="flex items-center justify-between border-b border-[#E5E2DC] px-5 py-4">
+                            <div className="flex items-center gap-2.5">
+                                <LineChartUp01 className="size-4 text-[#5C7A00]" />
+                                <span className="text-sm font-semibold text-primary">Investissements</span>
+                            </div>
+                            <div className="text-right">
+                                <span className="font-mono text-sm font-bold tabular-nums text-primary">{formatCurrency(totaux.totalInvestissements)}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-1 flex-col divide-y divide-gray-100">
+                            {investissements.length > 0 ? investissements.map((inv) => (
+                                <div key={inv.id} className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-gray-50">
+                                    <Avatar src={inv.imageUrl ?? undefined} alt={inv.nom} size="sm" initials={inv.ticker.substring(0, 2)} />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-primary">{inv.nom}</p>
+                                        <Badge size="sm" type="pill-color" color={inv.type === "ETF" ? "brand" : inv.type === "Crypto" ? "warning" : "gray"}>
+                                            {inv.type}
+                                        </Badge>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-mono text-sm font-semibold tabular-nums text-primary">{formatCurrency(inv.valeurActuelle)}</p>
+                                        <div className="flex items-center justify-end gap-1">
+                                            <span className={cx("font-mono text-xs font-semibold tabular-nums", inv.plusValuePercent >= 0 ? "text-finance-gain" : "text-finance-loss")}>
+                                                {formatPercent(inv.plusValuePercent)}
+                                            </span>
+                                            {inv.plusValuePercent >= 0
+                                                ? <ArrowUp className="size-3 text-finance-gain" />
+                                                : <ArrowDown className="size-3 text-finance-loss" />
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            )) : (
+                                <div className="flex flex-1 items-center justify-center p-6">
+                                    <p className="text-sm text-tertiary">Aucun investissement</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="border-t border-[#E5E2DC] p-3">
+                            <Link href="/patrimoine/investissements">
+                                <Button size="sm" color="link-color" iconLeading={Plus} className="w-full justify-center">
+                                    Nouvel investissement
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* ---- DETTES ---- */}
+                    <div className="flex flex-col overflow-hidden rounded-xl border border-[#E5E2DC] bg-white">
+                        <div className="flex items-center justify-between border-b border-[#E5E2DC] px-5 py-4">
+                            <div className="flex items-center gap-2.5">
+                                <CreditCard01 className="size-4 text-rose-500" />
+                                <span className="text-sm font-semibold text-primary">Dettes</span>
+                            </div>
+                            <div className="text-right">
+                                <span className="font-mono text-sm font-bold tabular-nums text-primary">{formatCurrency(totaux.totalDettes)}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-1 flex-col divide-y divide-gray-100">
+                            {dettes.length > 0 ? dettes.map((dette) => {
+                                const progression = ((dette.capitalInitial - dette.capitalRestant) / dette.capitalInitial) * 100;
+                                const jMoins = getJMoinsBadge(dette.prochainPrelevement);
+
+                                return (
+                                    <div key={dette.id} className="px-5 py-4 transition-colors hover:bg-gray-50">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar src={dette.imageUrl ?? undefined} alt={dette.nom} size="sm" initials={dette.nom.substring(0, 2)} />
+                                                <div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="text-sm font-medium text-primary">{dette.nom}</p>
+                                                        <Badge size="sm" type="pill-color" color={getTypeColor(dette.type)}>{getTypeLabel(dette.type)}</Badge>
+                                                    </div>
+                                                    <p className="text-xs text-tertiary">{dette.preteur}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <p className="font-mono text-sm font-bold tabular-nums text-primary">{formatCurrency(dette.capitalRestant)}</p>
+                                                <p className="text-[11px] text-tertiary">sur {formatCurrency(dette.capitalInitial)}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-2.5 flex items-center gap-2">
+                                            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                                                <div className={cx("h-full rounded-full", progression >= 50 ? "bg-[#BEFF00]" : "bg-gray-900")} style={{ width: `${progression}%` }} />
+                                            </div>
+                                            <span className="text-[11px] font-medium tabular-nums text-tertiary">{progression.toFixed(0)}%</span>
+                                        </div>
+
+                                        <div className="mt-2 flex items-center justify-between">
+                                            <span className="text-xs text-tertiary">{formatCurrency(dette.mensualite)}/mois · {formatDate(dette.prochainPrelevement)}</span>
+                                            <Badge size="sm" type="pill-color" color={jMoins.color}>{jMoins.label}</Badge>
+                                        </div>
+                                    </div>
+                                );
+                            }) : (
+                                <div className="flex flex-1 items-center justify-center p-6">
+                                    <p className="text-sm text-tertiary">Aucune dette</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="border-t border-[#E5E2DC] p-3">
+                            <Link href="/patrimoine/dettes">
+                                <Button size="sm" color="link-color" iconLeading={Plus} className="w-full justify-center">
+                                    Nouvelle dette
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ============================================ */}
+                {/* ÉVOLUTION DU PATRIMOINE — Recharts           */}
+                {/* ============================================ */}
+                {evolutionPatrimoine.length > 0 && (
+                    <div className="rounded-xl border border-[#E5E2DC] bg-white p-6">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-lg font-semibold text-primary">Évolution du patrimoine</p>
+                                <p className="text-sm text-tertiary">Progression sur les 12 derniers mois</p>
+                            </div>
+                            <TableRowActionsDropdown />
+                        </div>
+
+                        <div className="mt-4 flex h-64 w-full flex-col gap-2 lg:h-80">
+                            <ResponsiveContainer className="h-full">
+                                <AreaChart data={evolutionPatrimoine} className="text-tertiary [&_.recharts-text]:text-xs">
+                                    <defs>
+                                        <linearGradient id="gradientActifs" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#1C1917" stopOpacity="0.1" />
+                                            <stop offset="95%" stopColor="#1C1917" stopOpacity="0" />
+                                        </linearGradient>
+                                        <linearGradient id="gradientNet" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#BEFF00" stopOpacity="0.25" />
+                                            <stop offset="95%" stopColor="#BEFF00" stopOpacity="0" />
+                                        </linearGradient>
+                                    </defs>
+
+                                    <CartesianGrid vertical={false} stroke="currentColor" className="text-utility-gray-100" />
+
+                                    <Legend verticalAlign="top" align="right" layout="horizontal" content={<ChartLegendContent className="-translate-y-2" />} />
+
+                                    <XAxis
+                                        fill="currentColor"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tickMargin={10}
+                                        padding={{ left: 10, right: 10 }}
+                                        interval="preserveStartEnd"
+                                        dataKey="date"
+                                        tickFormatter={(value) => new Date(value).toLocaleDateString("fr-FR", { month: "short" })}
+                                    />
+
+                                    <RechartsTooltip
+                                        content={<ChartTooltipContent />}
+                                        formatter={(value) => formatCurrency(value as number)}
+                                        labelFormatter={(value) => new Date(value).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+                                        cursor={{ className: "stroke-utility-brand-600 stroke-2" }}
+                                    />
+
+                                    <Area isAnimationActive={false} className="text-gray-400" dataKey="actifs" name="Actifs" type="monotone" stroke="currentColor" strokeWidth={2} fill="url(#gradientActifs)" activeDot={{ className: "fill-white stroke-gray-400 stroke-2" }} />
+                                    <Area isAnimationActive={false} className="text-gray-300" dataKey="passifs" name="Passifs" type="monotone" stroke="currentColor" strokeWidth={2} fill="none" strokeDasharray="4 4" activeDot={{ className: "fill-white stroke-gray-300 stroke-2" }} />
+                                    <Area isAnimationActive={false} className="text-[#BEFF00]" dataKey="net" name="Valeur nette" type="monotone" stroke="currentColor" strokeWidth={3} fill="url(#gradientNet)" activeDot={{ className: "fill-white stroke-[#BEFF00] stroke-2" }} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Modale mise à jour des soldes */}
@@ -677,13 +557,10 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                     <Dialog className="flex-col">
                         {({ close }) => (
                             <div className="flex w-full flex-col gap-6 rounded-xl bg-primary p-6 shadow-xl ring-1 ring-secondary">
-                                {/* Header */}
                                 <div className="flex flex-col gap-1">
                                     <h2 className="text-lg font-semibold text-primary">Mettre à jour les soldes</h2>
                                     <p className="text-sm text-tertiary">Ajustez les soldes de vos comptes</p>
                                 </div>
-
-                                {/* Body */}
                                 <div className="flex flex-col gap-4">
                                     {comptes.map((compte) => (
                                         <Input
@@ -696,12 +573,8 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                                         />
                                     ))}
                                 </div>
-
-                                {/* Footer */}
                                 <div className="flex justify-end gap-3 border-t border-secondary pt-6">
-                                    <Button color="secondary" onClick={close}>
-                                        Annuler
-                                    </Button>
+                                    <Button color="secondary" onClick={close}>Annuler</Button>
                                     <Button color="primary" onClick={handleUpdateSoldes} isDisabled={isSaving}>
                                         {isSaving ? "Enregistrement..." : "Enregistrer"}
                                     </Button>
