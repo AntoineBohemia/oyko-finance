@@ -170,7 +170,7 @@ export default function MonBudgetClient({
                 {/* ============================================ */}
                 <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <h1 className="text-display-xs font-semibold capitalize text-primary lg:text-display-sm">
+                        <h1 className="font-display text-display-xs font-semibold capitalize text-primary lg:text-display-sm">
                             Mon budget · {monthName}
                         </h1>
                         <p className="text-md text-tertiary">
@@ -227,18 +227,18 @@ export default function MonBudgetClient({
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success-50">
-                                        <TrendUp01 className="h-4 w-4 text-success-600" />
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100">
+                                        <TrendUp01 className="h-4 w-4 text-stone-600" />
                                     </div>
                                     <span className="text-sm text-tertiary">Revenus</span>
                                 </div>
-                                <span className="font-semibold text-finance-gain">{formatCurrencySimple(revenusMois)}</span>
+                                <span className="font-semibold text-[#608B00]">{formatCurrencySimple(revenusMois)}</span>
                             </div>
 
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-error-50">
-                                        <TrendDown01 className="h-4 w-4 text-error-600" />
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100">
+                                        <TrendDown01 className="h-4 w-4 text-stone-600" />
                                     </div>
                                     <span className="text-sm text-tertiary">Charges fixes</span>
                                 </div>
@@ -280,7 +280,7 @@ export default function MonBudgetClient({
                             {depensesParEnveloppe.map((env) => (
                                 <div
                                     key={env.id}
-                                    className="flex w-44 shrink-0 flex-col gap-2.5 rounded-xl border border-[#E5E2DC] bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md lg:w-auto"
+                                    className="flex w-44 shrink-0 flex-col gap-2.5 rounded-lg border border-[#E5E2DC] bg-white p-4 shadow-xs lg:w-auto"
                                 >
                                     <div className="flex items-center gap-2">
                                         <span className="text-lg">{env.icone}</span>
@@ -302,7 +302,7 @@ export default function MonBudgetClient({
 
                                     <p className={cx(
                                         "text-xs font-medium",
-                                        env.reste >= 0 ? "text-finance-gain" : "text-finance-loss"
+                                        env.reste >= 0 ? "text-[#608B00]" : "text-primary"
                                     )}>
                                         {env.reste >= 0
                                             ? `${formatCurrencySimple(env.reste)} restant`

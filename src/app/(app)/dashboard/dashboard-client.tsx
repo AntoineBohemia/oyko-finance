@@ -277,7 +277,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 {/* ============================================ */}
                 <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <h1 className="text-display-xs font-semibold text-primary lg:text-display-sm">
+                        <h1 className="font-display text-display-xs font-semibold text-primary lg:text-display-sm">
                             Bonjour, {prenom}
                         </h1>
                         <p className="text-md text-tertiary">
@@ -353,7 +353,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                         {comptes.slice(0, 4).map((compte) => {
                             const Icon = getCompteIcon(compte.type);
                             return (
-                                <div key={compte.id} className="flex items-center gap-4 rounded-lg border border-[#E5E2DC] bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                                <div key={compte.id} className="flex items-center gap-4 rounded-lg border border-[#E5E2DC] bg-white p-5 shadow-xs">
                                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100">
                                         <Icon className="h-6 w-6 text-gray-600" />
                                     </div>
@@ -404,14 +404,14 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success-50"><TrendUp01 className="h-4 w-4 text-success-600" /></div>
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100"><TrendUp01 className="h-4 w-4 text-stone-600" /></div>
                                     <span className="text-sm text-tertiary">Revenus</span>
                                 </div>
-                                <span className="font-semibold text-finance-gain">{formatCurrencySimple(revenusMois)}</span>
+                                <span className="font-semibold text-primary">{formatCurrencySimple(revenusMois)}</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-error-50"><TrendDown01 className="h-4 w-4 text-error-600" /></div>
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100"><TrendDown01 className="h-4 w-4 text-stone-600" /></div>
                                     <span className="text-sm text-tertiary">Dépenses</span>
                                 </div>
                                 <span className="font-semibold text-primary">{formatCurrencySimple(depensesMoisVariables + chargesFixesMois)}</span>
@@ -447,7 +447,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                         </div>
                         <StaggerList className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                             {enveloppes.slice(0, 4).map((env) => (
-                                <StaggerItem key={env.id} className="flex flex-col gap-3 rounded-lg border border-[#E5E2DC] bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                                <StaggerItem key={env.id} className="flex flex-col gap-3 rounded-lg border border-[#E5E2DC] bg-white p-4 shadow-xs">
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl">{env.icone}</span>
                                         <span className="text-sm font-medium text-primary">{env.nom}</span>
@@ -457,7 +457,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                                         <p className="text-xs text-tertiary">sur {formatCurrencySimple(env.budgetHebdo)}</p>
                                     </div>
                                     <ProgressBar value={Math.min(env.pourcentage, 100)} className="h-1.5" progressClassName={getProgressColor(env.pourcentage)} />
-                                    <p className={cx("text-xs font-medium", env.reste >= 0 ? "text-finance-gain" : "text-finance-loss")}>
+                                    <p className={cx("text-xs font-medium", env.reste >= 0 ? "text-[#608B00]" : "text-primary")}>
                                         {env.reste >= 0 ? `${formatCurrencySimple(env.reste)} restant` : `${formatCurrencySimple(Math.abs(env.reste))} dépassé`}
                                     </p>
                                 </StaggerItem>
@@ -483,10 +483,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                                 {lastTransactions.map((tx) => (
                                     <div key={tx.id} className="flex items-center justify-between rounded-lg px-2 py-3 transition-colors duration-150 first:pt-0 last:pb-0 hover:bg-gray-50">
                                         <div className="flex items-center gap-3">
-                                            <div className={cx("flex h-9 w-9 items-center justify-center rounded-full", tx.montant < 0 ? "bg-error-50" : "bg-success-50")}>
+                                            <div className={cx("flex h-9 w-9 items-center justify-center rounded-full", tx.montant < 0 ? "bg-stone-100" : "bg-[#FAFFE4]")}>
                                                 {tx.montant < 0
-                                                    ? <TrendDown01 className="h-4 w-4 text-error-600" />
-                                                    : <TrendUp01 className="h-4 w-4 text-success-600" />
+                                                    ? <TrendDown01 className="h-4 w-4 text-stone-600" />
+                                                    : <TrendUp01 className="h-4 w-4 text-[#608B00]" />
                                                 }
                                             </div>
                                             <div>
@@ -494,7 +494,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                                                 <p className="text-xs text-tertiary">{formatDateRelative(tx.date)}</p>
                                             </div>
                                         </div>
-                                        <p className={cx("text-sm font-semibold tabular-nums", tx.montant < 0 ? "text-primary" : "text-finance-gain")}>
+                                        <p className={cx("text-sm font-semibold tabular-nums", tx.montant < 0 ? "text-primary" : "text-[#608B00]")}>
                                             {tx.montant > 0 ? "+" : ""}{formatCurrencySimple(tx.montant)}
                                         </p>
                                     </div>

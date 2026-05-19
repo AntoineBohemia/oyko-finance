@@ -239,11 +239,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
                 {/* Page Content */}
                 <main className="relative flex-1">
-                    {/* Subtle gradient mesh for depth */}
-                    <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
-                        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-[#BEFF00]/[0.02] blur-[120px]" />
-                        <div className="absolute -right-40 top-1/3 h-80 w-80 rounded-full bg-[#BEFF00]/[0.015] blur-[100px]" />
-                    </div>
+                    {/* Grain noise texture — 3% opacity per visual identity */}
+                    <svg className="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-[0.03]" aria-hidden="true">
+                        <filter id="grain-noise">
+                            <feTurbulence type="fractalNoise" baseFrequency="0.80" numOctaves="4" stitchTiles="stitch" />
+                        </filter>
+                        <rect width="100%" height="100%" filter="url(#grain-noise)" />
+                    </svg>
                     <div className="relative z-10">{children}</div>
                 </main>
             </div>

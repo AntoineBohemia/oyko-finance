@@ -204,7 +204,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                 {/* ============================================ */}
                 <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <h1 className="text-display-xs font-semibold text-primary lg:text-display-sm">Patrimoine</h1>
+                        <h1 className="font-display text-display-xs font-semibold text-primary lg:text-display-sm">Patrimoine</h1>
                         <p className="text-md text-tertiary">Vue consolidée de vos actifs et passifs</p>
                     </div>
                     <Button size="md" color="secondary" iconLeading={RefreshCw01} onClick={openUpdateModal}>
@@ -215,7 +215,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                 {/* ============================================ */}
                 {/* HERO — Valeur nette + Donut (bg-white)       */}
                 {/* ============================================ */}
-                <div className="mb-8 rounded-2xl border border-[#E5E2DC] bg-white p-6 shadow-xs lg:p-8">
+                <div className="mb-8 rounded-xl border border-[#E5E2DC] bg-white p-6 shadow-xs lg:p-8">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                         {/* Left — Valeur nette */}
                         <div className="flex flex-col gap-2">
@@ -281,10 +281,10 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                             <div className="flex items-center gap-2">
                                 <span className="font-semibold text-primary">{formatCurrency(totaux.totalDettes)}</span>
                                 <span className="text-tertiary">Passifs</span>
-                                <TrendDown01 className="h-4 w-4 text-rose-400" />
+                                <TrendDown01 className="h-4 w-4 text-stone-500" />
                             </div>
                         </div>
-                        <div className="flex h-3 w-full overflow-hidden rounded-full bg-rose-100">
+                        <div className="flex h-3 w-full overflow-hidden rounded-full bg-stone-200">
                             <div className="h-full bg-success-500 transition-all" style={{ width: `${pctActifs}%` }} />
                         </div>
                         <div className="flex justify-between text-xs text-tertiary">
@@ -298,7 +298,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                 {/* 3 KPI CARDS                                  */}
                 {/* ============================================ */}
                 <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div className="flex items-center gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="flex items-center gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 shadow-xs">
                         <div className="flex size-11 items-center justify-center rounded-full bg-gray-100">
                             <Wallet03 className="size-5 text-gray-600" />
                         </div>
@@ -308,7 +308,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                             <p className="text-xs text-tertiary">{comptes.length} compte{comptes.length > 1 ? "s" : ""}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="flex items-center gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 shadow-xs">
                         <div className="flex size-11 items-center justify-center rounded-full bg-[#BEFF00]/10">
                             <LineChartUp01 className="size-5 text-[#5C7A00]" />
                         </div>
@@ -318,9 +318,9 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                             <p className="text-xs font-medium text-[#5C7A00]">{formatPercent(totaux.totalPlusValuePercent)}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                        <div className="flex size-11 items-center justify-center rounded-full bg-rose-50">
-                            <CreditCard01 className="size-5 text-rose-600" />
+                    <div className="flex items-center gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 shadow-xs">
+                        <div className="flex size-11 items-center justify-center rounded-full bg-stone-100">
+                            <CreditCard01 className="size-5 text-stone-600" />
                         </div>
                         <div>
                             <p className="text-sm text-tertiary">Dettes</p>
@@ -336,7 +336,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                 <StaggerList className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
 
                     {/* ---- LIQUIDITÉS ---- */}
-                    <StaggerItem className="flex flex-col overflow-hidden rounded-xl border border-[#E5E2DC] bg-white shadow-xs transition-all duration-200 hover:shadow-md">
+                    <StaggerItem className="flex flex-col overflow-hidden rounded-xl border border-[#E5E2DC] bg-white shadow-xs">
                         <div className="flex items-center justify-between border-b border-[#E5E2DC] px-5 py-4">
                             <div className="flex items-center gap-2.5">
                                 <Wallet03 className="size-4 text-gray-500" />
@@ -378,7 +378,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                     </StaggerItem>
 
                     {/* ---- INVESTISSEMENTS ---- */}
-                    <StaggerItem className="flex flex-col overflow-hidden rounded-xl border border-[#E5E2DC] bg-white shadow-xs transition-all duration-200 hover:shadow-md">
+                    <StaggerItem className="flex flex-col overflow-hidden rounded-xl border border-[#E5E2DC] bg-white shadow-xs">
                         <div className="flex items-center justify-between border-b border-[#E5E2DC] px-5 py-4">
                             <div className="flex items-center gap-2.5">
                                 <LineChartUp01 className="size-4 text-[#5C7A00]" />
@@ -402,12 +402,12 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                                     <div className="text-right">
                                         <p className="font-mono text-sm font-semibold tabular-nums text-primary">{formatCurrency(inv.valeurActuelle)}</p>
                                         <div className="flex items-center justify-end gap-1">
-                                            <span className={cx("font-mono text-xs font-semibold tabular-nums", inv.plusValuePercent >= 0 ? "text-finance-gain" : "text-finance-loss")}>
+                                            <span className={cx("font-mono text-xs font-semibold tabular-nums", inv.plusValuePercent >= 0 ? "text-finance-gain" : "text-primary")}>
                                                 {formatPercent(inv.plusValuePercent)}
                                             </span>
                                             {inv.plusValuePercent >= 0
                                                 ? <ArrowUp className="size-3 text-finance-gain" />
-                                                : <ArrowDown className="size-3 text-finance-loss" />
+                                                : <ArrowDown className="size-3 text-primary" />
                                             }
                                         </div>
                                     </div>
@@ -429,10 +429,10 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                     </StaggerItem>
 
                     {/* ---- DETTES ---- */}
-                    <StaggerItem className="flex flex-col overflow-hidden rounded-xl border border-[#E5E2DC] bg-white shadow-xs transition-all duration-200 hover:shadow-md">
+                    <StaggerItem className="flex flex-col overflow-hidden rounded-xl border border-[#E5E2DC] bg-white shadow-xs">
                         <div className="flex items-center justify-between border-b border-[#E5E2DC] px-5 py-4">
                             <div className="flex items-center gap-2.5">
-                                <CreditCard01 className="size-4 text-rose-500" />
+                                <CreditCard01 className="size-4 text-stone-500" />
                                 <span className="text-sm font-semibold text-primary">Dettes</span>
                             </div>
                             <div className="text-right">
