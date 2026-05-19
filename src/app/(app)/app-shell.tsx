@@ -238,7 +238,14 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1">{children}</main>
+                <main className="relative flex-1">
+                    {/* Subtle gradient mesh for depth */}
+                    <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
+                        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-[#BEFF00]/[0.02] blur-[120px]" />
+                        <div className="absolute -right-40 top-1/3 h-80 w-80 rounded-full bg-[#BEFF00]/[0.015] blur-[100px]" />
+                    </div>
+                    <div className="relative z-10">{children}</div>
+                </main>
             </div>
         </div>
     );

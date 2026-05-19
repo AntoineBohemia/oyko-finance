@@ -353,7 +353,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                         {comptes.slice(0, 4).map((compte) => {
                             const Icon = getCompteIcon(compte.type);
                             return (
-                                <div key={compte.id} className="flex items-center gap-4 rounded-lg border border-[#E5E2DC] bg-white p-5">
+                                <div key={compte.id} className="flex items-center gap-4 rounded-lg border border-[#E5E2DC] bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100">
                                         <Icon className="h-6 w-6 text-gray-600" />
                                     </div>
@@ -388,7 +388,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-gray-300">{budgetData.percentage.toFixed(0)}%</span>
                         </div>
                         <div>
-                            <AnimatedAmount value={budgetData.spent} className="text-display-md font-bold text-white lg:text-display-lg" />
+                            <AnimatedAmount value={budgetData.spent} className="font-display text-display-md font-bold text-white lg:text-display-lg" />
                             <span className="ml-2 text-lg text-gray-500">/ {formatCurrencySimple(budgetData.total)}</span>
                         </div>
                         <ProgressBar value={Math.min(budgetData.percentage, 100)} className="h-2 bg-gray-700" progressClassName={budgetData.percentage > 80 ? "bg-[#D97706]" : "bg-[#BEFF00]"} />
@@ -399,7 +399,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                     </div>
 
                     {/* Résumé mensuel (2 cols) */}
-                    <div className="flex flex-col gap-4 rounded-xl p-5 border border-[#E5E2DC] bg-white lg:col-span-2">
+                    <div className="flex flex-col gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 shadow-xs lg:col-span-2">
                         <h2 className="text-sm font-semibold tracking-wider text-tertiary uppercase">Ce mois</h2>
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
@@ -447,7 +447,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                         </div>
                         <StaggerList className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                             {enveloppes.slice(0, 4).map((env) => (
-                                <StaggerItem key={env.id} className="flex flex-col gap-3 rounded-lg border border-[#E5E2DC] bg-white p-4 transition-all hover:translate-y-[-1px]">
+                                <StaggerItem key={env.id} className="flex flex-col gap-3 rounded-lg border border-[#E5E2DC] bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl">{env.icone}</span>
                                         <span className="text-sm font-medium text-primary">{env.nom}</span>
@@ -471,7 +471,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 {/* ============================================ */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Transactions récentes */}
-                    <div className="flex flex-col gap-4 rounded-xl p-5 border border-[#E5E2DC] bg-white">
+                    <div className="flex flex-col gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 shadow-xs">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-primary">Transactions récentes</h2>
                             <Link href="/budget?tab=transactions" className="flex items-center gap-1 text-sm font-medium text-gray-900 hover:text-gray-700">
@@ -481,7 +481,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                         {lastTransactions.length > 0 ? (
                             <div className="flex flex-col divide-y divide-secondary">
                                 {lastTransactions.map((tx) => (
-                                    <div key={tx.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                                    <div key={tx.id} className="flex items-center justify-between rounded-lg px-2 py-3 transition-colors duration-150 first:pt-0 last:pb-0 hover:bg-gray-50">
                                         <div className="flex items-center gap-3">
                                             <div className={cx("flex h-9 w-9 items-center justify-center rounded-full", tx.montant < 0 ? "bg-error-50" : "bg-success-50")}>
                                                 {tx.montant < 0
@@ -512,7 +512,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                     </div>
 
                     {/* Prochains prélèvements */}
-                    <div className="flex flex-col gap-4 rounded-xl p-5 border border-[#E5E2DC] bg-white">
+                    <div className="flex flex-col gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 shadow-xs">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-primary">Prochains prélèvements</h2>
                             <Calendar className="h-5 w-5 text-tertiary" />
@@ -520,7 +520,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                         {prochainsPrelevements.length > 0 ? (
                             <div className="flex flex-col divide-y divide-secondary">
                                 {prochainsPrelevements.map((charge) => (
-                                    <div key={charge.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                                    <div key={charge.id} className="flex items-center justify-between rounded-lg px-2 py-3 transition-colors duration-150 first:pt-0 last:pb-0 hover:bg-gray-50">
                                         <div className="flex items-center gap-3">
                                             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-lg">{charge.icone}</span>
                                             <div>

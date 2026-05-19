@@ -197,7 +197,7 @@ export default function MonBudgetClient({
                         </div>
 
                         <div>
-                            <AnimatedAmount value={totalDepenseVariables} className="text-display-md font-bold text-white lg:text-display-lg" />
+                            <AnimatedAmount value={totalDepenseVariables} className="font-display text-display-md font-bold text-white lg:text-display-lg" />
                             <span className="ml-2 text-lg text-gray-500">/ {formatCurrencySimple(disponiblePourVariables)}</span>
                         </div>
 
@@ -221,7 +221,7 @@ export default function MonBudgetClient({
                     </div>
 
                     {/* Résumé ce mois — 2 cols */}
-                    <div className="flex flex-col gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 lg:col-span-2">
+                    <div className="flex flex-col gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5 shadow-xs lg:col-span-2">
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-tertiary">Ce mois</h2>
 
                         <div className="flex flex-col gap-3">
@@ -248,7 +248,7 @@ export default function MonBudgetClient({
                             <div className="border-t border-secondary pt-3">
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm font-medium text-primary">Disponible</span>
-                                    <span className="font-mono text-xl font-bold text-gray-900">{formatCurrencySimple(disponiblePourVariables)}</span>
+                                    <span className="font-display text-xl font-bold text-gray-900">{formatCurrencySimple(disponiblePourVariables)}</span>
                                 </div>
                             </div>
 
@@ -280,7 +280,7 @@ export default function MonBudgetClient({
                             {depensesParEnveloppe.map((env) => (
                                 <div
                                     key={env.id}
-                                    className="flex w-44 shrink-0 flex-col gap-2.5 rounded-xl border border-[#E5E2DC] bg-white p-4 lg:w-auto"
+                                    className="flex w-44 shrink-0 flex-col gap-2.5 rounded-xl border border-[#E5E2DC] bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md lg:w-auto"
                                 >
                                     <div className="flex items-center gap-2">
                                         <span className="text-lg">{env.icone}</span>
