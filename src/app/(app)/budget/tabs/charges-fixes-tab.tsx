@@ -349,7 +349,7 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
                             className={cx(
                                 "rounded-l-lg px-3 py-1.5 text-xs font-medium transition-all",
                                 selectedView === "cards"
-                                    ? "bg-brand-50 text-brand-700"
+                                    ? "bg-gray-900 text-white"
                                     : "text-tertiary hover:text-primary"
                             )}
                         >
@@ -360,7 +360,7 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
                             className={cx(
                                 "rounded-r-lg px-3 py-1.5 text-xs font-medium transition-all",
                                 selectedView === "calendrier"
-                                    ? "bg-brand-50 text-brand-700"
+                                    ? "bg-gray-900 text-white"
                                     : "text-tertiary hover:text-primary"
                             )}
                         >
@@ -388,7 +388,7 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
             {/* VUE CALENDRIER */}
             {/* ============================================ */}
             {selectedView === "calendrier" && (
-                <div className="rounded-xl ring-1 ring-secondary ring-inset">
+                <div className="rounded-xl border border-[#E5E2DC] bg-white">
                     <Calendar events={calendarEvents} view="month" className="h-[700px]" />
                 </div>
             )}
@@ -409,14 +409,14 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
                                 className={cx(
                                     "group relative flex flex-col gap-3 rounded-xl p-4 ring-1 transition-all",
                                     cf.estActif
-                                        ? "bg-primary ring-secondary hover:ring-brand-200 hover:shadow-xs"
-                                        : "bg-secondary/50 ring-secondary opacity-75"
+                                        ? "bg-white border border-[#E5E2DC] hover:border-brand-200 hover:shadow-xs"
+                                        : "bg-gray-50 border border-[#E5E2DC] opacity-75"
                                 )}
                             >
                                 {/* Header: icône + nom + montant */}
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-center gap-3">
-                                        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-xl">
+                                        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 text-xl">
                                             {getCategoryIcon(cf)}
                                         </span>
                                         <div className="min-w-0">
@@ -470,7 +470,7 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
                     })}
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-secondary py-16">
+                <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-[#E5E2DC] bg-white py-16">
                     <p className="text-sm text-tertiary">
                         {searchQuery ? "Aucun résultat" : "Aucune charge fixe configurée"}
                     </p>
@@ -486,7 +486,7 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
             {/* FOOTER : TOTAUX */}
             {/* ============================================ */}
             {filteredChargesFixes.length > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-secondary p-4 ring-1 ring-secondary ring-inset">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#E5E2DC] bg-white p-4">
                     <div className="flex flex-wrap gap-6">
                         <div className="flex flex-col">
                             <span className="text-xs text-tertiary">Total mensuel</span>

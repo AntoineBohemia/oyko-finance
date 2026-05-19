@@ -305,7 +305,7 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                     <>
                         {/* Desktop: Table */}
                         <div className="hidden lg:block">
-                            <TableCard.Root className="rounded-xl">
+                            <TableCard.Root className="rounded-xl border border-[#E5E2DC] bg-white">
                                 <Table aria-label="Enveloppes">
                                     <Table.Header>
                                         <Table.Head id="categorie" isRowHeader label="Catégorie" className="w-full" />
@@ -363,13 +363,13 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
 
                             {/* Détail des transactions de l'enveloppe sélectionnée */}
                             {expandedEnvelope && transactionsEnveloppe.length > 0 && (
-                                <div className="mt-4 rounded-lg bg-secondary/50 p-4">
+                                <div className="mt-4 rounded-lg border border-[#E5E2DC] bg-white p-4">
                                     <p className="mb-3 text-sm font-medium text-tertiary">
                                         Transactions - {enveloppes.find((e) => e.id === expandedEnvelope)?.nom}
                                     </p>
                                     <div className="flex flex-col gap-2">
                                         {transactionsEnveloppe.map((t) => (
-                                            <div key={t.id} className="flex items-center justify-between rounded bg-primary px-3 py-2">
+                                            <div key={t.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-medium text-primary">{t.description}</span>
                                                     <span className="text-xs text-tertiary">
@@ -387,7 +387,7 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                         {/* Mobile: Cards */}
                         <div className="grid grid-cols-2 gap-3 lg:hidden">
                             {depensesParEnveloppe.map((env) => (
-                                <div key={env.id} className="flex flex-col gap-2 rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary ring-inset">
+                                <div key={env.id} className="flex flex-col gap-2 rounded-xl border border-[#E5E2DC] bg-white p-4">
                                     <div className="flex items-center gap-2">
                                         <span className="text-lg">{env.icone}</span>
                                         <span className="text-sm font-medium text-primary">{env.nom}</span>
@@ -403,7 +403,7 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                         </div>
                     </>
                 ) : (
-                    <div className="rounded-xl bg-secondary p-8 text-center">
+                    <div className="rounded-xl bg-white border border-[#E5E2DC] p-8 text-center">
                         <p className="text-tertiary">Aucune catégorie de dépense configurée.</p>
                         <Link href="/parametres">
                             <Button size="sm" color="link-color" className="mt-2">
@@ -426,7 +426,7 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                 </div>
 
                 {chargesFixes.length > 0 ? (
-                    <TableCard.Root className="-mx-4 rounded-none lg:mx-0 lg:rounded-xl">
+                    <TableCard.Root className="-mx-4 rounded-none border-y border-[#E5E2DC] bg-white lg:mx-0 lg:rounded-xl lg:border">
                         <Table aria-label="Charges fixes">
                             <Table.Header>
                                 <Table.Head id="charge" isRowHeader label="Charge" className="w-full" />
@@ -476,7 +476,7 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                         </Table>
                     </TableCard.Root>
                 ) : (
-                    <div className="rounded-xl bg-secondary p-8 text-center">
+                    <div className="rounded-xl bg-white border border-[#E5E2DC] p-8 text-center">
                         <p className="text-tertiary">Aucune charge fixe configurée.</p>
                         <Link href="/budget?tab=charges-fixes">
                             <Button size="sm" color="link-color" className="mt-2">
@@ -499,8 +499,8 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                             className={cx(
                                 "flex shrink-0 flex-col items-center rounded-lg px-4 py-2 text-sm transition-all",
                                 selectedWeek === week.num
-                                    ? "bg-brand-50 text-brand-700 ring-2 ring-brand-500"
-                                    : "bg-secondary text-tertiary hover:bg-secondary_hover",
+                                    ? "bg-gray-900 text-white"
+                                    : "bg-white text-tertiary border border-[#E5E2DC] hover:bg-gray-50",
                             )}
                         >
                             <span className="font-medium">Sem {week.num}</span>
@@ -510,7 +510,7 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                 </div>
 
                 {weeksData[selectedWeek - 1] && (
-                    <div className="rounded-xl bg-secondary p-5 ring-1 ring-secondary ring-inset">
+                    <div className="rounded-xl border border-[#E5E2DC] bg-white p-5">
                         <div className="mb-4 flex flex-col gap-1">
                             <p className="text-sm font-semibold text-primary">
                                 Semaine {selectedWeek} ({weeksData[selectedWeek - 1].start.getDate()}-{weeksData[selectedWeek - 1].end.getDate()}{" "}

@@ -492,7 +492,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                 {/* Contenu principal */}
                 <div className="flex min-w-0 flex-1 flex-col gap-8">
                     {/* FORMULAIRE DE SAISIE */}
-                    <div className="rounded-xl bg-secondary p-5 ring-1 ring-secondary ring-inset lg:p-6">
+                    <div className="rounded-xl border border-[#E5E2DC] bg-white p-5 lg:p-6">
                         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-tertiary">
                             Ajouter une dépense
                         </h2>
@@ -527,7 +527,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                                                 "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                                                 categorieId === cat.id
                                                     ? "bg-brand-50 text-brand-700 ring-2 ring-brand-500"
-                                                    : "bg-primary text-tertiary ring-1 ring-secondary hover:bg-primary_hover"
+                                                    : "bg-gray-50 text-tertiary border border-[#E5E2DC] hover:bg-gray-100"
                                             )}
                                         >
                                             <span className="text-lg">{cat.icone}</span>
@@ -690,7 +690,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                     </div>
 
                     {/* RÉSUMÉ PÉRIODE — visible uniquement sur mobile/tablette */}
-                    <div className="flex gap-4 rounded-xl bg-secondary p-4 ring-1 ring-secondary ring-inset xl:hidden">
+                    <div className="flex gap-4 rounded-xl border border-[#E5E2DC] bg-white p-4 xl:hidden">
                         <div className="flex flex-1 flex-col items-center gap-0.5">
                             <span className="text-xs text-tertiary">Dépenses</span>
                             <span className="text-sm font-semibold text-primary">
@@ -736,7 +736,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
 
                         {/* Filtres */}
                         {showFilters && (
-                            <div className="flex flex-col gap-3 rounded-lg bg-secondary p-4 sm:flex-row sm:items-end">
+                            <div className="flex flex-col gap-3 rounded-lg border border-[#E5E2DC] bg-white p-4 sm:flex-row sm:items-end">
                                 <Select
                                     className="flex-1 sm:max-w-40"
                                     selectedKey={periodeFilter}
@@ -835,7 +835,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                                             {group.label}
                                         </p>
 
-                                        <div className="flex flex-col divide-y divide-secondary rounded-xl ring-1 ring-secondary">
+                                        <div className="flex flex-col divide-y divide-secondary rounded-xl border border-[#E5E2DC] bg-white">
                                             {group.transactions.map((t) => {
                                                 const isRevenu = t.type === "revenu";
                                                 const isFixe = t.type === "fixe";
@@ -917,7 +917,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                 {/* SIDEBAR DROITE */}
                 <div className="hidden w-72 shrink-0 flex-col gap-6 xl:flex">
                     {/* Résumé période */}
-                    <div className="flex flex-col gap-4 rounded-xl bg-secondary p-5 ring-1 ring-secondary ring-inset">
+                    <div className="flex flex-col gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5">
                         <p className="text-sm font-semibold text-primary">{getPeriodeLabel()}</p>
 
                         <div className="flex flex-col gap-3">
@@ -951,7 +951,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                     </div>
 
                     {/* Top catégories */}
-                    <div className="flex flex-col gap-4 rounded-xl bg-secondary p-5 ring-1 ring-secondary ring-inset">
+                    <div className="flex flex-col gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5">
                         <p className="text-sm font-semibold text-primary">Top catégories</p>
 
                         <div className="flex flex-col gap-3">
@@ -974,7 +974,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                     </div>
 
                     {/* Graphique mini */}
-                    <div className="flex flex-col gap-4 rounded-xl bg-secondary p-5 ring-1 ring-secondary ring-inset">
+                    <div className="flex flex-col gap-4 rounded-xl border border-[#E5E2DC] bg-white p-5">
                         <p className="text-sm font-semibold text-primary">7 derniers jours</p>
 
                         <ResponsiveContainer width="100%" height={120}>
