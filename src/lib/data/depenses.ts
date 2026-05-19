@@ -120,11 +120,11 @@ export async function addTransaction(data: {
       method: "POST",
       body: {
         montant: data.type === "depense" ? -Math.abs(data.montant) : Math.abs(data.montant),
-        categorie_id: data.categorieId,
-        compte_id: data.compteId,
+        categorieId: data.categorieId,
+        compteId: data.compteId,
         description: data.description || null,
         type: data.type,
-        date_transaction: data.date.toISOString(),
+        dateTransaction: data.date.toISOString(),
       },
     });
     return { success: true };

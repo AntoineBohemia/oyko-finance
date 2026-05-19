@@ -327,7 +327,7 @@ export function ImportCSVModal({ isOpen, onOpenChange, profile, categories, comp
                 body: {
                     nom: newCategoryName.trim(),
                     icone: newCategoryIcon,
-                    budget_mensuel: parseFloat(newCategoryBudget) || 0,
+                    budgetMensuel: parseFloat(newCategoryBudget) || 0,
                 },
             });
         } catch (err) {

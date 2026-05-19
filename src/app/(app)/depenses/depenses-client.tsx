@@ -345,7 +345,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
         try {
             await api("/api/v1/transactions/" + editingTransaction.id, {
                 method: "PUT",
-                body: { categorie_id: editCategorieId },
+                body: { categorieId: editCategorieId },
             });
 
             setIsEditModalOpen(false);
@@ -371,7 +371,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                     nom: newCategoryName.trim(),
                     icone: newCategoryIcon,
                     couleur: "#1C1917",
-                    budget_mensuel: parseFloat(newCategoryBudget) || 0,
+                    budgetMensuel: parseFloat(newCategoryBudget) || 0,
                     type: "depense",
                 },
             });

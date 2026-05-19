@@ -30,8 +30,8 @@ export function useResetData() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () =>
-      api("/api/v1/profile/reset", { method: "POST", body: { confirm: true } }),
+    mutationFn: (password: string) =>
+      api("/api/v1/profile/reset", { method: "POST", body: { password } }),
     onSuccess: () => {
       queryClient.invalidateQueries();
     },

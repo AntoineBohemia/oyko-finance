@@ -105,9 +105,9 @@ export async function getParametresData(): Promise<ParametresData> {
 
 // Mettre a jour le profil
 export async function updateProfile(data: {
-  revenus_mensuels?: number;
-  objectif_epargne?: number;
-  mode_gestion?: "semaine" | "mois";
+  revenusMensuels?: number;
+  objectifEpargne?: number;
+  modeGestion?: "semaine" | "mois";
 }): Promise<boolean> {
   if (await isDevModeActive()) return true;
 
@@ -123,8 +123,8 @@ export async function updateProfile(data: {
 export async function addChargeFix(data: {
   nom: string;
   montant: number;
-  jour_prelevement: number;
-  categorie_id?: string;
+  jourDuMois: number;
+  categorieId?: string;
   icone?: string;
 }): Promise<boolean> {
   if (await isDevModeActive()) return true;
@@ -183,7 +183,7 @@ export async function updateCategorie(
   id: string,
   data: {
     nom?: string;
-    budget_mensuel?: number;
+    budgetMensuel?: number;
     icone?: string;
   },
 ): Promise<boolean> {
@@ -200,7 +200,7 @@ export async function updateCategorie(
 // Ajouter une categorie
 export async function addCategorie(data: {
   nom: string;
-  budget_mensuel: number;
+  budgetMensuel: number;
   icone: string;
 }): Promise<boolean> {
   if (await isDevModeActive()) return true;

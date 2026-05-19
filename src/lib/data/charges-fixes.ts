@@ -104,9 +104,9 @@ export async function addChargeFix(data: {
   nom: string;
   montant: number;
   frequence: string;
-  jour_prelevement: number;
-  categorie_id?: string;
-  compte_id?: string;
+  jourDuMois: number;
+  categorieId?: string;
+  compteId?: string;
   notes?: string;
 }): Promise<{ success: boolean; id?: string }> {
   if (await isDevModeActive()) return { success: true, id: "mock-id" };
@@ -129,10 +129,10 @@ export async function updateChargeFix(
     nom?: string;
     montant?: number;
     frequence?: string;
-    jour_prelevement?: number;
-    categorie_id?: string;
-    compte_id?: string;
-    est_actif?: boolean;
+    jourDuMois?: number;
+    categorieId?: string;
+    compteId?: string;
+    estActif?: boolean;
     notes?: string;
   },
 ): Promise<boolean> {
@@ -168,7 +168,7 @@ export async function toggleChargeFixActive(
   try {
     await api("/api/v1/recurring-charges/" + id + "/toggle", {
       method: "PATCH",
-      body: { est_actif: estActif },
+      body: { estActif },
     });
     return true;
   } catch {

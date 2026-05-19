@@ -232,9 +232,9 @@ export default function InvestissementsClient({ initialData }: InvestissementsCl
             type: newInvestissement.type,
             plateforme: newInvestissement.plateforme || undefined,
             quantite,
-            prix_achat_unitaire: prixAchat,
-            prix_actuel: prixActuel,
-            date_achat: newInvestissement.dateAchat || undefined,
+            prixAchatUnitaire: prixAchat,
+            prixActuel: prixActuel,
+            dateAchat: newInvestissement.dateAchat || undefined,
             notes: newInvestissement.notes || undefined,
         });
 

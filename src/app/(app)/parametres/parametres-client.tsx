@@ -131,6 +131,7 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
     const [isAddCompteOpen, setIsAddCompteOpen] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [isResetOpen, setIsResetOpen] = useState(false);
+    const [resetPassword, setResetPassword] = useState("");
     const [isBankConnecting, setIsBankConnecting] = useState(false);
     const [bankSyncResult, setBankSyncResult] = useState<{ accountsSynced: number; transactionsImported: number } | null>(null);
 
@@ -166,7 +167,7 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         setIsSaving(true);
 
         const { updateProfile } = await import("@/lib/data/parametres");
-        const success = await updateProfile({ revenus_mensuels: parseFloat(revenus) || 0 });
+        const success = await updateProfile({ revenusMensuels: parseFloat(revenus) || 0 });
 
         setIsSaving(false);
         if (success) {
@@ -180,7 +181,7 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         setIsSaving(true);
 
         const { updateProfile } = await import("@/lib/data/parametres");
-        const success = await updateProfile({ objectif_epargne: parseFloat(objectifEpargne) || 0 });
+        const success = await updateProfile({ objectifEpargne: parseFloat(objectifEpargne) || 0 });
 
         setIsSaving(false);
         if (success) {
@@ -194,7 +195,7 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         setIsSaving(true);
 
         const { updateProfile } = await import("@/lib/data/parametres");
-        const success = await updateProfile({ mode_gestion: modeGestion as "semaine" | "mois" });
+        const success = await updateProfile({ modeGestion: modeGestion as "semaine" | "mois" });
 
         setIsSaving(false);
         if (success) {
@@ -209,7 +210,7 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
 
         const { updateCategorie } = await import("@/lib/data/parametres");
         for (const cat of editCategories) {
-            await updateCategorie(cat.id, { nom: cat.nom, budget_mensuel: cat.budget, icone: cat.icone });
+            await updateCategorie(cat.id, { nom: cat.nom, budgetMensuel: cat.budget, icone: cat.icone });
         }
 
         setIsSaving(false);
@@ -225,7 +226,7 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         const success = await addChargeFix({
             nom: newCharge.nom,
             montant: parseFloat(newCharge.montant) || 0,
-            jour_prelevement: parseInt(newCharge.jourPrelevement) || 1,
+            jourDuMois: parseInt(newCharge.jourPrelevement) || 1,
             icone: "💸",
         });
 
@@ -337,20 +338,23 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
     };
 
     const handleReset = async () => {
-        if (!profile) return;
+        if (!profile || !resetPassword.trim()) return;
         setIsSaving(true);
 
-        // TODO: Replace with a dedicated reset API endpoint
-        const { updateProfile } = await import("@/lib/data/parametres");
-        await updateProfile({
-            revenus_mensuels: 0,
-            objectif_epargne: 0,
-            mode_gestion: "semaine",
-        });
+        try {
+            const { api } = await import("@/lib/api/client");
+            await api("/api/v1/profile/reset", {
+                method: "POST",
+                body: { password: resetPassword },
+            });
 
-        setIsSaving(false);
-        setIsResetOpen(false);
-        window.location.reload();
+            setIsSaving(false);
+            setIsResetOpen(false);
+            setResetPassword("");
+            window.location.reload();
+        } catch {
+            setIsSaving(false);
+        }
     };
 
     // Message si pas de données
@@ -1044,11 +1048,21 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                                     </div>
                                 </div>
 
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-sm font-medium text-secondary">Confirmez avec votre mot de passe</label>
+                                    <Input
+                                        type="password"
+                                        placeholder="Mot de passe"
+                                        value={resetPassword}
+                                        onChange={(e) => setResetPassword(e.target.value)}
+                                    />
+                                </div>
+
                                 <div className="flex gap-3">
-                                    <Button color="secondary" onClick={close} className="flex-1">
+                                    <Button color="secondary" onClick={() => { setResetPassword(""); close(); }} className="flex-1">
                                         Annuler
                                     </Button>
-                                    <Button color="primary-destructive" onClick={handleReset} className="flex-1" isDisabled={isSaving}>
+                                    <Button color="primary-destructive" onClick={handleReset} className="flex-1" isDisabled={isSaving || !resetPassword.trim()}>
                                         {isSaving ? "..." : "Réinitialiser"}
                                     </Button>
                                 </div>

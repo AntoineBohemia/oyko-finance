@@ -302,9 +302,9 @@ export default function ChargesFixesClient({ initialData }: ChargesFixesClientPr
             nom: newChargeFix.nom,
             montant: parseFloat(newChargeFix.montant),
             frequence: newChargeFix.frequence,
-            jour_prelevement: parseInt(newChargeFix.jourPrelevement),
-            categorie_id: newChargeFix.categorieId || undefined,
-            compte_id: newChargeFix.compteId || undefined,
+            jourDuMois: parseInt(newChargeFix.jourPrelevement),
+            categorieId: newChargeFix.categorieId || undefined,
+            compteId: newChargeFix.compteId || undefined,
             notes: newChargeFix.notes || undefined,
         });
 

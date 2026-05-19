@@ -350,7 +350,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
             const { api } = await import("@/lib/api/client");
             await api(`/api/v1/transactions/${editingTransaction.id}`, {
                 method: "PATCH",
-                body: { categorie_id: editCategorieId },
+                body: { categorieId: editCategorieId },
             });
 
             setIsEditModalOpen(false);
@@ -370,13 +370,13 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
 
         try {
             const { api } = await import("@/lib/api/client");
-            const data = await api<{ id: string; nom: string; icone: string; budget_mensuel: number }>("/api/v1/categories", {
+            const data = await api<{ id: string; nom: string; icone: string; budgetMensuel: number }>("/api/v1/categories", {
                 method: "POST",
                 body: {
                     nom: newCategoryName.trim(),
                     icone: newCategoryIcon,
                     couleur: "#1C1917",
-                    budget_mensuel: parseFloat(newCategoryBudget) || 0,
+                    budgetMensuel: parseFloat(newCategoryBudget) || 0,
                     type: "depense",
                 },
             });

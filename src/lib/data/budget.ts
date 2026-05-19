@@ -119,7 +119,7 @@ export async function updateCategoryBudget(
   try {
     await api("/api/v1/categories/" + categoryId, {
       method: "PUT",
-      body: { budget_mensuel: newBudget },
+      body: { budgetMensuel: newBudget },
     });
     return true;
   } catch {

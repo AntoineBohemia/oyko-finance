@@ -85,9 +85,9 @@ export async function addInvestissement(data: {
   type: string;
   plateforme?: string;
   quantite: number;
-  prix_achat_unitaire: number;
-  prix_actuel?: number;
-  date_achat?: string;
+  prixAchatUnitaire: number;
+  prixActuel?: number;
+  dateAchat?: string;
   notes?: string;
 }): Promise<{ success: boolean; id?: string }> {
   if (await isDevModeActive()) return { success: true, id: "mock-id" };
@@ -112,8 +112,8 @@ export async function updateInvestissement(
     type?: string;
     plateforme?: string;
     quantite?: number;
-    prix_achat_unitaire?: number;
-    prix_actuel?: number;
+    prixAchatUnitaire?: number;
+    prixActuel?: number;
     notes?: string;
   },
 ): Promise<boolean> {
@@ -147,9 +147,9 @@ export async function addPosition(
   if (await isDevModeActive()) return true;
 
   try {
-    await api("/api/v1/investments/" + id + "/position", {
-      method: "POST",
-      body: data,
+    await api("/api/v1/investments/" + id, {
+      method: "PUT",
+      body: { quantite: data.quantite, prixAchatUnitaire: data.prix },
     });
     return true;
   } catch {
@@ -167,7 +167,7 @@ export async function updatePrixActuel(
   try {
     await api("/api/v1/investments/" + id, {
       method: "PUT",
-      body: { prix_actuel: prixActuel },
+      body: { prixActuel },
     });
     return true;
   } catch {

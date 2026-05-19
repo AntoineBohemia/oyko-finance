@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
               method: "PUT",
               headers,
               body: JSON.stringify({
-                budget_mensuel: env.budget || 0,
+                budgetMensuel: env.budget || 0,
               }),
             });
           }
