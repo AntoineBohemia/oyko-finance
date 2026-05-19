@@ -221,7 +221,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                         <div className="flex flex-col gap-2">
                             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-tertiary">Valeur nette</p>
                             <div className="flex flex-wrap items-baseline gap-3">
-                                <span className="font-display text-4xl font-bold tracking-tight text-primary lg:text-5xl">
+                                <span className="font-mono text-4xl font-bold tabular-nums tracking-tight text-primary lg:text-5xl">
                                     {formatCurrency(totaux.valeurNette)}
                                 </span>
                                 <MetricChangeIndicator

@@ -388,7 +388,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-gray-300">{budgetData.percentage.toFixed(0)}%</span>
                         </div>
                         <div>
-                            <AnimatedAmount value={budgetData.spent} className="font-display text-display-md font-bold text-white lg:text-display-lg" />
+                            <AnimatedAmount value={budgetData.spent} className="font-mono text-display-md font-bold tabular-nums text-white lg:text-display-lg" />
                             <span className="ml-2 text-lg text-gray-500">/ {formatCurrencySimple(budgetData.total)}</span>
                         </div>
                         <ProgressBar value={Math.min(budgetData.percentage, 100)} className="h-2 bg-gray-700" progressClassName={budgetData.percentage > 80 ? "bg-[#D97706]" : "bg-[#BEFF00]"} />

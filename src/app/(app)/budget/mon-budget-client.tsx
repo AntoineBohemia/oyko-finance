@@ -197,7 +197,7 @@ export default function MonBudgetClient({
                         </div>
 
                         <div>
-                            <AnimatedAmount value={totalDepenseVariables} className="font-display text-display-md font-bold text-white lg:text-display-lg" />
+                            <AnimatedAmount value={totalDepenseVariables} className="font-mono text-display-md font-bold tabular-nums text-white lg:text-display-lg" />
                             <span className="ml-2 text-lg text-gray-500">/ {formatCurrencySimple(disponiblePourVariables)}</span>
                         </div>
 
@@ -248,7 +248,7 @@ export default function MonBudgetClient({
                             <div className="border-t border-secondary pt-3">
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm font-medium text-primary">Disponible</span>
-                                    <span className="font-display text-xl font-bold text-gray-900">{formatCurrencySimple(disponiblePourVariables)}</span>
+                                    <span className="font-mono text-xl font-bold tabular-nums text-gray-900">{formatCurrencySimple(disponiblePourVariables)}</span>
                                 </div>
                             </div>
 
