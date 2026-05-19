@@ -105,8 +105,8 @@ const CarouselDots = ({ total, current, onSelect }: { total: number; current: nu
                     className={cx(
                         "h-2 rounded-full transition-all duration-300",
                         index === current
-                            ? "w-6 bg-brand-600 dark:bg-brand-400"
-                            : "w-2 bg-gray-300 hover:bg-gray-400 active:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 dark:active:bg-gray-500",
+                            ? "w-6 bg-gray-900"
+                            : "w-2 bg-gray-300 hover:bg-gray-400 active:bg-gray-400",
                     )}
                 />
             </button>
@@ -138,19 +138,19 @@ const CarouselArrow = ({ direction, onClick }: { direction: "left" | "right"; on
 
 const MiniDashboard = () => {
     return (
-        <div className={cx("flex h-full flex-col overflow-hidden rounded-2xl", "bg-white shadow-2xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10")}>
+        <div className={cx("flex h-full flex-col overflow-hidden rounded-2xl", "bg-white shadow-2xl ring-1 ring-black/5")}>
             {/* Header */}
-            <div className="border-b border-gray-100 bg-gray-50/80 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/50">
+            <div className="border-b border-gray-100 bg-gray-50/80 px-4 py-3">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-xs text-tertiary">Solde total</p>
                         <p className="text-lg font-semibold text-primary">8 234,50 €</p>
                     </div>
-                    <div className="flex items-center gap-1 rounded-full bg-success-50 px-2 py-0.5 dark:bg-success-900/30">
+                    <div className="flex items-center gap-1 rounded-full bg-success-50 px-2 py-0.5">
                         <svg className="size-3 text-success-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                         </svg>
-                        <span className="text-xs font-medium text-success-700 dark:text-success-400">+3.2%</span>
+                        <span className="text-xs font-medium text-success-700">+3.2%</span>
                     </div>
                 </div>
             </div>
@@ -159,9 +159,9 @@ const MiniDashboard = () => {
             <div className="flex flex-1 flex-col gap-3 p-4">
                 {/* Mini stats row */}
                 <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-800/50">
-                        <div className="flex size-7 items-center justify-center rounded-md bg-brand-100 dark:bg-brand-900/50">
-                            <svg className="size-3.5 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
+                        <div className="flex size-7 items-center justify-center rounded-md bg-gray-100">
+                            <svg className="size-3.5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -174,8 +174,8 @@ const MiniDashboard = () => {
                             <p className="text-xs font-semibold text-primary">2 800 €</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-800/50">
-                        <div className="flex size-7 items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800">
+                    <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
+                        <div className="flex size-7 items-center justify-center rounded-md bg-gray-100">
                             <svg className="size-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path
                                     strokeLinecap="round"
@@ -192,7 +192,7 @@ const MiniDashboard = () => {
                 </div>
 
                 {/* Budget progress */}
-                <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/30">
+                <div className="rounded-lg bg-gray-50 p-3">
                     <p className="mb-2 text-xs font-medium text-primary">Budgets</p>
                     <div className="space-y-2">
                         <div>
@@ -200,8 +200,8 @@ const MiniDashboard = () => {
                                 <span className="text-secondary">Alimentation</span>
                                 <span className="text-tertiary">280€ / 350€</span>
                             </div>
-                            <div className="h-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                                <div className="h-full w-[80%] rounded-full bg-brand-500" />
+                            <div className="h-1 overflow-hidden rounded-full bg-gray-200">
+                                <div className="h-full w-[80%] rounded-full bg-gray-500" />
                             </div>
                         </div>
                         <div>
@@ -209,7 +209,7 @@ const MiniDashboard = () => {
                                 <span className="text-secondary">Transport</span>
                                 <span className="text-tertiary">65€ / 120€</span>
                             </div>
-                            <div className="h-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                            <div className="h-1 overflow-hidden rounded-full bg-gray-200">
                                 <div className="h-full w-[54%] rounded-full bg-teal-500" />
                             </div>
                         </div>
@@ -222,7 +222,7 @@ const MiniDashboard = () => {
                     <div className="space-y-1.5">
                         <div className="flex items-center justify-between py-1">
                             <div className="flex items-center gap-2">
-                                <div className="flex size-6 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                                <div className="flex size-6 items-center justify-center rounded-full bg-gray-100">
                                     <svg className="size-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12" />
                                     </svg>
@@ -236,7 +236,7 @@ const MiniDashboard = () => {
                         </div>
                         <div className="flex items-center justify-between py-1">
                             <div className="flex items-center gap-2">
-                                <div className="flex size-6 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/30">
+                                <div className="flex size-6 items-center justify-center rounded-full bg-success-100">
                                     <svg className="size-3 text-success-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
                                     </svg>
@@ -264,16 +264,16 @@ const MobileUseCaseCard = ({ useCase }: { useCase: UseCase }) => {
 
     return (
         <div className="mx-auto w-full max-w-lg px-4">
-            <div className={cx("overflow-hidden rounded-2xl", "bg-white shadow-xl ring-1 ring-gray-100", "dark:bg-gray-900 dark:ring-gray-800")}>
+            <div className={cx("overflow-hidden rounded-2xl", "bg-white shadow-xl ring-1 ring-gray-100")}>
                 {/* Header */}
-                <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/30">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/50">
-                        <Icon className="size-5 text-brand-600 dark:text-brand-400" />
+                <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/50 px-4 py-3">
+                    <div className="flex size-10 items-center justify-center rounded-full bg-gray-100">
+                        <Icon className="size-5 text-gray-900" />
                     </div>
                     <div className="min-w-0 flex-1">
-                        <span className="text-xs font-medium text-brand-600 dark:text-brand-400">{useCase.title}</span>
+                        <span className="text-xs font-medium text-gray-900">{useCase.title}</span>
                         <h3 className="text-sm font-semibold text-primary">
-                            {useCase.headline.prefix} <span className="text-brand-600 dark:text-brand-400">{useCase.headline.highlight}</span>
+                            {useCase.headline.prefix} <span className="text-gray-900">{useCase.headline.highlight}</span>
                         </h3>
                     </div>
                 </div>
@@ -284,8 +284,8 @@ const MobileUseCaseCard = ({ useCase }: { useCase: UseCase }) => {
                     <ul className="space-y-2">
                         {useCase.features.map((feature, i) => (
                             <li key={i} className="flex items-start gap-2.5">
-                                <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/50">
-                                    <Check className="size-3 text-brand-600 dark:text-brand-400" strokeWidth={3} />
+                                <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                                    <Check className="size-3 text-gray-900" strokeWidth={3} />
                                 </div>
                                 <span className="text-sm text-secondary">{feature}</span>
                             </li>
@@ -293,9 +293,9 @@ const MobileUseCaseCard = ({ useCase }: { useCase: UseCase }) => {
                     </ul>
 
                     {/* Stat */}
-                    <div className="mt-4 flex items-center gap-3 rounded-xl bg-brand-50 p-3 dark:bg-brand-950/50">
-                        <span className="text-display-xs font-bold text-brand-600 dark:text-brand-400">{useCase.stat.value}</span>
-                        <span className="text-sm text-brand-700 dark:text-brand-300">{useCase.stat.label}</span>
+                    <div className="mt-4 flex items-center gap-3 rounded-xl bg-gray-50 p-3">
+                        <span className="text-display-xs font-bold text-gray-900">{useCase.stat.value}</span>
+                        <span className="text-sm text-gray-600">{useCase.stat.label}</span>
                     </div>
                 </div>
             </div>
@@ -313,12 +313,9 @@ const BrandGlowBar = () => (
             "pointer-events-none absolute -bottom-6 inset-x-0 mx-auto",
             "h-24 w-full max-w-xl",
             "rounded-[32px]",
-            "bg-gradient-to-r from-brand-300/40 via-brand-400/50 to-brand-300/40",
+            "bg-gradient-to-r from-gray-300/30 via-gray-400/20 to-gray-300/30",
             "blur-3xl",
-            // Hidden on mobile
             "hidden md:block",
-            // Dark mode
-            "dark:from-brand-600/30 dark:via-brand-500/40 dark:to-brand-600/30",
         )}
         style={{
             animation: "gradient-pulse 4s ease-in-out infinite",
@@ -336,20 +333,20 @@ const DesktopUseCaseCard = ({ useCase }: { useCase: UseCase }) => {
         <div className="relative mx-auto w-full max-w-4xl px-4">
             {/* Glow effect under the card */}
             <BrandGlowBar />
-            <div className={cx("relative overflow-hidden rounded-3xl", "bg-white shadow-2xl ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800")}>
+            <div className={cx("relative overflow-hidden rounded-3xl", "bg-white shadow-2xl ring-1 ring-gray-100")}>
                 <div className="grid grid-cols-1 lg:grid-cols-2">
                     {/* Left side - Content */}
                     <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-10">
                         {/* Badge */}
                         <div className="mb-4">
-                            <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-600 dark:bg-brand-900/50 dark:text-brand-400">
+                            <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-900">
                                 {useCase.title}
                             </span>
                         </div>
 
                         {/* Title */}
                         <h3 className="text-2xl font-semibold text-primary sm:text-3xl">
-                            {useCase.headline.prefix} <span className="text-brand-600 dark:text-brand-400">{useCase.headline.highlight}</span>{" "}
+                            {useCase.headline.prefix} <span className="text-gray-900">{useCase.headline.highlight}</span>{" "}
                             {useCase.headline.suffix}
                         </h3>
 
@@ -357,9 +354,9 @@ const DesktopUseCaseCard = ({ useCase }: { useCase: UseCase }) => {
                         <ul className="mt-6 space-y-3">
                             {useCase.features.map((feature, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/50">
+                                    <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-gray-100">
                                         <svg
-                                            className="size-3 text-brand-600 dark:text-brand-400"
+                                            className="size-3 text-gray-900"
                                             fill="none"
                                             viewBox="0 0 24 24"
                                             stroke="currentColor"
@@ -375,19 +372,19 @@ const DesktopUseCaseCard = ({ useCase }: { useCase: UseCase }) => {
 
                         {/* Stat */}
                         <div className="mt-8 flex items-baseline gap-2">
-                            <span className="text-display-sm font-bold text-brand-600 dark:text-brand-400">{useCase.stat.value}</span>
+                            <span className="text-display-sm font-bold text-gray-900">{useCase.stat.value}</span>
                             <span className="text-sm text-tertiary">{useCase.stat.label}</span>
                         </div>
                     </div>
 
                     {/* Right side - Visual */}
-                    <div className="relative min-h-[280px] bg-gray-100 lg:min-h-0 dark:bg-gray-800">
+                    <div className="relative min-h-[280px] bg-gray-100 lg:min-h-0">
                         <div className="absolute inset-4 lg:inset-6">
                             <MiniDashboard />
                         </div>
 
                         {/* Decorative gradient overlay */}
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-500/5 to-transparent" aria-hidden="true" />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-gray-200/20 to-transparent" aria-hidden="true" />
                     </div>
                 </div>
             </div>
@@ -410,7 +407,7 @@ const TabSelector = ({ useCases, currentIndex, onSelect }: { useCases: UseCase[]
                     className={cx(
                         "flex min-h-11 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200",
                         index === currentIndex
-                            ? "bg-brand-600 text-white shadow-md active:scale-95"
+                            ? "bg-gray-900 text-white shadow-md active:scale-95"
                             : "bg-secondary text-secondary hover:bg-tertiary hover:text-primary active:scale-95 active:bg-tertiary active:text-primary",
                     )}
                 >
@@ -507,7 +504,7 @@ export const FeaturesCarousel = () => {
                             className="text-center text-lg text-tertiary md:text-xl"
                         >
                             {currentUseCase.headline.prefix}{" "}
-                            <span className="font-semibold text-brand-600 dark:text-brand-400">{currentUseCase.headline.highlight}</span>{" "}
+                            <span className="font-semibold text-gray-900">{currentUseCase.headline.highlight}</span>{" "}
                             {currentUseCase.headline.suffix}
                         </motion.p>
                     </AnimatePresence>

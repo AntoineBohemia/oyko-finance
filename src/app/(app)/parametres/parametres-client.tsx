@@ -20,6 +20,7 @@ import {
     Sun,
     Trash01,
     Tv03,
+    Link01,
     Upload01,
     Wallet03,
     Zap,
@@ -32,7 +33,6 @@ import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { cx } from "@/utils/cx";
-import { createClient } from "@/lib/supabase/client";
 import type {
     ParametresData,
     CategorieParametres,
@@ -40,7 +40,7 @@ import type {
     CompteParametres,
     TotauxParametres,
 } from "@/lib/data/parametres";
-import type { Profile } from "@/types/database.types";
+import type { Profile } from "@/types/api";
 
 interface ParametresClientProps {
     initialData: ParametresData;
@@ -68,7 +68,7 @@ const getCompteIcon = (type: string) => {
 const getCompteColor = (type: string) => {
     switch (type) {
         case "courant":
-            return "text-brand-600";
+            return "text-gray-600";
         case "epargne":
             return "text-success-600";
         case "cash":
@@ -93,7 +93,7 @@ const getChargeIcon = (categorieNom: string) => {
 
 const getChargeColor = (categorieNom: string) => {
     const colorMap: Record<string, string> = {
-        "Logement": "text-brand-600",
+        "Logement": "text-gray-600",
         "Streaming": "text-red-500",
         "Téléphone": "text-gray-600",
         "Sport": "text-yellow-500",
@@ -131,6 +131,8 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
     const [isAddCompteOpen, setIsAddCompteOpen] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [isResetOpen, setIsResetOpen] = useState(false);
+    const [isBankConnecting, setIsBankConnecting] = useState(false);
+    const [bankSyncResult, setBankSyncResult] = useState<{ accountsSynced: number; transactionsImported: number } | null>(null);
 
     // États sauvegarde
     const [isSaving, setIsSaving] = useState(false);
@@ -158,21 +160,16 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
     const [importFile, setImportFile] = useState<File | null>(null);
     const [importFormat, setImportFormat] = useState("");
 
-    // Supabase client
-    const supabase = createClient();
-
     // Handlers
     const handleSaveRevenus = async () => {
         if (!profile) return;
         setIsSaving(true);
 
-        const { error } = await supabase
-            .from("profiles")
-            .update({ revenus_mensuels: parseFloat(revenus) || 0 })
-            .eq("id", profile.id);
+        const { updateProfile } = await import("@/lib/data/parametres");
+        const success = await updateProfile({ revenus_mensuels: parseFloat(revenus) || 0 });
 
         setIsSaving(false);
-        if (!error) {
+        if (success) {
             setIsEditRevenusOpen(false);
             window.location.reload();
         }
@@ -182,13 +179,11 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         if (!profile) return;
         setIsSaving(true);
 
-        const { error } = await supabase
-            .from("profiles")
-            .update({ objectif_epargne: parseFloat(objectifEpargne) || 0 })
-            .eq("id", profile.id);
+        const { updateProfile } = await import("@/lib/data/parametres");
+        const success = await updateProfile({ objectif_epargne: parseFloat(objectifEpargne) || 0 });
 
         setIsSaving(false);
-        if (!error) {
+        if (success) {
             setIsEditEpargneOpen(false);
             window.location.reload();
         }
@@ -198,13 +193,11 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         if (!profile) return;
         setIsSaving(true);
 
-        const { error } = await supabase
-            .from("profiles")
-            .update({ mode_gestion: modeGestion })
-            .eq("id", profile.id);
+        const { updateProfile } = await import("@/lib/data/parametres");
+        const success = await updateProfile({ mode_gestion: modeGestion as "semaine" | "mois" });
 
         setIsSaving(false);
-        if (!error) {
+        if (success) {
             setIsEditModeOpen(false);
             window.location.reload();
         }
@@ -214,11 +207,9 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         if (!profile) return;
         setIsSaving(true);
 
+        const { updateCategorie } = await import("@/lib/data/parametres");
         for (const cat of editCategories) {
-            await supabase
-                .from("categories")
-                .update({ nom: cat.nom, budget_mensuel: cat.budget, icone: cat.icone })
-                .eq("id", cat.id);
+            await updateCategorie(cat.id, { nom: cat.nom, budget_mensuel: cat.budget, icone: cat.icone });
         }
 
         setIsSaving(false);
@@ -230,8 +221,8 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         if (!profile) return;
         setIsSaving(true);
 
-        const { error } = await supabase.from("charges_fixes").insert({
-            user_id: profile.id,
+        const { addChargeFix } = await import("@/lib/data/parametres");
+        const success = await addChargeFix({
             nom: newCharge.nom,
             montant: parseFloat(newCharge.montant) || 0,
             jour_prelevement: parseInt(newCharge.jourPrelevement) || 1,
@@ -239,7 +230,7 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         });
 
         setIsSaving(false);
-        if (!error) {
+        if (success) {
             setIsAddChargeOpen(false);
             setNewCharge({ nom: "", montant: "", jourPrelevement: "", categorie: "" });
             window.location.reload();
@@ -247,9 +238,41 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
     };
 
     const handleDeleteCharge = async (id: string) => {
-        const { error } = await supabase.from("charges_fixes").delete().eq("id", id);
-        if (!error) {
+        const { deleteChargeFix } = await import("@/lib/data/parametres");
+        const success = await deleteChargeFix(id);
+        if (success) {
             window.location.reload();
+        }
+    };
+
+    const handleConnectBank = async () => {
+        setIsBankConnecting(true);
+        setBankSyncResult(null);
+        try {
+            // 1. Créer la connexion bancaire
+            const connectRes = await fetch("/api/bank/connect", { method: "POST" });
+            if (!connectRes.ok) throw new Error("Erreur de connexion");
+
+            const connectData = await connectRes.json();
+            const connectUrl = connectData.connectUrl;
+
+            // 2. Si l'URL est une vraie URL Bridge (pas mock), rediriger l'utilisateur
+            if (connectUrl && !connectUrl.includes("mock-bank")) {
+                window.location.href = connectUrl;
+                return;
+            }
+
+            // 3. Mode mock : sync immédiat
+            const syncRes = await fetch("/api/bank/sync", { method: "POST" });
+            if (!syncRes.ok) throw new Error("Erreur de synchronisation");
+
+            const result = await syncRes.json();
+            setBankSyncResult(result);
+
+            window.location.reload();
+        } catch (error) {
+            console.error("Bank connection error:", error);
+            setIsBankConnecting(false);
         }
     };
 
@@ -257,16 +280,16 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         if (!profile) return;
         setIsSaving(true);
 
-        const { error } = await supabase.from("comptes").insert({
-            user_id: profile.id,
+        const { addCompte } = await import("@/lib/data/parametres");
+        const success = await addCompte({
             nom: newCompte.nom,
             banque: newCompte.banque,
             solde: parseFloat(newCompte.solde) || 0,
-            type: newCompte.type,
+            type: newCompte.type as "courant" | "epargne" | "cash",
         });
 
         setIsSaving(false);
-        if (!error) {
+        if (success) {
             setIsAddCompteOpen(false);
             setNewCompte({ nom: "", banque: "", solde: "", type: "" });
             window.location.reload();
@@ -274,8 +297,9 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
     };
 
     const handleDeleteCompte = async (id: string) => {
-        const { error } = await supabase.from("comptes").delete().eq("id", id);
-        if (!error) {
+        const { deleteCompte } = await import("@/lib/data/parametres");
+        const success = await deleteCompte(id);
+        if (success) {
             window.location.reload();
         }
     };
@@ -290,23 +314,16 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
     const handleExport = async () => {
         if (!profile) return;
 
-        const [categoriesRes, chargesRes, comptesRes, transactionsRes] = await Promise.all([
-            supabase.from("categories").select("*").eq("user_id", profile.id),
-            supabase.from("charges_fixes").select("*").eq("user_id", profile.id),
-            supabase.from("comptes").select("*").eq("user_id", profile.id),
-            supabase.from("transactions").select("*").eq("user_id", profile.id),
-        ]);
-
+        // TODO: Replace with a dedicated export API endpoint
         const data = {
             profile: {
                 revenus_mensuels: profile.revenus_mensuels,
                 objectif_epargne: profile.objectif_epargne,
                 mode_gestion: profile.mode_gestion,
             },
-            categories: categoriesRes.data,
-            chargesFixes: chargesRes.data,
-            comptes: comptesRes.data,
-            transactions: transactionsRes.data,
+            categories: categories,
+            chargesFixes: chargesFixes,
+            comptes: comptes,
             exportDate: new Date().toISOString(),
         };
 
@@ -323,26 +340,13 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         if (!profile) return;
         setIsSaving(true);
 
-        // Supprimer toutes les données de l'utilisateur
-        await Promise.all([
-            supabase.from("transactions").delete().eq("user_id", profile.id),
-            supabase.from("charges_fixes").delete().eq("user_id", profile.id),
-            supabase.from("comptes").delete().eq("user_id", profile.id),
-            supabase.from("categories").delete().eq("user_id", profile.id),
-            supabase.from("investissements").delete().eq("user_id", profile.id),
-            supabase.from("dettes").delete().eq("user_id", profile.id),
-            supabase.from("historique_soldes").delete().eq("user_id", profile.id),
-        ]);
-
-        // Réinitialiser le profil
-        await supabase
-            .from("profiles")
-            .update({
-                revenus_mensuels: 0,
-                objectif_epargne: 0,
-                mode_gestion: "semaine",
-            })
-            .eq("id", profile.id);
+        // TODO: Replace with a dedicated reset API endpoint
+        const { updateProfile } = await import("@/lib/data/parametres");
+        await updateProfile({
+            revenus_mensuels: 0,
+            objectif_epargne: 0,
+            mode_gestion: "semaine",
+        });
 
         setIsSaving(false);
         setIsResetOpen(false);
@@ -377,8 +381,8 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                     <div className="flex flex-col gap-6 rounded-xl bg-primary_alt p-6 shadow-xs ring-1 ring-secondary ring-inset">
                         <div className="flex items-center justify-between border-b border-secondary pb-4">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50">
-                                    <PiggyBank01 className="h-5 w-5 text-brand-600" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+                                    <PiggyBank01 className="h-5 w-5 text-gray-600" />
                                 </div>
                                 <p className="text-lg font-semibold text-primary">Budget</p>
                             </div>
@@ -527,6 +531,15 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                                     <p className="text-sm text-tertiary">Solde total: {formatCurrency(totaux.totalComptes)}</p>
                                 </div>
                             </div>
+                            <Button
+                                size="sm"
+                                color="primary"
+                                iconLeading={Link01}
+                                onClick={handleConnectBank}
+                                isDisabled={isBankConnecting}
+                            >
+                                {isBankConnecting ? "Connexion..." : "Connecter ma banque"}
+                            </Button>
                         </div>
 
                         {/* Liste des comptes */}

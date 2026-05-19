@@ -23,9 +23,11 @@ import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { cx } from "@/utils/cx";
 import { formatCurrencySimple, getDayKey } from "@/utils/format";
-import { createClient } from "@/lib/supabase/client";
+import { addTransaction, deleteTransaction } from "@/lib/data/depenses";
+import { addCategorie } from "@/lib/data/parametres";
+import { api } from "@/lib/api/client";
 import type { DepensesData, CategorieDepense, CompteDepense, TransactionDepense } from "@/lib/data/depenses";
-import type { Profile } from "@/types/database.types";
+import type { Profile } from "@/types/api";
 
 // Types pour les données sérialisées
 interface SerializedDepensesData {
@@ -263,39 +265,26 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
         if (!montant || !categorieId || !compteId) return;
 
         setIsSubmitting(true);
-        const supabase = createClient();
 
         try {
-            // Calculer la date
             let transactionDate = new Date();
             if (dateOption === "yesterday") {
                 transactionDate.setDate(transactionDate.getDate() - 1);
             }
 
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("Non authentifié");
+            await addTransaction({
+                montant: parseFloat(montant),
+                categorieId,
+                compteId,
+                description: description || undefined,
+                type: "depense",
+                date: transactionDate,
+            });
 
-            const { error } = await supabase
-                .from("transactions")
-                .insert({
-                    user_id: user.id,
-                    montant: -Math.abs(parseFloat(montant)),
-                    categorie_id: categorieId,
-                    compte_id: compteId,
-                    description: description || null,
-                    type: "depense",
-                    date_transaction: transactionDate.toISOString(),
-                });
-
-            if (error) throw error;
-
-            // Reset form
             setMontant("");
             setCategorieId(null);
             setDescription("");
             setDateOption("today");
-
-            // Recharger la page pour afficher la nouvelle transaction
             router.refresh();
         } catch (error) {
             console.error("Erreur ajout dépense:", error);
@@ -308,33 +297,21 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
         if (!revenuMontant || !revenuCategorieId || !revenuCompteId) return;
 
         setIsSubmitting(true);
-        const supabase = createClient();
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("Non authentifié");
-
-            const { error } = await supabase
-                .from("transactions")
-                .insert({
-                    user_id: user.id,
-                    montant: Math.abs(parseFloat(revenuMontant)),
-                    categorie_id: revenuCategorieId,
-                    compte_id: revenuCompteId,
-                    description: revenuDescription || null,
-                    type: "revenu",
-                    date_transaction: new Date().toISOString(),
-                });
-
-            if (error) throw error;
+            await addTransaction({
+                montant: parseFloat(revenuMontant),
+                categorieId: revenuCategorieId,
+                compteId: revenuCompteId,
+                description: revenuDescription || undefined,
+                type: "revenu",
+                date: new Date(),
+            });
 
             setIsRevenuModalOpen(false);
-            // Reset form
             setRevenuMontant("");
             setRevenuCategorieId(null);
             setRevenuDescription("");
-
-            // Recharger la page
             router.refresh();
         } catch (error) {
             console.error("Erreur ajout revenu:", error);
@@ -344,16 +321,8 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
     };
 
     const handleDeleteTransaction = async (transactionId: string) => {
-        const supabase = createClient();
-
         try {
-            const { error } = await supabase
-                .from("transactions")
-                .delete()
-                .eq("id", transactionId);
-
-            if (error) throw error;
-
+            await deleteTransaction(transactionId);
             router.refresh();
         } catch (error) {
             console.error("Erreur suppression:", error);
@@ -371,16 +340,13 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
     const handleSaveEdit = async () => {
         if (!editingTransaction) return;
 
-        const supabase = createClient();
         setIsSubmitting(true);
 
         try {
-            const { error } = await supabase
-                .from("transactions")
-                .update({ categorie_id: editCategorieId })
-                .eq("id", editingTransaction.id);
-
-            if (error) throw error;
+            await api("/api/v1/transactions/" + editingTransaction.id, {
+                method: "PUT",
+                body: { categorie_id: editCategorieId },
+            });
 
             setIsEditModalOpen(false);
             setEditingTransaction(null);
@@ -396,38 +362,29 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
     const handleCreateCategory = async () => {
         if (!newCategoryName.trim() || !profile) return;
 
-        const supabase = createClient();
         setIsSubmitting(true);
 
         try {
-            const { data, error } = await supabase
-                .from("categories")
-                .insert({
-                    user_id: profile.id,
+            const data = await api<{ id: string; nom: string; icone: string | null; couleur: string | null }>("/api/v1/categories", {
+                method: "POST",
+                body: {
                     nom: newCategoryName.trim(),
                     icone: newCategoryIcon,
-                    couleur: "#7F56D9",
+                    couleur: "#1C1917",
                     budget_mensuel: parseFloat(newCategoryBudget) || 0,
                     type: "depense",
-                })
-                .select()
-                .single();
+                },
+            });
 
-            if (error) throw error;
-
-            // Ajouter à la liste locale
             const newCat: CategorieDepense = {
                 id: data.id,
                 nom: data.nom,
                 icone: data.icone ?? "📦",
-                couleur: data.couleur ?? "#7F56D9",
+                couleur: data.couleur ?? "#1C1917",
             };
             setLocalCategories((prev) => [...prev, newCat]);
-
-            // Sélectionner la nouvelle catégorie
             setEditCategorieId(data.id);
 
-            // Reset formulaire
             setIsCreatingCategory(false);
             setNewCategoryName("");
             setNewCategoryIcon("📦");
@@ -465,16 +422,13 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
     const handleDeleteSelected = async () => {
         if (selectedTransactions.size === 0) return;
 
-        const supabase = createClient();
         setIsSubmitting(true);
 
         try {
-            const { error } = await supabase
-                .from("transactions")
-                .delete()
-                .in("id", Array.from(selectedTransactions));
-
-            if (error) throw error;
+            await api("/api/v1/transactions/bulk-delete", {
+                method: "POST",
+                body: { ids: Array.from(selectedTransactions) },
+            });
 
             setSelectedTransactions(new Set());
             setIsDeleteConfirmOpen(false);
@@ -588,7 +542,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                                 className={cx(
                                                     "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                                                     categorieId === cat.id
-                                                        ? "bg-brand-50 text-brand-700 ring-2 ring-brand-500"
+                                                        ? "bg-gray-900 text-white"
                                                         : "bg-primary text-tertiary ring-1 ring-secondary hover:bg-primary_hover"
                                                 )}
                                             >
@@ -840,13 +794,13 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
 
                             {/* Barre d'actions sélection */}
                             {selectedTransactions.size > 0 && (
-                                <div className="flex items-center justify-between rounded-lg bg-brand-50 p-3">
+                                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
                                     <div className="flex items-center gap-3">
                                         <input
                                             type="checkbox"
                                             checked={selectedTransactions.size === filteredTransactions.length}
                                             onChange={toggleSelectAll}
-                                            className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                            className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                                         />
                                         <span className="text-sm font-medium text-brand-700">
                                             {selectedTransactions.size} sélectionnée{selectedTransactions.size > 1 ? "s" : ""}
@@ -892,7 +846,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                                             className={cx(
                                                                 "group flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-secondary/50",
                                                                 isFixe && "bg-secondary/30",
-                                                                isSelected && "bg-brand-50"
+                                                                isSelected && "bg-gray-50"
                                                             )}
                                                         >
                                                             <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -901,7 +855,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                                                     type="checkbox"
                                                                     checked={isSelected}
                                                                     onChange={() => toggleSelectTransaction(t.id)}
-                                                                    className="h-4 w-4 shrink-0 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                                                    className="h-4 w-4 shrink-0 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                                                                 />
                                                                 <span className="text-xl">{t.categorieIcone || "📦"}</span>
                                                                 <div className="min-w-0 flex-1">
@@ -1100,7 +1054,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                                             className={cx(
                                                                 "flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-all",
                                                                 editCategorieId === cat.id
-                                                                    ? "bg-brand-50 text-brand-700 ring-2 ring-brand-500"
+                                                                    ? "bg-gray-900 text-white"
                                                                     : "bg-secondary text-tertiary hover:text-primary"
                                                             )}
                                                         >
@@ -1112,7 +1066,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                                     <button
                                                         type="button"
                                                         onClick={() => setIsCreatingCategory(true)}
-                                                        className="flex items-center gap-1 rounded-md border-2 border-dashed border-secondary px-3 py-2 text-sm font-medium text-tertiary transition-all hover:border-brand-300 hover:text-brand-600"
+                                                        className="flex items-center gap-1 rounded-md border-2 border-dashed border-secondary px-3 py-2 text-sm font-medium text-tertiary transition-all hover:border-brand-300 hover:text-gray-900"
                                                     >
                                                         <Plus className="h-4 w-4" />
                                                         <span>Nouvelle</span>
@@ -1148,7 +1102,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                                                 className={cx(
                                                                     "flex h-10 w-10 items-center justify-center rounded-lg text-xl transition-all",
                                                                     newCategoryIcon === emoji
-                                                                        ? "bg-brand-100 ring-2 ring-brand-500"
+                                                                        ? "bg-gray-100 ring-2 ring-gray-900"
                                                                         : "bg-secondary hover:bg-secondary_hover"
                                                                 )}
                                                             >

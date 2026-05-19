@@ -29,9 +29,8 @@ import { ProgressBar } from "@/components/base/progress-indicators/progress-indi
 import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { cx } from "@/utils/cx";
-import { createClient } from "@/lib/supabase/client";
 import type { DettesPageData, DetteData, TypeDette } from "@/lib/data/dettes";
-import type { Profile } from "@/types/database.types";
+import type { Profile } from "@/types/api";
 
 // Types sérialisés
 interface SerializedDetteData {
@@ -361,29 +360,24 @@ export default function DettesClient({ initialData }: DettesClientProps) {
         if (!newDette.nom || !newDette.type || !newDette.capitalInitial || !newDette.mensualite) return;
 
         setIsSubmitting(true);
-        const supabase = createClient();
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("Non authentifie");
-
-            const { error } = await supabase.from("dettes").insert({
-                user_id: user.id,
+            const { addDette } = await import("@/lib/data/dettes");
+            const result = await addDette({
                 nom: newDette.nom,
-                type: newDette.type,
-                capital_initial: parseFloat(newDette.capitalInitial),
-                capital_restant: parseFloat(newDette.capitalRestant || newDette.capitalInitial),
-                taux_interet: parseFloat(newDette.tauxAnnuel) || 0,
+                type: newDette.type as TypeDette,
+                capitalInitial: parseFloat(newDette.capitalInitial),
+                capitalRestant: parseFloat(newDette.capitalRestant || newDette.capitalInitial),
+                tauxAnnuel: parseFloat(newDette.tauxAnnuel) || 0,
                 mensualite: parseFloat(newDette.mensualite),
-                jour_prelevement: parseInt(newDette.jourPrelevement) || 5,
-                date_debut: new Date().toISOString().split("T")[0],
-                date_fin: newDette.dateFin || null,
-                preteur: newDette.preteur || null,
-                compte_id: newDette.compte || null,
-                notes: newDette.notes || null,
+                jourPrelevement: parseInt(newDette.jourPrelevement) || 5,
+                dateFin: newDette.dateFin || "",
+                preteur: newDette.preteur || "",
+                compteId: newDette.compte || "",
+                notes: newDette.notes || undefined,
             });
 
-            if (error) throw error;
+            if (!result.success) throw new Error(result.error || "Erreur");
 
             setIsModalOpen(false);
             setNewDette({
@@ -408,15 +402,11 @@ export default function DettesClient({ initialData }: DettesClientProps) {
     };
 
     const handleDeleteDette = async (detteId: string) => {
-        const supabase = createClient();
-
         try {
-            const { error } = await supabase
-                .from("dettes")
-                .delete()
-                .eq("id", detteId);
+            const { deleteDette } = await import("@/lib/data/dettes");
+            const result = await deleteDette(detteId);
 
-            if (error) throw error;
+            if (!result.success) throw new Error(result.error || "Erreur");
 
             setSelectedDette(null);
             router.refresh();

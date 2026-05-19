@@ -32,7 +32,7 @@ import { Input } from "@/components/base/input/input";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { Select } from "@/components/base/select/select";
 import { cx } from "@/utils/cx";
-import { createClient } from "@/lib/supabase/client";
+import { api } from "@/lib/api/client";
 
 // ============================================
 // TYPES
@@ -95,8 +95,7 @@ const STEPS = [
     { id: 2, title: "Charges fixes", icon: "🏠" },
     { id: 3, title: "Budget", icon: "📊" },
     { id: 4, title: "Épargne", icon: "🎯" },
-    { id: 5, title: "Mode", icon: "📅" },
-    { id: 6, title: "Comptes", icon: "🏦" },
+    { id: 5, title: "Comptes", icon: "🏦" },
 ];
 
 // ============================================
@@ -133,7 +132,6 @@ function OnboardingLoading() {
 function OnboardingContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const supabase = createClient();
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -157,8 +155,8 @@ function OnboardingContent() {
         const step = searchParams.get("step");
         const bankConnectedParam = searchParams.get("bank_connected");
 
-        if (step === "6") {
-            setCurrentStep(6);
+        if (step === "5" || step === "6") {
+            setCurrentStep(5);
         }
 
         if (bankConnectedParam === "true") {
@@ -169,20 +167,20 @@ function OnboardingContent() {
     }, [searchParams]);
 
     const loadConnectedBankAccounts = async () => {
-        const { data: accounts } = await supabase
-            .from("bank_accounts")
-            .select("id, name, balance, iban")
-            .order("created_at", { ascending: false });
-
-        if (accounts && accounts.length > 0) {
-            setConnectedBankAccounts(
-                accounts.map((acc) => ({
-                    id: acc.id,
-                    name: acc.name || "Compte sans nom",
-                    balance: acc.balance ?? 0,
-                    iban: acc.iban,
-                }))
-            );
+        try {
+            const accounts = await api<{id: string; name: string | null; balance: number | null; iban: string | null}[]>("/api/v1/bank/accounts");
+            if (accounts && accounts.length > 0) {
+                setConnectedBankAccounts(
+                    accounts.map((acc) => ({
+                        id: acc.id,
+                        name: acc.name || "Compte sans nom",
+                        balance: acc.balance ?? 0,
+                        iban: acc.iban,
+                    }))
+                );
+            }
+        } catch {
+            // Pas de comptes connectés
         }
     };
 
@@ -209,12 +207,10 @@ function OnboardingContent() {
             case 2:
                 return true; // Charges fixes optionnelles
             case 3:
-                return true; // Épargne optionnelle
-            case 4:
                 return enveloppes.length > 0;
+            case 4:
+                return true; // Épargne optionnelle
             case 5:
-                return true;
-            case 6:
                 return true; // Comptes optionnels
             default:
                 return true;
@@ -222,7 +218,7 @@ function OnboardingContent() {
     }, [currentStep, revenusNum, enveloppes]);
 
     const handleNext = () => {
-        if (currentStep < 7) {
+        if (currentStep < 6) {
             // Quand on passe à l'étape 4 (Épargne), initialiser avec le restant après budget
             if (currentStep === 3) {
                 const restant = revenusNum - totalChargesFixes - totalEnveloppes;
@@ -243,79 +239,36 @@ function OnboardingContent() {
         setError("");
 
         try {
-            // Récupérer l'utilisateur connecté
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (!user) {
-                setError("Vous devez être connecté pour continuer");
-                setIsLoading(false);
-                return;
-            }
-
-            // 1. Mettre à jour le profil utilisateur
-            const { error: profileError } = await supabase
-                .from("profiles")
-                .update({
+            // Appeler le route handler d'onboarding qui gère toute la logique côté serveur
+            const res = await fetch("/api/auth/onboarding", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
                     revenus_mensuels: revenusNum,
                     objectif_epargne: epargneNum,
-                    mode_gestion: modeGestion,
-                })
-                .eq("id", user.id);
-
-            if (profileError) throw profileError;
-
-            // 2. Créer les catégories par défaut via la fonction SQL
-            const { error: categoriesError } = await supabase.rpc("create_default_categories", {
-                p_user_id: user.id,
+                    mode_gestion: "mois",
+                    comptes: comptes.map((c, index) => ({
+                        nom: c.nom,
+                        banque: c.banque,
+                        type: c.type,
+                        solde: c.solde,
+                        ordre: index,
+                    })),
+                    charges_fixes: chargesFixes.map((c) => ({
+                        nom: c.nom,
+                        montant: c.montant,
+                        jour_prelevement: c.jourPrelevement,
+                    })),
+                    enveloppes: enveloppes.map((env) => ({
+                        nom: env.nom,
+                        budget: env.budget,
+                    })),
+                }),
             });
 
-            // Ignorer l'erreur si les catégories existent déjà
-            if (categoriesError && !categoriesError.message.includes("duplicate")) {
-                console.warn("Categories warning:", categoriesError);
-            }
-
-            // 3. Créer les comptes bancaires
-            if (comptes.length > 0) {
-                const comptesData = comptes.map((c, index) => ({
-                    user_id: user.id,
-                    nom: c.nom,
-                    banque: c.banque,
-                    type: c.type,
-                    solde: c.solde,
-                    ordre: index,
-                }));
-
-                const { error: comptesError } = await supabase
-                    .from("comptes")
-                    .insert(comptesData);
-
-                if (comptesError) throw comptesError;
-            }
-
-            // 4. Créer les charges fixes
-            if (chargesFixes.length > 0) {
-                const chargesData = chargesFixes.map((c) => ({
-                    user_id: user.id,
-                    nom: c.nom,
-                    montant: c.montant,
-                    jour_prelevement: c.jourPrelevement,
-                }));
-
-                const { error: chargesError } = await supabase
-                    .from("charges_fixes")
-                    .insert(chargesData);
-
-                if (chargesError) throw chargesError;
-            }
-
-            // 5. Mettre à jour les budgets des catégories (enveloppes)
-            for (const env of enveloppes) {
-                await supabase
-                    .from("categories")
-                    .update({ budget_mensuel: env.budget })
-                    .eq("user_id", user.id)
-                    .eq("nom", env.nom)
-                    .eq("type", "depense");
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.detail || "Erreur lors de la sauvegarde");
             }
 
             // Rediriger vers le dashboard
@@ -402,38 +355,34 @@ function OnboardingContent() {
         setBankConnectionError("");
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-
-            if (!session) {
-                setBankConnectionError("Session expirée. Veuillez vous reconnecter.");
-                setIsBankConnecting(false);
-                return;
-            }
-
             // Sauvegarder qu'on vient de l'onboarding
             sessionStorage.setItem("bank_connect_from_onboarding", "true");
 
-            // Appeler l'Edge Function pour obtenir l'URL de connexion
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/bridge-connect`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
+            // Appeler le route handler pour obtenir l'URL de connexion
+            const response = await fetch("/api/bank/connect", {
+                method: "POST",
+            });
 
             if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.error || "Erreur de connexion");
             }
 
-            const { connect_url } = await response.json();
+            const data = await response.json();
+            const connectUrl = data.connectUrl || data.connect_url;
 
-            // Rediriger vers Bridge Connect
-            window.location.href = connect_url;
+            // Si Bridge réel, rediriger
+            if (connectUrl && !connectUrl.includes("mock-bank")) {
+                window.location.href = connectUrl;
+                return;
+            }
+
+            // Mode mock : sync immédiat
+            const syncRes = await fetch("/api/bank/sync", { method: "POST" });
+            if (syncRes.ok) {
+                setBankConnected(true);
+                loadConnectedBankAccounts();
+            }
         } catch (error) {
             console.error("Bank connection error:", error);
             setBankConnectionError((error as Error).message || "Erreur lors de la connexion");
@@ -781,47 +730,64 @@ function OnboardingContent() {
                                     <label className="text-sm font-medium text-primary">Épargne mensuelle</label>
 
                                     {/* Input avec boutons +/- */}
-                                    <div className="flex items-center justify-center gap-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => setObjectifEpargne(Math.max(0, epargneNum - 50).toString())}
-                                            className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-secondary bg-primary text-tertiary transition-colors hover:border-error-300 hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-900/30 dark:hover:text-error-400 active:scale-95"
-                                        >
-                                            <Minus className="h-6 w-6" />
-                                        </button>
+                                    {(() => {
+                                        const maxEpargne = Math.max(0, revenusNum - totalChargesFixes - totalEnveloppes);
+                                        const isOverBudget = epargneNum > maxEpargne;
+                                        return (
+                                            <>
+                                                <div className="flex items-center justify-center gap-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setObjectifEpargne(Math.max(0, epargneNum - 50).toString())}
+                                                        className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-secondary bg-primary text-tertiary transition-colors hover:border-error-300 hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-900/30 dark:hover:text-error-400 active:scale-95"
+                                                    >
+                                                        <Minus className="h-6 w-6" />
+                                                    </button>
 
-                                        <div className="flex flex-col items-center">
-                                            <div className="flex items-baseline gap-1">
-                                                <input
-                                                    type="number"
-                                                    value={objectifEpargne}
-                                                    onChange={(e) => setObjectifEpargne(e.target.value)}
-                                                    className="w-32 border-none bg-transparent text-center text-4xl font-bold text-primary outline-none focus:ring-0"
-                                                    min="0"
-                                                    step="50"
-                                                />
-                                                <span className="text-2xl text-tertiary">€</span>
-                                            </div>
-                                            {/* Pourcentage du salaire */}
-                                            {revenusNum > 0 && (
-                                                <Badge
-                                                    size="md"
-                                                    type="pill-color"
-                                                    color={epargneNum / revenusNum >= 0.2 ? "success" : epargneNum / revenusNum >= 0.1 ? "warning" : "gray"}
-                                                >
-                                                    {((epargneNum / revenusNum) * 100).toFixed(1)}% de vos revenus
-                                                </Badge>
-                                            )}
-                                        </div>
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="flex items-baseline gap-1">
+                                                            <input
+                                                                type="number"
+                                                                value={objectifEpargne}
+                                                                onChange={(e) => {
+                                                                    const val = parseFloat(e.target.value) || 0;
+                                                                    setObjectifEpargne(Math.min(Math.max(0, val), maxEpargne).toString());
+                                                                }}
+                                                                className={cx("w-32 border-none bg-transparent text-center text-4xl font-bold outline-none focus:ring-0", isOverBudget ? "text-error-600" : "text-primary")}
+                                                                min="0"
+                                                                max={maxEpargne}
+                                                                step="50"
+                                                            />
+                                                            <span className="text-2xl text-tertiary">€</span>
+                                                        </div>
+                                                        {revenusNum > 0 && (
+                                                            <Badge
+                                                                size="md"
+                                                                type="pill-color"
+                                                                color={isOverBudget ? "error" : epargneNum / revenusNum >= 0.2 ? "success" : epargneNum / revenusNum >= 0.1 ? "warning" : "gray"}
+                                                            >
+                                                                {isOverBudget ? "Dépasse le disponible" : `${((epargneNum / revenusNum) * 100).toFixed(1)}% de vos revenus`}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
 
-                                        <button
-                                            type="button"
-                                            onClick={() => setObjectifEpargne((epargneNum + 50).toString())}
-                                            className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-secondary bg-primary text-tertiary transition-colors hover:border-success-300 hover:bg-success-50 hover:text-success-600 dark:hover:bg-success-900/30 dark:hover:text-success-400 active:scale-95"
-                                        >
-                                            <Plus className="h-6 w-6" />
-                                        </button>
-                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setObjectifEpargne(Math.min(epargneNum + 50, maxEpargne).toString())}
+                                                        disabled={epargneNum >= maxEpargne}
+                                                        className={cx("flex h-14 w-14 items-center justify-center rounded-full border-2 transition-colors active:scale-95", epargneNum >= maxEpargne ? "cursor-not-allowed border-secondary bg-secondary text-quaternary" : "border-secondary bg-primary text-tertiary hover:border-success-300 hover:bg-success-50 hover:text-success-600 dark:hover:bg-success-900/30 dark:hover:text-success-400")}
+                                                    >
+                                                        <Plus className="h-6 w-6" />
+                                                    </button>
+                                                </div>
+                                                {maxEpargne > 0 && (
+                                                    <p className="text-center text-xs text-tertiary">
+                                                        Maximum : {formatCurrency(maxEpargne)} (revenus − charges − budget dépenses)
+                                                    </p>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
 
                                 {epargneNum >= revenusNum * 0.1 && (
@@ -882,80 +848,8 @@ function OnboardingContent() {
                     )}
 
                     {/* ÉTAPE 5: MODE DE GESTION */}
+                    {/* ÉTAPE 5: COMPTES */}
                     {currentStep === 5 && (
-                        <div className="flex flex-col gap-8">
-                            <div className="flex flex-col gap-2 text-center">
-                                <span className="text-4xl">📅</span>
-                                <h1 className="text-2xl font-semibold text-primary">Mode de gestion</h1>
-                                <p className="text-tertiary">Comment préférez-vous gérer votre budget ?</p>
-                            </div>
-
-                            <div className="flex flex-col gap-4">
-                                {/* Option Semaine */}
-                                <button
-                                    onClick={() => setModeGestion("semaine")}
-                                    className={cx(
-                                        "flex flex-col gap-3 rounded-xl p-6 text-left transition-all ring-1 ring-inset",
-                                        modeGestion === "semaine"
-                                            ? "bg-brand-50 ring-2 ring-brand dark:bg-brand-900/20"
-                                            : "bg-primary_alt ring-secondary hover:ring-brand",
-                                    )}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-2xl">📅</span>
-                                            <span className="text-lg font-semibold text-primary">À LA SEMAINE</span>
-                                        </div>
-                                        {modeGestion === "semaine" && (
-                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600">
-                                                <Check className="h-4 w-4 text-white" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <p className="text-sm text-tertiary">
-                                        Contrôle serré, idéal pour bien gérer son budget. Vous avez un montant hebdomadaire à ne pas dépasser.
-                                    </p>
-                                    <div className="rounded-lg bg-primary p-3">
-                                        <p className="text-sm text-tertiary">Budget hebdomadaire</p>
-                                        <p className="text-xl font-semibold text-brand-600">~{formatCurrency(budgetHebdo)}/semaine</p>
-                                    </div>
-                                </button>
-
-                                {/* Option Mois */}
-                                <button
-                                    onClick={() => setModeGestion("mois")}
-                                    className={cx(
-                                        "flex flex-col gap-3 rounded-xl p-6 text-left transition-all ring-1 ring-inset",
-                                        modeGestion === "mois"
-                                            ? "bg-brand-50 ring-2 ring-brand dark:bg-brand-900/20"
-                                            : "bg-primary_alt ring-secondary hover:ring-brand",
-                                    )}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-2xl">📆</span>
-                                            <span className="text-lg font-semibold text-primary">AU MOIS</span>
-                                        </div>
-                                        {modeGestion === "mois" && (
-                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600">
-                                                <Check className="h-4 w-4 text-white" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <p className="text-sm text-tertiary">
-                                        Vue globale mensuelle. Plus de flexibilité dans la répartition de vos dépenses.
-                                    </p>
-                                    <div className="rounded-lg bg-primary p-3">
-                                        <p className="text-sm text-tertiary">Budget mensuel</p>
-                                        <p className="text-xl font-semibold text-brand-600">{formatCurrency(resteAPourVivre)}</p>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ÉTAPE 6: COMPTES */}
-                    {currentStep === 6 && (
                         <div className="flex flex-col gap-8">
                             <div className="flex flex-col gap-2 text-center">
                                 <span className="text-4xl">🏦</span>
@@ -1269,11 +1163,11 @@ function OnboardingContent() {
                         <Button
                             size="lg"
                             color="primary"
-                            iconTrailing={ArrowRight}
-                            onClick={handleNext}
-                            isDisabled={!canProceed}
+                            iconTrailing={currentStep === 5 ? Rocket01 : ArrowRight}
+                            onClick={currentStep === 5 ? handleFinish : handleNext}
+                            isDisabled={currentStep === 5 ? isLoading : !canProceed}
                         >
-                            {currentStep === 6 ? "Terminer" : "Suivant"}
+                            {currentStep === 5 ? (isLoading ? "Création..." : "Terminer") : "Suivant"}
                         </Button>
                     </div>
                 </footer>

@@ -1,49 +1,80 @@
 "use client";
 
 import type { FC } from "react";
-import { useEffect, useState } from "react";
-import { LifeBuoy01, LogOut01, Moon01, Settings01, Sun } from "@untitledui/icons";
+import { useState } from "react";
+import { LogOut01, Settings01 } from "@untitledui/icons";
 import { AnimatePresence, motion } from "motion/react";
-import { useTheme } from "next-themes";
 import { Button as AriaButton, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
-import { ButtonUtility } from "@/components/base/buttons/button-utility";
-import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
 import { cx } from "@/utils/cx";
 import { MobileNavigationHeader } from "../base-components/mobile-header";
 import { NavAccountMenu } from "../base-components/nav-account-card";
 import { NavItemBase } from "../base-components/nav-item";
-import { NavItemButton } from "../base-components/nav-item-button";
 import { NavList } from "../base-components/nav-list";
 import type { NavItemType } from "../config";
 
+/**
+ * Oyko Sidebar — Dark permanent (anthracite #1C1917)
+ * Active state: lime indicator bar + lime icon
+ * Inactive: stone-500 icons
+ */
+
 interface SidebarNavigationSlimProps {
-    /** URL of the currently active item. */
     activeUrl?: string;
-    /** List of items to display. */
     items: (NavItemType & { icon: FC<{ className?: string }> })[];
-    /** List of footer items to display. */
     footerItems?: (NavItemType & { icon: FC<{ className?: string }> })[];
-    /** Whether to hide the border. */
     hideBorder?: boolean;
-    /** Whether to hide the right side border. */
     hideRightBorder?: boolean;
 }
+
+// Dark sidebar nav button
+const SidebarNavButton = ({
+    icon: Icon,
+    label,
+    href,
+    current,
+    hasNotification,
+    onClick,
+}: {
+    icon: FC<{ className?: string }>;
+    label: string;
+    href?: string;
+    current?: boolean;
+    hasNotification?: boolean;
+    onClick?: () => void;
+}) => {
+    return (
+        <a
+            href={href}
+            aria-label={label}
+            title={label}
+            onClick={onClick}
+            className={cx(
+                "relative flex w-full cursor-pointer items-center justify-center rounded-lg p-2.5 transition duration-150 ease-out select-none",
+                current
+                    ? "text-[#BEFF00]"
+                    : "text-gray-500 hover:text-gray-300",
+            )}
+        >
+            {/* Active indicator — lime bar on left */}
+            {current && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-[#BEFF00]" />
+            )}
+            <Icon aria-hidden="true" className="size-5 shrink-0 transition-colors duration-150" />
+            {hasNotification && (
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#BEFF00]" />
+            )}
+        </a>
+    );
+};
 
 export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hideBorder, hideRightBorder }: SidebarNavigationSlimProps) => {
     const activeItem = [...items, ...footerItems].find((item) => item.href === activeUrl || item.items?.some((subItem) => subItem.href === activeUrl));
     const [currentItem, setCurrentItem] = useState(activeItem || items[1]);
     const [isHovering, setIsHovering] = useState(false);
-    const [mounted, setMounted] = useState(false);
-    const { theme, setTheme } = useTheme();
-    const isDark = theme === "dark";
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     const isSecondarySidebarVisible = isHovering && Boolean(currentItem.items?.length);
 
@@ -52,29 +83,20 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
 
     const mainSidebar = (
         <aside
-            style={{
-                width: MAIN_SIDEBAR_WIDTH,
-            }}
-            className={cx(
-                "group flex h-full max-h-full max-w-full overflow-y-auto py-1 pl-1 transition duration-100 ease-linear",
-                isSecondarySidebarVisible && "bg-primary",
-            )}
+            style={{ width: MAIN_SIDEBAR_WIDTH }}
+            className="group flex h-full max-h-full max-w-full overflow-y-auto"
         >
-            <div
-                className={cx(
-                    "flex w-auto flex-col justify-between rounded-xl bg-primary pt-5 ring-1 ring-secondary transition duration-300 ring-inset",
-                    hideBorder && !isSecondarySidebarVisible && "ring-transparent",
-                )}
-            >
+            <div className="flex w-full flex-col items-center justify-between bg-gray-900 py-5">
+                {/* Logo */}
                 <div className="flex justify-center px-3">
-                    <UntitledLogoMinimal className="size-8" />
+                    <UntitledLogoMinimal className="size-8 text-white" />
                 </div>
 
-                <ul className="mt-4 flex flex-col gap-0.5 px-3">
+                {/* Nav items */}
+                <ul className="mt-6 flex flex-col gap-1 px-2">
                     {items.map((item) => (
                         <li key={item.label}>
-                            <NavItemButton
-                                size="md"
+                            <SidebarNavButton
                                 current={currentItem.href === item.href}
                                 href={item.href}
                                 label={item.label || ""}
@@ -85,43 +107,28 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                         </li>
                     ))}
                 </ul>
-                <div className="mt-auto flex flex-col gap-4 px-3 py-5">
-                    {footerItems.length > 0 && (
-                        <ul className="flex flex-col gap-0.5">
-                            {footerItems.map((item) => (
-                                <li key={item.label}>
-                                    <NavItemButton
-                                        size="md"
-                                        current={currentItem.href === item.href}
-                                        label={item.label || ""}
-                                        href={item.href}
-                                        icon={item.icon}
-                                        hasNotification={item.hasNotification}
-                                        onClick={() => setCurrentItem(item)}
-                                    />
-                                </li>
-                            ))}
-                        </ul>
-                    )}
 
-                    {/* Theme Toggle */}
-                    <div className="flex justify-center">
-                        <ButtonUtility
-                            size="sm"
-                            color="tertiary"
-                            icon={mounted && isDark ? Sun : Moon01}
-                            tooltip={mounted && isDark ? "Mode clair" : "Mode sombre"}
-                            onClick={() => setTheme(isDark ? "light" : "dark")}
+                {/* Footer */}
+                <div className="mt-auto flex flex-col items-center gap-3 px-2 pb-2">
+                    {footerItems.map((item) => (
+                        <SidebarNavButton
+                            key={item.label}
+                            current={currentItem.href === item.href}
+                            label={item.label || ""}
+                            href={item.href}
+                            icon={item.icon}
+                            hasNotification={item.hasNotification}
+                            onClick={() => setCurrentItem(item)}
                         />
-                    </div>
+                    ))}
 
                     <AriaDialogTrigger>
                         <AriaButton
                             className={({ isPressed, isFocused }) =>
-                                cx("group relative inline-flex rounded-full", (isPressed || isFocused) && "outline-2 outline-offset-2 outline-focus-ring")
+                                cx("group relative inline-flex rounded-full ring-offset-gray-900", (isPressed || isFocused) && "outline-2 outline-offset-2 outline-[#BEFF00]")
                             }
                         >
-                            <Avatar status="online" src="https://www.untitledui.com/images/avatars/olivia-rhye?fm=webp&q=80" size="md" alt="Olivia Rhye" />
+                            <Avatar status="online" size="md" alt="Antoine Moulin" initials="AM" />
                         </AriaButton>
                         <AriaPopover
                             placement="right bottom"
@@ -149,17 +156,17 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
         <AnimatePresence initial={false}>
             {isSecondarySidebarVisible && (
                 <motion.div
-                    initial={{ width: 0, borderColor: "var(--color-border-secondary)" }}
-                    animate={{ width: SECONDARY_SIDEBAR_WIDTH, borderColor: "var(--color-border-secondary)" }}
-                    exit={{ width: 0, borderColor: "rgba(0,0,0,0)", transition: { borderColor: { type: "tween", delay: 0.05 } } }}
+                    initial={{ width: 0 }}
+                    animate={{ width: SECONDARY_SIDEBAR_WIDTH }}
+                    exit={{ width: 0 }}
                     transition={{ type: "spring", damping: 26, stiffness: 220, bounce: 0 }}
                     className={cx(
-                        "relative h-full overflow-x-hidden overflow-y-auto bg-primary",
-                        !(hideBorder || hideRightBorder) && "box-content border-r-[1.5px]",
+                        "relative h-full overflow-x-hidden overflow-y-auto bg-white",
+                        !(hideBorder || hideRightBorder) && "box-content border-r border-[#E5E2DC]",
                     )}
                 >
                     <div style={{ width: SECONDARY_SIDEBAR_WIDTH }} className="flex h-full flex-col px-4 pt-6">
-                        <h3 className="text-sm font-semibold text-brand-secondary">{currentItem.label}</h3>
+                        <h3 className="font-display text-sm font-semibold text-gray-900">{currentItem.label}</h3>
                         <ul className="py-2">
                             {currentItem.items?.map((item) => (
                                 <li key={item.label} className="py-0.5">
@@ -169,13 +176,10 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 </li>
                             ))}
                         </ul>
-                        <div className="sticky bottom-0 mt-auto flex justify-between border-t border-secondary bg-primary px-2 py-5">
+                        <div className="sticky bottom-0 mt-auto flex justify-between border-t border-[#E5E2DC] bg-white px-2 py-5">
                             <div>
-                                <p className="text-sm font-semibold text-primary">Olivia Rhye</p>
-                                <p className="text-sm text-tertiary">olivia@untitledui.com</p>
-                            </div>
-                            <div className="absolute top-2.5 right-0">
-                                <ButtonUtility size="sm" color="tertiary" tooltip="Log out" icon={LogOut01} />
+                                <p className="text-sm font-semibold text-gray-900">Antoine Moulin</p>
+                                <p className="text-sm text-gray-500">antoine@oyko.space</p>
                             </div>
                         </div>
                     </div>
@@ -196,47 +200,80 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                 {secondarySidebar}
             </div>
 
-            {/* Placeholder to take up physical space because the real sidebar has `fixed` position. */}
+            {/* Placeholder for fixed sidebar */}
             <div
-                style={{
-                    paddingLeft: MAIN_SIDEBAR_WIDTH,
-                }}
+                style={{ paddingLeft: MAIN_SIDEBAR_WIDTH }}
                 className="invisible hidden lg:sticky lg:top-0 lg:bottom-0 lg:left-0 lg:block"
             />
 
             {/* Mobile header navigation */}
             <MobileNavigationHeader>
-                <aside className="group flex h-full max-h-full w-full max-w-full flex-col justify-between overflow-y-auto bg-primary pt-4">
+                <aside className="group flex h-full max-h-full w-full max-w-full flex-col justify-between overflow-y-auto bg-gray-900 pt-4">
                     <div className="px-4">
-                        <UntitledLogo className="h-8" />
+                        <UntitledLogoMinimal className="h-8 text-white" />
                     </div>
 
-                    <NavList items={items} />
+                    {/* Mobile nav items */}
+                    <nav className="mt-6 flex-1 px-3">
+                        <ul className="flex flex-col gap-1">
+                            {items.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = activeUrl === item.href;
+                                return (
+                                    <li key={item.label}>
+                                        <a
+                                            href={item.href}
+                                            className={cx(
+                                                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                                                isActive
+                                                    ? "text-[#BEFF00]"
+                                                    : "text-gray-400 hover:text-gray-200",
+                                            )}
+                                        >
+                                            <Icon className="size-5" />
+                                            <span>{item.label}</span>
+                                        </a>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </nav>
 
-                    <div className="mt-auto flex flex-col gap-5 px-2 py-4">
-                        <div className="flex flex-col gap-2">
-                            <NavItemBase current={activeUrl === "/support"} type="link" href="/support" icon={LifeBuoy01}>
-                                Support
-                            </NavItemBase>
-                            <NavItemBase current={activeUrl === "/settings"} type="link" href="/settings" icon={Settings01}>
-                                Settings
-                            </NavItemBase>
+                    <div className="mt-auto flex flex-col gap-5 px-3 py-4">
+                        <div className="flex flex-col gap-1">
+                            {footerItems.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = activeUrl === item.href;
+                                return (
+                                    <a
+                                        key={item.label}
+                                        href={item.href}
+                                        className={cx(
+                                            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                                            isActive ? "text-[#BEFF00]" : "text-gray-400 hover:text-gray-200",
+                                        )}
+                                    >
+                                        <Icon className="size-5" />
+                                        <span>{item.label}</span>
+                                    </a>
+                                );
+                            })}
                         </div>
 
-                        <div className="relative flex items-center gap-3 border-t border-secondary pt-6 pr-8 pl-2">
+                        <div className="relative flex items-center gap-3 border-t border-gray-700 pt-6 pr-8 pl-2">
                             <AvatarLabelGroup
                                 status="online"
                                 size="md"
-                                src="https://www.untitledui.com/images/avatars/olivia-rhye?fm=webp&q=80"
-                                title="Olivia Rhye"
-                                subtitle="olivia@untitledui.com"
+                                src=""
+                                title="Antoine Moulin"
+                                subtitle="antoine@oyko.space"
                             />
 
                             <div className="absolute top-1/2 right-0 -translate-y-1/2">
                                 <Button
                                     size="sm"
                                     color="tertiary"
-                                    iconLeading={<LogOut01 className="size-5 text-fg-quaternary transition-inherit-all group-hover:text-fg-quaternary_hover" />}
+                                    iconLeading={<LogOut01 className="size-5 text-gray-500 transition-inherit-all group-hover:text-gray-300" />}
                                     className="p-1.5!"
                                 />
                             </div>

@@ -42,14 +42,13 @@ import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { cx } from "@/utils/cx";
-import { createClient } from "@/lib/supabase/client";
 import type {
     EvolutionPortfolio,
     RepartitionType,
     TotauxInvestissements,
     PerformanceAnnuelle,
 } from "@/lib/data/investissements";
-import type { Profile } from "@/types/database.types";
+import type { Profile } from "@/types/api";
 
 // ============================================
 // TYPES
@@ -221,26 +220,25 @@ export default function InvestissementsClient({ initialData }: InvestissementsCl
         if (!profile || !newInvestissement.nom || !newInvestissement.quantite || !newInvestissement.prixAchat) return;
 
         setIsSaving(true);
-        const supabase = createClient();
 
         const quantite = parseFloat(newInvestissement.quantite);
         const prixAchat = parseFloat(newInvestissement.prixAchat);
         const prixActuel = newInvestissement.prixActuel ? parseFloat(newInvestissement.prixActuel) : prixAchat;
 
-        const { error } = await supabase.from("investissements").insert({
-            user_id: profile.id,
+        const { addInvestissement } = await import("@/lib/data/investissements");
+        const result = await addInvestissement({
             nom: newInvestissement.nom,
-            ticker: newInvestissement.ticker || null,
+            ticker: newInvestissement.ticker || undefined,
             type: newInvestissement.type,
-            plateforme: newInvestissement.plateforme || null,
+            plateforme: newInvestissement.plateforme || undefined,
             quantite,
             prix_achat_unitaire: prixAchat,
             prix_actuel: prixActuel,
-            date_achat: newInvestissement.dateAchat || null,
-            notes: newInvestissement.notes || null,
+            date_achat: newInvestissement.dateAchat || undefined,
+            notes: newInvestissement.notes || undefined,
         });
 
-        if (!error) {
+        if (result.success) {
             setIsModalOpen(false);
             resetNewInvestissement();
             window.location.reload();
@@ -253,22 +251,14 @@ export default function InvestissementsClient({ initialData }: InvestissementsCl
         if (!selectedActif || !addPosition.quantite || !addPosition.prix) return;
 
         setIsSaving(true);
-        const supabase = createClient();
 
-        const newQuantite = selectedActif.quantite + parseFloat(addPosition.quantite);
-        const newPrixMoyen =
-            (selectedActif.quantite * selectedActif.prixAchat + parseFloat(addPosition.quantite) * parseFloat(addPosition.prix)) /
-            newQuantite;
+        const { addPosition: addPositionApi } = await import("@/lib/data/investissements");
+        const success = await addPositionApi(selectedActif.id, {
+            quantite: parseFloat(addPosition.quantite),
+            prix: parseFloat(addPosition.prix),
+        });
 
-        const { error } = await supabase
-            .from("investissements")
-            .update({
-                quantite: newQuantite,
-                prix_achat_unitaire: newPrixMoyen,
-            })
-            .eq("id", selectedActif.id);
-
-        if (!error) {
+        if (success) {
             setIsAddPositionOpen(false);
             setAddPosition({ quantite: "", prix: "", date: "" });
             window.location.reload();
@@ -280,10 +270,10 @@ export default function InvestissementsClient({ initialData }: InvestissementsCl
     const handleDelete = async (id: string) => {
         if (!confirm("Supprimer cet investissement ?")) return;
 
-        const supabase = createClient();
-        const { error } = await supabase.from("investissements").delete().eq("id", id);
+        const { deleteInvestissement } = await import("@/lib/data/investissements");
+        const success = await deleteInvestissement(id);
 
-        if (!error) {
+        if (success) {
             window.location.reload();
         }
     };

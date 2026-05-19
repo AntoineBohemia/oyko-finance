@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "motion/react";
+import { useRef, useState } from "react";
+import { AnimatePresence, motion, useInView } from "motion/react";
 import { cx } from "@/utils/cx";
 
 // =============================================================================
@@ -39,8 +39,35 @@ const faqs = [
 // ACCORDION ITEM
 // =============================================================================
 
-const AccordionItem = ({ question, answer, isOpen, onToggle }: { question: string; answer: string; isOpen: boolean; onToggle: () => void }) => (
-    <div className="border-t border-secondary pt-5 first:border-t-0 first:pt-0 md:pt-6">
+const ease = [0.16, 1, 0.3, 1] as const;
+
+const AccordionItem = ({ question, answer, isOpen, onToggle, index }: { question: string; answer: string; isOpen: boolean; onToggle: () => void; index: number }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const isInView = useInView(ref, { once: true, margin: "-40px" });
+
+    return (
+    <motion.div
+        ref={ref}
+        initial={{ opacity: 0, y: 25 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, ease, delay: index * 0.08 }}
+        className="relative border-t border-secondary pt-5 first:border-t-0 first:pt-0 md:pt-6"
+    >
+        {/* Glow subtil sur question ouverte */}
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    className="pointer-events-none absolute -inset-2 -z-10 rounded-xl"
+                    style={{ background: "radial-gradient(ellipse at center, rgba(190,255,0,0.04), transparent 70%)" }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    aria-hidden="true"
+                />
+            )}
+        </AnimatePresence>
+
         <h3>
             <button
                 onClick={onToggle}
@@ -69,7 +96,12 @@ const AccordionItem = ({ question, answer, isOpen, onToggle }: { question: strin
                         strokeLinejoin="round"
                     >
                         <circle cx="12" cy="12" r="10" />
-                        <line className={cx("origin-center transition duration-150 ease-out", isOpen && "-rotate-90")} x1="12" y1="8" x2="12" y2="16" />
+                        <motion.line
+                            x1="12" y1="8" x2="12" y2="16"
+                            animate={{ rotate: isOpen ? -90 : 0 }}
+                            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                            style={{ transformOrigin: "center" }}
+                        />
                         <line x1="8" y1="12" x2="16" y2="12" />
                     </svg>
                 </span>
@@ -90,11 +122,21 @@ const AccordionItem = ({ question, answer, isOpen, onToggle }: { question: strin
             }}
         >
             <div className="pt-2 pr-10 md:pr-12">
-                <p className="text-sm text-tertiary md:text-md">{answer}</p>
+                <motion.p
+                    className="text-sm text-tertiary md:text-md"
+                    initial={false}
+                    animate={{
+                        clipPath: isOpen ? "inset(0 0 0% 0)" : "inset(0 0 100% 0)",
+                    }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+                >
+                    {answer}
+                </motion.p>
             </div>
         </motion.div>
-    </div>
-);
+    </motion.div>
+    );
+};
 
 // =============================================================================
 // MAIN COMPONENT
@@ -113,24 +155,25 @@ export const FaqSection = () => {
         setOpenQuestions(newOpenQuestions);
     };
 
+    const headerRef = useRef<HTMLDivElement>(null);
+    const headerInView = useInView(headerRef, { once: true, margin: "-100px" });
+
     return (
         <section className="relative bg-primary py-12 md:py-24">
-            {/* Gradient de transition */}
-            <div
-                className="pointer-events-none absolute inset-x-0 -top-24 h-32"
-                style={{
-                    background: "linear-gradient(to bottom, transparent, var(--color-bg-primary) 70%)",
-                }}
-                aria-hidden="true"
-            />
 
             <div className="mx-auto max-w-container px-4 md:px-8">
                 {/* Header */}
-                <div className="flex flex-col md:items-center md:text-center">
+                <motion.div
+                    ref={headerRef}
+                    className="flex flex-col md:items-center md:text-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={headerInView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
                     <span className="text-sm font-semibold text-brand-secondary">FAQ</span>
                     <h2 className="mt-2 text-display-xs font-semibold text-primary md:mt-3 md:text-display-md">Questions fréquentes</h2>
                     <p className="mt-3 text-md text-tertiary md:mt-5 md:text-xl">Tout ce que vous devez savoir sur Oyko.</p>
-                </div>
+                </motion.div>
 
                 {/* Accordion */}
                 <div className="mx-auto mt-8 max-w-3xl md:mt-16">
@@ -142,6 +185,7 @@ export const FaqSection = () => {
                                 answer={faq.answer}
                                 isOpen={openQuestions.has(index)}
                                 onToggle={() => handleToggle(index)}
+                                index={index}
                             />
                         ))}
                     </div>

@@ -39,16 +39,6 @@ body {
     font-kerning: normal;
 }
 
-/* Apply display font to headings */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family: var(--font-display);
-}
-
 /* Hide the default expand arrow on Safari.  */
 details summary::-webkit-details-marker {
     display: none;
@@ -71,15 +61,9 @@ input[type="search"]::-webkit-search-cancel-button {
     -webkit-appearance: none;
 }
 
-/* Subtle gradient pulse animation */
-@keyframes gradient-pulse {
-    0%,
-    100% {
-        opacity: 0.5;
-        transform: translateX(-50%) scale(1);
-    }
-    50% {
-        opacity: 0.7;
-        transform: translateX(-50%) scale(1.03);
-    }
+/* Hide the default outline on chart elements. */
+.recharts-surface,
+.recharts-surface g,
+.recharts-surface path {
+    outline: none;
 }

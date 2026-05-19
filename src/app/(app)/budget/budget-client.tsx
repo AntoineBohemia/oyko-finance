@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Plus, Settings01, X } from "@untitledui/icons";
+import { PageTransition } from "@/components/base/page-transition/page-transition";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogTrigger, Modal, ModalOverlay } from "@/components/application/modals/modal";
@@ -13,9 +14,8 @@ import { Input } from "@/components/base/input/input";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { cx } from "@/utils/cx";
 import { formatCurrencySimple, getProgressColor } from "@/utils/format";
-import { createClient } from "@/lib/supabase/client";
 import type { BudgetData, Enveloppe, ChargeFixBudget } from "@/lib/data/budget";
-import type { Profile } from "@/types/database.types";
+import type { Profile } from "@/types/api";
 
 // Types pour les données sérialisées
 interface SerializedBudgetData {
@@ -141,7 +141,7 @@ export default function BudgetClient({ initialData, initialMonth, initialYear }:
                 .reduce((acc, t) => acc + Math.abs(t.montant), 0);
             const reste = env.budgetMensuel - depenses;
             const pourcentage = env.budgetMensuel > 0 ? (depenses / env.budgetMensuel) * 100 : 0;
-            const status = pourcentage > 100 ? "depasse" : pourcentage > 80 ? "attention" : "ok";
+            const status = pourcentage > 100 ? "above" : pourcentage > 80 ? "watch" : "ok";
             return { ...env, depense: depenses, reste, pourcentage, status };
         });
     }, [enveloppes, transactions]);
@@ -233,21 +233,14 @@ export default function BudgetClient({ initialData, initialMonth, initialYear }:
     // Handlers
     const handleSaveEnvelopes = async () => {
         if (!profile) return;
-
         setIsSaving(true);
-        const supabase = createClient();
 
         try {
-            // Mettre à jour chaque catégorie
+            const { updateCategoryBudget } = await import("@/lib/data/budget");
             for (const env of editEnvelopes) {
-                await supabase
-                    .from("categories")
-                    .update({ budget_mensuel: env.budget })
-                    .eq("id", env.id);
+                await updateCategoryBudget(env.id, env.budget);
             }
-
             setIsEditModalOpen(false);
-            // Recharger la page pour afficher les nouvelles valeurs
             window.location.reload();
         } catch (error) {
             console.error("Erreur lors de la sauvegarde:", error);
@@ -274,7 +267,7 @@ export default function BudgetClient({ initialData, initialMonth, initialYear }:
     const monthNames = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 
     return (
-        <div className="min-h-screen bg-primary">
+        <PageTransition className="min-h-screen bg-primary">
             <div className="mx-auto max-w-container px-4 py-6 lg:px-8 lg:py-8">
                 {/* ============================================ */}
                 {/* SECTION 1: HEADER */}
@@ -474,9 +467,9 @@ export default function BudgetClient({ initialData, initialMonth, initialYear }:
                                                             <Badge
                                                                 size="sm"
                                                                 type="pill-color"
-                                                                color={env.status === "ok" ? "success" : env.status === "attention" ? "warning" : "error"}
+                                                                color={env.status === "ok" ? "success" : env.status === "watch" ? "gray" : "gray"}
                                                             >
-                                                                {env.status === "ok" ? "OK" : env.status === "attention" ? "Attention" : "Dépassé"}
+                                                                {env.status === "ok" ? "OK" : env.status === "watch" ? "À surveiller" : "Au-delà du prévu"}
                                                             </Badge>
                                                         </div>
                                                     </Table.Cell>
@@ -512,7 +505,7 @@ export default function BudgetClient({ initialData, initialMonth, initialYear }:
                             {/* Mobile: Cards */}
                             <div className="grid grid-cols-2 gap-3 lg:hidden">
                                 {depensesParEnveloppe.map((env) => (
-                                    <div key={env.id} className="flex flex-col gap-2 rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary ring-inset">
+                                    <div key={env.id} className="flex flex-col gap-2 rounded-xl bg-primary p-4 border border-[#E5E2DC] bg-white">
                                         <div className="flex items-center gap-2">
                                             <span className="text-lg">{env.icone}</span>
                                             <span className="text-sm font-medium text-primary">{env.nom}</span>
@@ -520,8 +513,8 @@ export default function BudgetClient({ initialData, initialMonth, initialYear }:
                                         <p className="text-lg font-semibold text-primary">{formatCurrencySimple(env.depense)}</p>
                                         <p className="text-xs text-tertiary">sur {formatCurrencySimple(env.budgetMensuel)}</p>
                                         <ProgressBar value={Math.min(env.pourcentage, 100)} className="h-1.5" progressClassName={getProgressColor(env.pourcentage)} />
-                                        <p className={cx("text-xs font-medium", env.reste >= 0 ? "text-finance-gain" : "text-finance-loss")}>
-                                            {env.reste >= 0 ? `${formatCurrencySimple(env.reste)} restant` : `${formatCurrencySimple(Math.abs(env.reste))} dépassé`}
+                                        <p className={cx("text-xs font-medium", env.reste >= 0 ? "text-finance-gain" : "text-tertiary")}>
+                                            {env.reste >= 0 ? `${formatCurrencySimple(env.reste)} restant` : `${formatCurrencySimple(Math.abs(env.reste))} au-delà`}
                                         </p>
                                     </div>
                                 ))}
@@ -629,8 +622,8 @@ export default function BudgetClient({ initialData, initialMonth, initialYear }:
                                 className={cx(
                                     "flex shrink-0 flex-col items-center rounded-lg px-4 py-2 text-sm transition-all",
                                     selectedWeek === week.num
-                                        ? "bg-brand-50 text-brand-700 ring-2 ring-brand-500"
-                                        : "bg-secondary text-tertiary hover:bg-secondary_hover",
+                                        ? "bg-gray-900 text-white"
+                                        : "bg-gray-50 text-tertiary hover:bg-gray-100",
                                 )}
                             >
                                 <span className="font-medium">Sem {week.num}</span>
@@ -691,6 +684,6 @@ export default function BudgetClient({ initialData, initialMonth, initialYear }:
                     )}
                 </div>
             </div>
-        </div>
+        </PageTransition>
     );
 }

@@ -1,311 +1,138 @@
-import { createClient } from "@/lib/supabase/server";
-import type {
-    Profile,
-    Compte,
-    Categorie,
-    ChargeFix,
-    Transaction,
-    Tables
-} from "@/types/database.types";
+import { api } from "@/lib/api/client";
+import { isDevModeActive } from "@/lib/dev/config";
+import { getMockDashboardData } from "@/lib/dev/mock-data";
+import type { Profile, Compte } from "@/types/api";
 
-// Types pour les données du dashboard
+// Types pour les donnees du dashboard
 export interface DashboardData {
-    profile: Profile | null;
-    comptes: Compte[];
-    categories: CategorieVariable[];
-    chargesFixes: ChargeFixAvecDate[];
-    transactions: TransactionAvecCategorie[];
-    patrimoine: PatrimoineData;
+  profile: Profile | null;
+  comptes: Compte[];
+  categories: CategorieVariable[];
+  chargesFixes: ChargeFixAvecDate[];
+  transactions: TransactionAvecCategorie[];
+  patrimoine: PatrimoineData;
 }
 
 export interface CategorieVariable {
-    id: string;
-    nom: string;
-    icone: string;
-    couleur: string;
-    budgetMensuel: number;
+  id: string;
+  nom: string;
+  icone: string;
+  couleur: string;
+  budgetMensuel: number;
 }
 
 export interface ChargeFixAvecDate {
-    id: string;
-    nom: string;
-    montant: number;
-    icone: string;
-    dateProchain: Date;
+  id: string;
+  nom: string;
+  montant: number;
+  icone: string;
+  dateProchain: Date;
 }
 
 export interface TransactionAvecCategorie {
-    id: string;
-    description: string;
-    montant: number;
-    date: Date;
-    categorieId: string;
-    type: "variable" | "fixe" | "revenu";
+  id: string;
+  description: string;
+  montant: number;
+  date: Date;
+  categorieId: string;
+  type: "variable" | "fixe" | "revenu";
 }
 
 export interface PatrimoineData {
-    valeurNette: number;
-    totalLiquidites: number;
-    totalInvestissements: number;
-    totalDettes: number;
-    variationMois: number;
-    repartition: PatrimoineRepartition[];
+  valeurNette: number;
+  totalLiquidites: number;
+  totalInvestissements: number;
+  totalDettes: number;
+  variationMois: number;
+  repartition: PatrimoineRepartition[];
 }
 
 export interface PatrimoineRepartition {
-    name: string;
-    value: number;
-    className: string;
-    [key: string]: string | number;
+  name: string;
+  value: number;
+  className: string;
+  [key: string]: string | number;
 }
 
-// Fonction pour calculer la prochaine date de prélèvement
-function getNextPaymentDate(jourPrelevement: number | null): Date {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    const jour = jourPrelevement ?? 1;
+// Map des icones string vers emoji
+const ICON_TO_EMOJI: Record<string, string> = {
+  "briefcase": "💼", "shopping-cart": "🛒", "trending-up": "📈",
+  "home": "🏠", "car": "🚗", "heart": "❤️", "coffee": "☕",
+  "film": "🎬", "music": "🎵", "book": "📚", "gift": "🎁",
+  "smartphone": "📱", "wifi": "🌐", "zap": "⚡", "shield": "🛡️",
+  "activity": "💪", "dollar-sign": "💰", "credit-card": "💳",
+  "tv": "📺", "truck": "🚚", "plane": "✈️", "scissors": "✂️",
+  "shirt": "👕", "tool": "🔧", "umbrella": "☂️", "users": "👥",
+  "phone": "📞", "mail": "📧", "map-pin": "📍", "tag": "🏷️",
+  "percent": "💸", "package": "📦", "star": "⭐", "award": "🏆",
+};
 
-    // Créer la date du prélèvement ce mois
-    let nextDate = new Date(currentYear, currentMonth, jour);
-
-    // Si la date est passée, prendre le mois prochain
-    if (nextDate < today) {
-        nextDate = new Date(currentYear, currentMonth + 1, jour);
-    }
-
-    return nextDate;
+function mapIcone(icone: string | null): string {
+  if (!icone) return "📦";
+  // Si c'est deja un emoji, le garder
+  if (/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]/u.test(icone)) return icone;
+  return ICON_TO_EMOJI[icone] || "📦";
 }
 
-// Récupérer toutes les données du dashboard
+// Recuperer toutes les donnees du dashboard
 export async function getDashboardData(): Promise<DashboardData> {
-    const supabase = await createClient();
+  if (await isDevModeActive()) return getMockDashboardData();
 
-    // Récupérer l'utilisateur connecté
-    const { data: { user } } = await supabase.auth.getUser();
+  // Le backend retourne un format brut, on le mappe vers le format frontend
+  const raw = await api<Record<string, unknown>>("/api/v1/dashboard");
 
-    if (!user) {
-        return {
-            profile: null,
-            comptes: [],
-            categories: [],
-            chargesFixes: [],
-            transactions: [],
-            patrimoine: {
-                valeurNette: 0,
-                totalLiquidites: 0,
-                totalInvestissements: 0,
-                totalDettes: 0,
-                variationMois: 0,
-                repartition: [],
-            },
-        };
-    }
+  const rawCats = (raw.categories as Array<Record<string, unknown>>) || [];
+  const rawTxs = (raw.transactions as Array<Record<string, unknown>>) || [];
+  const rawCfs = (raw.chargesFixes as Array<Record<string, unknown>>) || [];
+  const rawPatrimoine = (raw.patrimoine as Record<string, unknown>) || {};
+  const rawProfile = raw.profile as Profile | null;
 
-    // Récupérer toutes les données en parallèle
-    const [
-        profileResult,
-        comptesResult,
-        categoriesResult,
-        chargesFixesResult,
-        transactionsResult,
-        patrimoineResult,
-        investissementsResult,
-        dettesResult,
-        historiqueResult,
-    ] = await Promise.all([
-        // Profile
-        supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", user.id)
-            .single(),
-
-        // Comptes
-        supabase
-            .from("comptes")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("est_actif", true)
-            .order("ordre"),
-
-        // Catégories variables (enveloppes)
-        supabase
-            .from("categories")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("type", "depense")
-            .eq("est_fixe", false)
-            .eq("est_actif", true)
-            .order("ordre"),
-
-        // Charges fixes
-        supabase
-            .from("charges_fixes")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("est_actif", true)
-            .order("jour_prelevement"),
-
-        // Transactions du mois en cours
-        supabase
-            .from("transactions")
-            .select("*, categories(*)")
-            .eq("user_id", user.id)
-            .gte("date_transaction", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-            .order("date_transaction", { ascending: false }),
-
-        // Vue patrimoine total
-        supabase
-            .from("v_patrimoine_total")
-            .select("*")
-            .eq("user_id", user.id)
-            .single(),
-
-        // Investissements pour la répartition
-        supabase
-            .from("investissements")
-            .select("type, valeur_actuelle")
-            .eq("user_id", user.id),
-
-        // Dettes
-        supabase
-            .from("dettes")
-            .select("capital_restant")
-            .eq("user_id", user.id),
-
-        // Historique pour calculer la variation
-        supabase
-            .from("historique_soldes")
-            .select("valeur_nette, date_snapshot")
-            .eq("user_id", user.id)
-            .order("date_snapshot", { ascending: false })
-            .limit(2),
-    ]);
-
-    // Transformer les catégories
-    const categories: CategorieVariable[] = (categoriesResult.data ?? []).map((cat) => ({
-        id: cat.id,
-        nom: cat.nom,
-        icone: cat.icone ?? "📦",
-        couleur: cat.couleur ?? "#6b7280",
-        budgetMensuel: cat.budget_mensuel ?? 0,
+  // Filtrer : seules les categories "depense" sont des enveloppes
+  const categories: CategorieVariable[] = rawCats
+    .filter((c) => c.type === "depense")
+    .map((c) => ({
+      id: c.id as string,
+      nom: c.nom as string,
+      icone: mapIcone(c.icone as string | null),
+      couleur: (c.couleur as string) || "#6b7280",
+      budgetMensuel: ((c.budgetMensuel ?? c.budget_mensuel ?? c.budgetMensuelEuros ?? 0) as number),
     }));
 
-    // Transformer les charges fixes avec dates
-    const chargesFixes: ChargeFixAvecDate[] = (chargesFixesResult.data ?? []).map((charge) => ({
-        id: charge.id,
-        nom: charge.nom,
-        montant: charge.montant,
-        icone: charge.icone ?? "💸",
-        dateProchain: getNextPaymentDate(charge.jour_prelevement),
-    }));
+  // Transactions : mapper les champs et convertir dates
+  const transactions: TransactionAvecCategorie[] = rawTxs.map((t) => ({
+    id: t.id as string,
+    description: (t.description as string) || "",
+    montant: (t.montantEuros ?? t.montant ?? 0) as number,
+    date: (() => { const d = new Date((t.date ?? t.dateTransaction ?? "") as string); return isNaN(d.getTime()) ? new Date() : d; })(),
+    categorieId: (t.categorieId ?? t.categorie_id ?? "") as string,
+    type: ((t.type as string) === "revenu" ? "revenu" : (t.type as string) === "fixe" ? "fixe" : "variable") as "variable" | "fixe" | "revenu",
+  }));
 
-    // Transformer les transactions
-    const transactions: TransactionAvecCategorie[] = (transactionsResult.data ?? []).map((t) => {
-        const cat = t.categories as Categorie | null;
-        let type: "variable" | "fixe" | "revenu" = "variable";
+  // Charges fixes
+  const chargesFixes: ChargeFixAvecDate[] = rawCfs.map((cf) => ({
+    id: cf.id as string,
+    nom: (cf.nom as string) || "",
+    montant: ((cf.montantEuros ?? cf.montant ?? 0) as number),
+    icone: mapIcone(cf.icone as string | null),
+    dateProchain: new Date((cf.dateProchain ?? cf.prochainPrelevement ?? new Date()) as string),
+  }));
 
-        if (t.type === "revenu") {
-            type = "revenu";
-        } else if (t.charge_fixe_id || cat?.est_fixe) {
-            type = "fixe";
-        }
+  // Patrimoine
+  const patrimoine: PatrimoineData = {
+    valeurNette: (rawPatrimoine.valeurNette ?? 0) as number,
+    totalLiquidites: (rawPatrimoine.totalLiquidites ?? rawPatrimoine.totalActifs ?? 0) as number,
+    totalInvestissements: (rawPatrimoine.totalInvestissements ?? 0) as number,
+    totalDettes: (rawPatrimoine.totalDettes ?? 0) as number,
+    variationMois: (rawPatrimoine.variationMois ?? 0) as number,
+    repartition: (rawPatrimoine.repartition as PatrimoineRepartition[]) || [],
+  };
 
-        return {
-            id: t.id,
-            description: t.description ?? "",
-            montant: t.montant,
-            date: new Date(t.date_transaction),
-            categorieId: t.categorie_id ?? "",
-            type,
-        };
-    });
-
-    // Calculer la répartition du patrimoine
-    const totalLiquidites = patrimoineResult.data?.total_liquidites ?? 0;
-    const totalInvestissements = patrimoineResult.data?.total_investissements ?? 0;
-    const totalDettes = patrimoineResult.data?.total_dettes ?? 0;
-    const valeurNette = patrimoineResult.data?.valeur_nette ?? 0;
-
-    // Grouper les investissements par type
-    const investissementsParType = new Map<string, number>();
-    (investissementsResult.data ?? []).forEach((inv) => {
-        const current = investissementsParType.get(inv.type) ?? 0;
-        investissementsParType.set(inv.type, current + (inv.valeur_actuelle ?? 0));
-    });
-
-    // Calculer la variation mensuelle
-    let variationMois = 0;
-    if (historiqueResult.data && historiqueResult.data.length >= 2) {
-        const current = historiqueResult.data[0].valeur_nette ?? 0;
-        const previous = historiqueResult.data[1].valeur_nette ?? 0;
-        if (previous > 0) {
-            variationMois = ((current - previous) / previous) * 100;
-        }
-    }
-
-    // Créer la répartition du patrimoine
-    const repartition: PatrimoineRepartition[] = [];
-
-    if (totalLiquidites > 0) {
-        repartition.push({
-            name: "Liquidités",
-            value: totalLiquidites,
-            className: "text-asset-liquidity",
-        });
-    }
-
-    // Ajouter les investissements par type
-    const typeClassMap: Record<string, string> = {
-        "ETF": "text-asset-stocks",
-        "Actions": "text-asset-stocks",
-        "Crypto": "text-asset-crypto",
-        "Obligations": "text-asset-savings",
-        "Immobilier": "text-asset-real-estate",
-        "Assurance-vie": "text-asset-savings",
-        "PEA": "text-asset-stocks",
-        "Autre": "text-asset-other",
-    };
-
-    investissementsParType.forEach((value, type) => {
-        if (value > 0) {
-            repartition.push({
-                name: type,
-                value,
-                className: typeClassMap[type] ?? "text-asset-other",
-            });
-        }
-    });
-
-    // Comptes épargne séparément
-    const comptesEpargne = (comptesResult.data ?? []).filter(c => c.type === "epargne");
-    const totalEpargne = comptesEpargne.reduce((acc, c) => acc + (c.solde ?? 0), 0);
-    if (totalEpargne > 0) {
-        repartition.push({
-            name: "Épargne",
-            value: totalEpargne,
-            className: "text-asset-savings",
-        });
-    }
-
-    const patrimoine: PatrimoineData = {
-        valeurNette,
-        totalLiquidites,
-        totalInvestissements,
-        totalDettes,
-        variationMois,
-        repartition: repartition.length > 0 ? repartition : [
-            { name: "Liquidités", value: totalLiquidites || 0, className: "text-asset-liquidity" },
-        ],
-    };
-
-    return {
-        profile: profileResult.data,
-        comptes: comptesResult.data ?? [],
-        categories,
-        chargesFixes,
-        transactions,
-        patrimoine,
-    };
+  return {
+    profile: rawProfile,
+    comptes: (raw.comptes as Compte[]) || [],
+    categories,
+    chargesFixes,
+    transactions,
+    patrimoine,
+  };
 }

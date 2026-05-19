@@ -50,20 +50,18 @@ export const styles = sortCx({
     colors: {
         primary: {
             root: [
-                "bg-brand-solid text-white shadow-xs-skeumorphic ring-1 ring-transparent ring-inset hover:bg-brand-solid_hover [data-pressed]:bg-brand-solid_hover [data-pressed]:scale-[0.98] data-loading:bg-brand-solid_hover",
-                // Inner border gradient
-                "before:absolute before:inset-px before:border before:border-white/12 before:mask-b-from-0%",
+                "bg-brand-solid text-gray-900 hover:bg-brand-solid_hover [data-pressed]:bg-brand-solid_hover [data-pressed]:scale-[0.98] data-loading:bg-brand-solid_hover",
                 // Disabled styles
-                "disabled:bg-disabled disabled:shadow-xs disabled:ring-disabled_subtle",
+                "disabled:bg-disabled disabled:text-fg-disabled",
                 // Icon styles
                 "*:data-icon:text-button-primary-icon hover:*:data-icon:text-button-primary-icon_hover",
             ].join(" "),
         },
         secondary: {
             root: [
-                "bg-primary text-secondary shadow-xs-skeumorphic ring-1 ring-primary ring-inset hover:bg-primary_hover hover:text-secondary_hover [data-pressed]:bg-primary_hover [data-pressed]:scale-[0.98] data-loading:bg-primary_hover",
+                "bg-white text-gray-900 ring-1 ring-[#E5E2DC] ring-inset hover:bg-gray-50 [data-pressed]:bg-gray-50 [data-pressed]:scale-[0.98] data-loading:bg-gray-50",
                 // Disabled styles
-                "disabled:shadow-xs disabled:ring-disabled_subtle",
+                "disabled:ring-disabled_subtle disabled:text-fg-disabled",
                 // Icon styles
                 "*:data-icon:text-fg-quaternary hover:*:data-icon:text-fg-quaternary_hover",
             ].join(" "),
@@ -95,20 +93,18 @@ export const styles = sortCx({
         },
         "primary-destructive": {
             root: [
-                "bg-error-solid text-white shadow-xs-skeumorphic ring-1 ring-transparent outline-error ring-inset hover:bg-error-solid_hover [data-pressed]:bg-error-solid_hover [data-pressed]:scale-[0.98] data-loading:bg-error-solid_hover",
-                // Inner border gradient
-                "before:absolute before:inset-px before:border before:border-white/12 before:mask-b-from-0%",
+                "bg-error-solid text-white outline-error hover:bg-error-solid_hover [data-pressed]:bg-error-solid_hover [data-pressed]:scale-[0.98] data-loading:bg-error-solid_hover",
                 // Disabled styles
-                "disabled:bg-disabled disabled:shadow-xs disabled:ring-disabled_subtle",
+                "disabled:bg-disabled disabled:text-fg-disabled",
                 // Icon styles
                 "*:data-icon:text-button-destructive-primary-icon hover:*:data-icon:text-button-destructive-primary-icon_hover",
             ].join(" "),
         },
         "secondary-destructive": {
             root: [
-                "bg-primary text-error-primary shadow-xs-skeumorphic ring-1 ring-error_subtle outline-error ring-inset hover:bg-error-primary hover:text-error-primary_hover [data-pressed]:bg-error-primary [data-pressed]:scale-[0.98] data-loading:bg-error-primary",
+                "bg-white text-error-primary ring-1 ring-[#B91C1C33] outline-error ring-inset hover:bg-[#B91C1C0A] hover:text-error-primary_hover [data-pressed]:bg-[#B91C1C0A] [data-pressed]:scale-[0.98] data-loading:bg-[#B91C1C0A]",
                 // Disabled styles
-                "disabled:bg-primary disabled:shadow-xs disabled:ring-disabled_subtle",
+                "disabled:bg-white disabled:ring-disabled_subtle disabled:text-fg-disabled",
                 // Icon styles
                 "*:data-icon:text-fg-error-secondary hover:*:data-icon:text-fg-error-primary",
             ].join(" "),

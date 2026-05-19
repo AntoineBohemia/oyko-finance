@@ -32,21 +32,21 @@ export const styles = sortCx({
 
     colors: {
         gray: {
-            root: "bg-primary text-secondary shadow-xs-skeumorphic ring-1 ring-primary ring-inset hover:bg-primary_hover hover:text-secondary_hover",
+            root: "bg-white text-secondary ring-1 ring-[#E5E2DC] ring-inset hover:bg-gray-50 hover:text-secondary_hover",
             icon: "text-fg-quaternary group-hover:text-fg-quaternary_hover",
         },
         black: {
-            root: "bg-black text-white shadow-xs-skeumorphic ring-1 ring-transparent ring-inset before:absolute before:inset-px before:border before:border-white/12 before:mask-b-from-0%",
+            root: "bg-gray-900 text-white ring-1 ring-transparent ring-inset hover:bg-gray-800",
             icon: "",
         },
 
         facebook: {
-            root: "bg-[#1877F2] text-white shadow-xs-skeumorphic ring-1 ring-transparent ring-inset before:absolute before:inset-px before:border before:border-white/12 before:mask-b-from-0% hover:bg-[#0C63D4]",
+            root: "bg-[#1877F2] text-white ring-1 ring-transparent ring-inset hover:bg-[#0C63D4]",
             icon: "",
         },
 
         dribble: {
-            root: "bg-[#EA4C89] text-white shadow-xs-skeumorphic ring-1 ring-transparent ring-inset before:absolute before:inset-px before:border before:border-white/12 before:mask-b-from-0% hover:bg-[#E62872]",
+            root: "bg-[#EA4C89] text-white ring-1 ring-transparent ring-inset hover:bg-[#E62872]",
             icon: "",
         },
     },

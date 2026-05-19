@@ -1,260 +1,154 @@
-import { createClient } from "@/lib/supabase/server";
-import type { Profile, Categorie, Compte, Transaction } from "@/types/database.types";
+import { api } from "@/lib/api/client";
+import { isDevModeActive } from "@/lib/dev/config";
+import { getMockDepensesData } from "@/lib/dev/mock-data";
+import type { Profile } from "@/types/api";
 
-// Types pour les données des dépenses
+// Types pour les donnees des depenses
 export interface DepensesData {
-    profile: Profile | null;
-    comptes: CompteDepense[];
-    categoriesDepense: CategorieDepense[];
-    categoriesRevenu: CategorieDepense[];
-    transactions: TransactionDepense[];
+  profile: Profile | null;
+  comptes: CompteDepense[];
+  categoriesDepense: CategorieDepense[];
+  categoriesRevenu: CategorieDepense[];
+  transactions: TransactionDepense[];
 }
 
 export interface CompteDepense {
-    id: string;
-    nom: string;
-    banque: string;
+  id: string;
+  nom: string;
+  banque: string;
 }
 
 export interface CategorieDepense {
-    id: string;
-    nom: string;
-    icone: string;
-    couleur: string;
+  id: string;
+  nom: string;
+  icone: string;
+  couleur: string;
 }
 
 export interface TransactionDepense {
-    id: string;
-    description: string;
-    montant: number;
-    date: Date;
-    categorieId: string | null;
-    compteId: string | null;
-    type: "depense" | "revenu" | "fixe";
-    categorieNom: string | null;
-    categorieIcone: string | null;
-    compteNom: string | null;
+  id: string;
+  description: string;
+  montant: number;
+  date: Date;
+  categorieId: string | null;
+  compteId: string | null;
+  type: "depense" | "revenu" | "fixe";
+  categorieNom: string | null;
+  categorieIcone: string | null;
+  compteNom: string | null;
 }
 
-// Récupérer toutes les données pour la page dépenses
+// Map des icones string vers emoji
+const ICON_TO_EMOJI: Record<string, string> = {
+  "briefcase": "💼", "shopping-cart": "🛒", "trending-up": "📈",
+  "home": "🏠", "car": "🚗", "heart": "❤️", "coffee": "☕",
+  "film": "🎬", "music": "🎵", "book": "📚", "gift": "🎁",
+  "smartphone": "📱", "wifi": "🌐", "zap": "⚡", "shield": "🛡️",
+  "activity": "💪", "dollar-sign": "💰", "credit-card": "💳",
+  "tv": "📺", "phone": "📞", "tag": "🏷️", "package": "📦",
+};
+
+function mapIcone(icone: string | null): string {
+  if (!icone) return "📦";
+  if (/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]/u.test(icone)) return icone;
+  return ICON_TO_EMOJI[icone] || "📦";
+}
+
+// Recuperer toutes les donnees pour la page depenses
 export async function getDepensesData(
-    periodeFilter: string = "this-week"
+  periodeFilter: string = "this-week",
 ): Promise<DepensesData> {
-    const supabase = await createClient();
+  if (await isDevModeActive()) return getMockDepensesData();
 
-    // Récupérer l'utilisateur connecté
-    const { data: { user } } = await supabase.auth.getUser();
+  // Le backend /transactions ne retourne pas profile/comptes/categories
+  // On fetch en parallele
+  const [raw, profile, categoriesRaw, comptesRaw] = await Promise.all([
+    api<Record<string, unknown>>("/api/v1/transactions", { params: { period: periodeFilter } }),
+    api<Profile>("/api/v1/profile").catch(() => null),
+    api<Record<string, unknown>>("/api/v1/categories").catch(() => []),
+    api<Record<string, unknown>>("/api/v1/accounts").catch(() => []),
+  ]);
 
-    if (!user) {
-        return {
-            profile: null,
-            comptes: [],
-            categoriesDepense: [],
-            categoriesRevenu: [],
-            transactions: [],
-        };
-    }
+  const rawTxs = (raw.transactions as Array<Record<string, unknown>>) || [];
+  const allCats = Array.isArray(categoriesRaw) ? categoriesRaw : ((categoriesRaw as Record<string, unknown>).categories ?? []) as Array<Record<string, unknown>>;
+  const allComptes = Array.isArray(comptesRaw) ? comptesRaw : ((comptesRaw as Record<string, unknown>).comptes ?? []) as Array<Record<string, unknown>>;
 
-    // Calculer les dates en fonction du filtre
-    const today = new Date();
-    let startDate: Date;
-    let endDate: Date = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+  const mapCat = (c: Record<string, unknown>): CategorieDepense => ({
+    id: c.id as string,
+    nom: (c.nom as string) || "",
+    icone: mapIcone((c.icone as string) || null),
+    couleur: (c.couleur as string) || "#6b7280",
+  });
 
-    switch (periodeFilter) {
-        case "this-week": {
-            const dayOfWeek = today.getDay();
-            const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Lundi = début de semaine
-            startDate = new Date(today);
-            startDate.setDate(today.getDate() - diff);
-            startDate.setHours(0, 0, 0, 0);
-            break;
-        }
-        case "this-month":
-            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-            break;
-        case "last-month":
-            startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            endDate = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
-            break;
-        case "all":
-        default:
-            startDate = new Date(2000, 0, 1); // Depuis très longtemps
-            break;
-    }
-
-    // Récupérer toutes les données en parallèle
-    const [
-        profileResult,
-        comptesResult,
-        categoriesDepenseResult,
-        categoriesRevenuResult,
-        transactionsResult,
-    ] = await Promise.all([
-        // Profile
-        supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", user.id)
-            .single(),
-
-        // Comptes
-        supabase
-            .from("comptes")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("est_actif", true)
-            .order("ordre"),
-
-        // Catégories de dépenses
-        supabase
-            .from("categories")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("type", "depense")
-            .eq("est_actif", true)
-            .order("ordre"),
-
-        // Catégories de revenus
-        supabase
-            .from("categories")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("type", "revenu")
-            .eq("est_actif", true)
-            .order("ordre"),
-
-        // Transactions avec relations
-        supabase
-            .from("transactions")
-            .select("*, categories(*), comptes(*)")
-            .eq("user_id", user.id)
-            .gte("date_transaction", startDate.toISOString())
-            .lte("date_transaction", endDate.toISOString())
-            .order("date_transaction", { ascending: false }),
-    ]);
-
-    const profile = profileResult.data;
-
-    // Transformer les comptes
-    const comptes: CompteDepense[] = (comptesResult.data ?? []).map((c) => ({
-        id: c.id,
-        nom: c.nom,
-        banque: c.banque ?? "",
-    }));
-
-    // Transformer les catégories de dépenses
-    const categoriesDepense: CategorieDepense[] = (categoriesDepenseResult.data ?? [])
-        .filter((c) => !c.est_fixe)
-        .map((c) => ({
-            id: c.id,
-            nom: c.nom,
-            icone: c.icone ?? "📦",
-            couleur: c.couleur ?? "#6b7280",
-        }));
-
-    // Transformer les catégories de revenus
-    const categoriesRevenu: CategorieDepense[] = (categoriesRevenuResult.data ?? []).map((c) => ({
-        id: c.id,
-        nom: c.nom,
-        icone: c.icone ?? "📦",
-        couleur: c.couleur ?? "#6b7280",
-    }));
-
-    // Transformer les transactions
-    const transactions: TransactionDepense[] = (transactionsResult.data ?? []).map((t) => {
-        const cat = t.categories as Categorie | null;
-        const compte = t.comptes as Compte | null;
-
-        let type: "depense" | "revenu" | "fixe" = "depense";
-        if (t.type === "revenu") {
-            type = "revenu";
-        } else if (t.charge_fixe_id || cat?.est_fixe) {
-            type = "fixe";
-        }
-
-        return {
-            id: t.id,
-            description: t.description ?? "",
-            montant: t.montant,
-            date: new Date(t.date_transaction),
-            categorieId: t.categorie_id,
-            compteId: t.compte_id,
-            type,
-            categorieNom: cat?.nom ?? null,
-            categorieIcone: cat?.icone ?? null,
-            compteNom: compte?.nom ?? null,
-        };
-    });
-
-    return {
-        profile,
-        comptes,
-        categoriesDepense,
-        categoriesRevenu,
-        transactions,
-    };
+  return {
+    profile,
+    comptes: allComptes.map((c) => ({
+      id: (c.id as string),
+      nom: (c.nom ?? c.name ?? "") as string,
+      banque: (c.banque ?? c.bankName ?? c.bank_name ?? "") as string,
+    })),
+    categoriesDepense: allCats.filter((c) => (c.type as string) === "depense" || !c.type).map(mapCat),
+    categoriesRevenu: allCats.filter((c) => (c.type as string) === "revenu").map(mapCat),
+    transactions: rawTxs.map((t) => ({
+      id: t.id as string,
+      description: (t.description as string) || "",
+      montant: ((t.montantEuros ?? t.montant ?? 0) as number),
+      date: (() => { const d = new Date((t.date ?? t.dateTransaction ?? "") as string); return isNaN(d.getTime()) ? new Date() : d; })(),
+      categorieId: ((t.categorieId ?? t.categorie_id ?? null) as string | null),
+      compteId: ((t.compteId ?? t.compte_id ?? null) as string | null),
+      type: ((t.type as string) === "revenu" ? "revenu" : (t.type as string) === "fixe" ? "fixe" : "depense") as "depense" | "revenu" | "fixe",
+      categorieNom: (t.categorieNom ?? null) as string | null,
+      categorieIcone: t.categorieIcone ? mapIcone(t.categorieIcone as string) : null,
+      compteNom: (t.compteNom ?? null) as string | null,
+    })),
+  };
 }
 
 // Ajouter une nouvelle transaction
 export async function addTransaction(data: {
-    montant: number;
-    categorieId: string;
-    compteId: string;
-    description?: string;
-    type: "depense" | "revenu";
-    date: Date;
+  montant: number;
+  categorieId: string;
+  compteId: string;
+  description?: string;
+  type: "depense" | "revenu";
+  date: Date;
 }): Promise<{ success: boolean; error?: string }> {
-    const supabase = await createClient();
+  if (await isDevModeActive()) return { success: true };
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return { success: false, error: "Non authentifié" };
-    }
-
-    // Le montant est négatif pour les dépenses, positif pour les revenus
-    const montantFinal = data.type === "depense" ? -Math.abs(data.montant) : Math.abs(data.montant);
-
-    const { error } = await supabase
-        .from("transactions")
-        .insert({
-            user_id: user.id,
-            montant: montantFinal,
-            categorie_id: data.categorieId,
-            compte_id: data.compteId,
-            description: data.description || null,
-            type: data.type,
-            date_transaction: data.date.toISOString(),
-        });
-
-    if (error) {
-        console.error("Erreur ajout transaction:", error);
-        return { success: false, error: error.message };
-    }
-
+  try {
+    await api("/api/v1/transactions", {
+      method: "POST",
+      body: {
+        montant: data.type === "depense" ? -Math.abs(data.montant) : Math.abs(data.montant),
+        categorie_id: data.categorieId,
+        compte_id: data.compteId,
+        description: data.description || null,
+        type: data.type,
+        date_transaction: data.date.toISOString(),
+      },
+    });
     return { success: true };
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Erreur inconnue",
+    };
+  }
 }
 
 // Supprimer une transaction
-export async function deleteTransaction(transactionId: string): Promise<{ success: boolean; error?: string }> {
-    const supabase = await createClient();
+export async function deleteTransaction(
+  transactionId: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (await isDevModeActive()) return { success: true };
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return { success: false, error: "Non authentifié" };
-    }
-
-    const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("id", transactionId)
-        .eq("user_id", user.id);
-
-    if (error) {
-        console.error("Erreur suppression transaction:", error);
-        return { success: false, error: error.message };
-    }
-
+  try {
+    await api("/api/v1/transactions/" + transactionId, { method: "DELETE" });
     return { success: true };
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Erreur inconnue",
+    };
+  }
 }

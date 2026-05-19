@@ -106,7 +106,7 @@ function EmailConfirmedContent() {
 
             {/* Footer */}
             <footer className="absolute bottom-0 left-0 right-0 p-8">
-                <p className="text-center text-sm text-tertiary">© Oyko 2025</p>
+                <p className="text-center text-sm text-tertiary">© <span className="font-display">Oyko</span> 2025</p>
             </footer>
         </GradientBackground>
     );

@@ -1,9 +1,11 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { AlertCircle } from "@untitledui/icons";
+import { AlertCircle, Mail01 } from "@untitledui/icons";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { MockFrame } from "react-mockframe";
+import "react-mockframe/styles/mockframe-iphones.min.css";
 import { Button } from "@/components/base/buttons/button";
 import { SocialButton } from "@/components/base/buttons/social-button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
@@ -12,7 +14,91 @@ import { Input } from "@/components/base/input/input";
 import { PasswordInput } from "@/components/base/input/input-password";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
-import { createClient } from "@/lib/supabase/client";
+import { cx } from "@/utils/cx";
+
+// =============================================================================
+// OYKO PHONE SCREEN — Dashboard preview inside phone mockup
+// =============================================================================
+
+const OykoScreen = () => (
+    <div className="flex h-full flex-col bg-[#08090D] px-5 pt-3 pb-6">
+        <div className="flex items-center justify-between">
+            <div>
+                <p className="text-[11px] text-gray-500">Bonjour, Antoine</p>
+                <p className="text-sm font-semibold text-white">Mon Dashboard</p>
+            </div>
+            <div className="flex size-8 items-center justify-center rounded-full bg-[#BEFF00]/15 ring-1 ring-[#BEFF00]/20">
+                <span className="text-xs font-bold text-[#BEFF00]">A</span>
+            </div>
+        </div>
+
+        <div className="mt-5 rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/[0.06]">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Solde disponible</p>
+            <div className="mt-1.5 flex items-baseline gap-0.5">
+                <span className="font-mono text-3xl font-bold tracking-tight text-white">1 247</span>
+                <span className="font-mono text-lg font-bold text-gray-600">,50 €</span>
+            </div>
+            <div className="mt-3.5 flex items-center gap-2.5">
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-800">
+                    <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-[#BEFF00] to-[#9ACC00]" />
+                </div>
+                <span className="font-mono text-[10px] font-semibold text-[#BEFF00]">62%</span>
+            </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+            {[
+                { emoji: "🍔", name: "Alimentation", spent: "280 €", pct: 70 },
+                { emoji: "🚇", name: "Transport", spent: "65 €", pct: 35 },
+                { emoji: "🎮", name: "Loisirs", spent: "175 €", pct: 88 },
+                { emoji: "👕", name: "Vêtements", spent: "45 €", pct: 20 },
+            ].map((env) => (
+                <div key={env.name} className="rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.05]">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs">{env.emoji}</span>
+                        <span className="text-[10px] font-medium text-gray-300">{env.name}</span>
+                    </div>
+                    <p className="mt-1 font-mono text-xs font-semibold text-white">{env.spent}</p>
+                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-gray-800">
+                        <div
+                            className={cx("h-full rounded-full", env.pct > 80 ? "bg-amber-500" : "bg-gradient-to-r from-white/70 to-white/40")}
+                            style={{ width: `${env.pct}%` }}
+                        />
+                    </div>
+                </div>
+            ))}
+        </div>
+
+        <div className="mt-4">
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-widest text-gray-500">Récent</p>
+            <div className="flex flex-col divide-y divide-white/[0.04]">
+                {[
+                    { name: "Carrefour Market", cat: "Alimentation", amount: "-47,32 €", positive: false },
+                    { name: "Salaire Mai", cat: "Revenus", amount: "+2 800 €", positive: true },
+                    { name: "Netflix", cat: "Abonnement", amount: "-13,99 €", positive: false },
+                    { name: "SNCF", cat: "Transport", amount: "-35,00 €", positive: false },
+                ].map((tx) => (
+                    <div key={tx.name} className="flex items-center justify-between py-2.5">
+                        <div className="flex items-center gap-2.5">
+                            <div className={cx("flex size-6 items-center justify-center rounded-full text-[9px]", tx.positive ? "bg-[#BEFF00]/10 text-[#BEFF00]" : "bg-white/[0.04] text-gray-500")}>
+                                {tx.positive ? "↓" : "↑"}
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-medium text-gray-200">{tx.name}</p>
+                                <p className="text-[9px] text-gray-600">{tx.cat}</p>
+                            </div>
+                        </div>
+                        <span className={cx("font-mono text-[11px] font-medium", tx.positive ? "text-[#BEFF00]" : "text-gray-400")}>{tx.amount}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    </div>
+);
+
+// =============================================================================
+// LOGIN FORM
+// =============================================================================
 
 function LoginForm() {
     const router = useRouter();
@@ -25,14 +111,11 @@ function LoginForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const supabase = createClient();
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setIsLoading(true);
 
-        // Vérification basique
         if (!email || !password) {
             setError("Veuillez remplir tous les champs");
             setIsLoading(false);
@@ -40,76 +123,59 @@ function LoginForm() {
         }
 
         try {
-            const { data, error: signInError } = await supabase.auth.signInWithPassword({
-                email,
-                password,
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
             });
 
-            if (signInError) {
-                // Messages d'erreur en français
-                if (signInError.message === "Invalid login credentials") {
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                if (res.status === 401) {
                     setError("Email ou mot de passe incorrect");
-                } else if (signInError.message === "Email not confirmed") {
-                    setError("Veuillez confirmer votre email avant de vous connecter");
                 } else {
-                    setError(signInError.message);
+                    setError(data.detail || "Erreur de connexion");
                 }
                 setIsLoading(false);
                 return;
             }
 
-            if (data.user) {
-                // Vérifier si le profil a été complété (onboarding)
-                const { data: profile } = await supabase.from("profiles").select("revenus_mensuels").eq("id", data.user.id).single();
-
-                // Si le profil n'a pas de revenus configurés, rediriger vers onboarding
-                if (!profile?.revenus_mensuels || profile.revenus_mensuels === 0) {
-                    router.push("/onboarding");
-                } else {
-                    router.push(redirectTo);
-                }
-                router.refresh();
+            const data = await res.json();
+            if (data.user?.onboardingCompleted === false) {
+                router.push("/onboarding");
+            } else {
+                router.push(redirectTo);
             }
-        } catch (err) {
+            router.refresh();
+        } catch {
             setError("Une erreur est survenue. Veuillez réessayer.");
             setIsLoading(false);
         }
     };
 
     const handleGoogleSignIn = async () => {
-        setIsLoading(true);
-        setError("");
-
-        try {
-            const { error: oauthError } = await supabase.auth.signInWithOAuth({
-                provider: "google",
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=${redirectTo}`,
-                },
-            });
-
-            if (oauthError) {
-                setError("Erreur lors de la connexion avec Google");
-                setIsLoading(false);
-            }
-        } catch (err) {
-            setError("Une erreur est survenue. Veuillez réessayer.");
-            setIsLoading(false);
-        }
+        setError("La connexion Google sera disponible prochainement.");
     };
 
     return (
-        <section className="grid min-h-screen grid-cols-1 bg-primary lg:grid-cols-[640px_1fr]">
+        <section className="grid min-h-screen grid-cols-1 bg-primary lg:grid-cols-2">
+            {/* Left — Form */}
             <div className="flex flex-col bg-primary">
-                <div className="flex flex-1 justify-center px-4 py-12 md:items-center md:px-8 md:py-32">
+                <header className="hidden p-8 md:block">
+                    <Link href="/">
+                        <UntitledLogo />
+                    </Link>
+                </header>
+
+                <div className="flex flex-1 justify-center px-4 py-12 md:items-center md:px-8">
                     <div className="flex w-full flex-col gap-8 sm:max-w-90">
-                        <div className="flex flex-col gap-6 md:gap-20">
-                            <Link href="/">
-                                <UntitledLogo className="max-md:hidden" />
-                                <UntitledLogoMinimal className="size-10 md:hidden" />
+                        <div className="flex flex-col gap-6">
+                            <Link href="/" className="lg:hidden">
+                                <UntitledLogoMinimal className="size-10" />
                             </Link>
+
                             <div className="flex flex-col gap-2 md:gap-3">
-                                <h1 className="text-display-xs font-semibold text-primary md:text-display-md">Connexion</h1>
+                                <h1 className="text-xl font-semibold text-primary md:text-display-xs">Connexion</h1>
                                 <p className="text-md text-tertiary">Bon retour ! Entrez vos identifiants.</p>
                             </div>
                         </div>
@@ -166,40 +232,36 @@ function LoginForm() {
                         <div className="flex justify-center gap-1 text-center">
                             <span className="text-sm text-tertiary">Pas encore de compte ?</span>
                             <Button href="/signup" color="link-color" size="md">
-                                S'inscrire
+                                S&apos;inscrire
                             </Button>
                         </div>
                     </div>
                 </div>
 
-                <footer className="hidden p-8 pt-11 lg:block">
-                    <p className="text-sm text-tertiary">© Oyko 2025</p>
+                <footer className="hidden justify-between p-8 pt-11 lg:flex">
+                    <p className="text-sm text-tertiary">© <span className="font-display">Oyko</span> 2025</p>
+                    <a href="mailto:contact@oyko.fr" className="flex items-center gap-2 text-sm text-tertiary">
+                        <Mail01 className="size-4 text-fg-quaternary" />
+                        contact@oyko.fr
+                    </a>
                 </footer>
             </div>
 
-            <div className="relative hidden items-center overflow-hidden bg-tertiary pl-24 lg:flex">
-                <div className="rounded-[9.03px] bg-primary p-[0.9px] shadow-lg ring-[0.56px] ring-utility-gray-300 ring-inset md:rounded-[26.95px] md:p-[3.5px] md:ring-[1.68px]">
-                    <div className="rounded-[7.9px] bg-primary p-0.5 shadow-modern-mockup-inner-md md:rounded-[23.58px] md:p-1 md:shadow-modern-mockup-inner-lg">
-                        <div className="relative overflow-hidden rounded-[6.77px] bg-utility-gray-50 ring-[0.56px] ring-utility-gray-200 md:rounded-[20.21px] md:ring-[1.68px]">
-                            {/* Light mode image (hidden in dark mode) */}
-                            <img
-                                src="https://www.untitledui.com/marketing/screen-mockups/dashboard-desktop-mockup-light-01.webp"
-                                className="max-h-168.5 max-w-none object-cover object-left-top dark:hidden"
-                                alt="Dashboard mockup showing application interface"
-                            />
-                            {/* Dark mode image (hidden in light mode) */}
-                            <img
-                                src="https://www.untitledui.com/marketing/screen-mockups/dashboard-desktop-mockup-dark-01.webp"
-                                className="max-h-168.5 max-w-none object-cover object-left-top not-dark:hidden"
-                                alt="Dashboard mockup showing application interface"
-                            />
-                        </div>
-                    </div>
+            {/* Right — Phone mockup */}
+            <div className="relative hidden items-center justify-center overflow-hidden bg-secondary lg:flex">
+                <div className="pointer-events-none" style={{ transform: "scale(0.85)" }}>
+                    <MockFrame device="iPhone 17" color="black">
+                        <OykoScreen />
+                    </MockFrame>
                 </div>
             </div>
         </section>
     );
 }
+
+// =============================================================================
+// PAGE
+// =============================================================================
 
 export default function LoginPage() {
     return (

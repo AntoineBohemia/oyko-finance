@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PageTransition } from "@/components/base/page-transition/page-transition";
 import {
     ArrowDown,
     ArrowUp,
@@ -38,7 +39,6 @@ import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { cx } from "@/utils/cx";
-import { createClient } from "@/lib/supabase/client";
 import type {
     PatrimoineData,
     ComptePatrimoine,
@@ -47,7 +47,7 @@ import type {
     EvolutionPatrimoine,
     TotauxPatrimoine,
 } from "@/lib/data/patrimoine";
-import type { Profile } from "@/types/database.types";
+import type { Profile } from "@/types/api";
 
 // Types pour les données sérialisées
 interface SerializedPatrimoineData {
@@ -150,7 +150,7 @@ const getCompteIconColor = (type: string) => {
         case "cash":
             return "text-warning-600";
         default:
-            return "text-brand-600";
+            return "text-gray-600";
     }
 };
 
@@ -189,8 +189,8 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
 
     // Répartition actifs pour le donut
     const repartitionActifs = [
-        { name: "Liquidités", value: totaux.totalLiquidites, color: "#7c3aed" },
-        { name: "Investissements", value: totaux.totalInvestissements, color: "#10b981" },
+        { name: "Liquidités", value: totaux.totalLiquidites, color: "#1C1917" },
+        { name: "Investissements", value: totaux.totalInvestissements, color: "#BEFF00" },
     ];
 
     // Initialiser les soldes pour la modale
@@ -207,14 +207,11 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
         if (!profile) return;
 
         setIsSaving(true);
-        const supabase = createClient();
 
         try {
+            const { updateCompteSolde } = await import("@/lib/data/patrimoine");
             for (const [compteId, solde] of Object.entries(soldesUpdate)) {
-                await supabase
-                    .from("comptes")
-                    .update({ solde: parseFloat(solde) || 0 })
-                    .eq("id", compteId);
+                await updateCompteSolde(compteId, parseFloat(solde) || 0);
             }
 
             setIsUpdateModalOpen(false);
@@ -226,17 +223,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
         }
     };
 
-    // Message si pas de données
-    if (!profile) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-primary">
-                <div className="text-center">
-                    <h1 className="text-xl font-semibold text-primary">Chargement...</h1>
-                    <p className="text-tertiary">Récupération de vos données...</p>
-                </div>
-            </div>
-        );
-    }
+    // Plus de blocage sur !profile — on affiche le contenu même sans profil
 
     // Calcul de la variation mensuelle
     const variationMois = evolutionPatrimoine.length >= 2
@@ -246,7 +233,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
         : 0;
 
     return (
-        <div className="min-h-screen bg-primary">
+        <PageTransition className="min-h-screen bg-primary">
             <div className="mx-auto max-w-container px-4 py-6 lg:px-8 lg:py-8">
                 <div className="flex flex-col gap-8">
                     {/* SECTION 1: HEADER */}
@@ -261,7 +248,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                     </div>
 
                     {/* SECTION 2: VALEUR NETTE HERO */}
-                    <div className="flex flex-col gap-6 rounded-xl bg-primary_alt p-6 shadow-xs ring-1 ring-secondary ring-inset lg:p-8">
+                    <div className="flex flex-col gap-6 rounded-xl bg-primary_alt p-6 border border-[#E5E2DC] lg:p-8">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                             <div className="flex flex-col gap-2">
                                 <p className="text-sm font-medium text-tertiary">Valeur nette</p>
@@ -350,10 +337,10 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                         {selectedTab === "liquidites" && (
                             <div className="flex flex-col gap-6">
                                 {/* Total liquidités */}
-                                <div className="flex items-center justify-between rounded-xl bg-primary_alt p-4 shadow-xs ring-1 ring-secondary ring-inset">
+                                <div className="flex items-center justify-between rounded-xl bg-primary_alt p-4 border border-[#E5E2DC]">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50">
-                                            <Wallet03 className="h-5 w-5 text-brand-600" />
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+                                            <Wallet03 className="h-5 w-5 text-gray-600" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-tertiary">Total liquidités</p>
@@ -376,7 +363,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                                             return (
                                                 <div
                                                     key={compte.id}
-                                                    className="flex flex-col gap-4 rounded-xl bg-primary_alt p-5 shadow-xs ring-1 ring-secondary ring-inset"
+                                                    className="flex flex-col gap-4 rounded-xl bg-primary_alt p-5 border border-[#E5E2DC]"
                                                 >
                                                     <div className="flex items-start justify-between">
                                                         <div className="flex items-center gap-3">
@@ -417,7 +404,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                         {selectedTab === "investissements" && (
                             <div className="flex flex-col gap-6">
                                 {/* Total investissements */}
-                                <div className="flex items-center justify-between rounded-xl bg-primary_alt p-4 shadow-xs ring-1 ring-secondary ring-inset">
+                                <div className="flex items-center justify-between rounded-xl bg-primary_alt p-4 border border-[#E5E2DC]">
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-50">
                                             <LineChartUp01 className="h-5 w-5 text-success-600" />
@@ -442,7 +429,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
 
                                 {/* Table investissements */}
                                 {investissements.length > 0 ? (
-                                    <div className="overflow-hidden rounded-xl bg-primary_alt shadow-xs ring-1 ring-secondary ring-inset">
+                                    <div className="overflow-hidden rounded-xl bg-primary_alt border border-[#E5E2DC]">
                                         <Table aria-label="Investissements">
                                             <Table.Header>
                                                 <Table.Head id="nom" isRowHeader label="Actif" className="w-full" />
@@ -504,7 +491,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                         {selectedTab === "dettes" && (
                             <div className="flex flex-col gap-6">
                                 {/* Total dettes */}
-                                <div className="flex items-center justify-between rounded-xl bg-primary_alt p-4 shadow-xs ring-1 ring-secondary ring-inset">
+                                <div className="flex items-center justify-between rounded-xl bg-primary_alt p-4 border border-[#E5E2DC]">
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-error-50">
                                             <CreditCard01 className="h-5 w-5 text-error-600" />
@@ -537,7 +524,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                                             return (
                                                 <div
                                                     key={dette.id}
-                                                    className="flex flex-col gap-4 rounded-xl bg-primary_alt p-5 shadow-xs ring-1 ring-secondary ring-inset"
+                                                    className="flex flex-col gap-4 rounded-xl bg-primary_alt p-5 border border-[#E5E2DC]"
                                                 >
                                                     <div className="flex items-start justify-between">
                                                         <div className="flex items-center gap-3">
@@ -595,7 +582,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
 
                     {/* SECTION 5: ÉVOLUTION DU PATRIMOINE */}
                     {evolutionPatrimoine.length > 0 && (
-                        <div className="flex flex-col gap-6 rounded-xl bg-primary_alt p-6 shadow-xs ring-1 ring-secondary ring-inset">
+                        <div className="flex flex-col gap-6 rounded-xl bg-primary_alt p-6 border border-[#E5E2DC]">
                             <div className="flex items-start justify-between">
                                 <div className="flex flex-col gap-1">
                                     <p className="text-lg font-semibold text-primary">Évolution du patrimoine</p>
@@ -609,12 +596,12 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                                     <AreaChart data={evolutionPatrimoine} className="text-tertiary [&_.recharts-text]:text-xs">
                                         <defs>
                                             <linearGradient id="gradientActifs" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#10b981" stopOpacity="0.3" />
-                                                <stop offset="95%" stopColor="#10b981" stopOpacity="0" />
+                                                <stop offset="5%" stopColor="#1C1917" stopOpacity="0.15" />
+                                                <stop offset="95%" stopColor="#1C1917" stopOpacity="0" />
                                             </linearGradient>
                                             <linearGradient id="gradientNet" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#7c3aed" stopOpacity="0.3" />
-                                                <stop offset="95%" stopColor="#7c3aed" stopOpacity="0" />
+                                                <stop offset="5%" stopColor="#BEFF00" stopOpacity="0.3" />
+                                                <stop offset="95%" stopColor="#BEFF00" stopOpacity="0" />
                                             </linearGradient>
                                         </defs>
 
@@ -642,19 +629,19 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
 
                                         <Area
                                             isAnimationActive={false}
-                                            className="text-success-500"
+                                            className="text-gray-400"
                                             dataKey="actifs"
                                             name="Actifs"
                                             type="monotone"
                                             stroke="currentColor"
                                             strokeWidth={2}
                                             fill="url(#gradientActifs)"
-                                            activeDot={{ className: "fill-bg-primary stroke-success-500 stroke-2" }}
+                                            activeDot={{ className: "fill-white stroke-gray-400 stroke-2" }}
                                         />
 
                                         <Area
                                             isAnimationActive={false}
-                                            className="text-error-400"
+                                            className="text-gray-300"
                                             dataKey="passifs"
                                             name="Passifs"
                                             type="monotone"
@@ -662,19 +649,19 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                                             strokeWidth={2}
                                             fill="none"
                                             strokeDasharray="4 4"
-                                            activeDot={{ className: "fill-bg-primary stroke-error-400 stroke-2" }}
+                                            activeDot={{ className: "fill-white stroke-gray-300 stroke-2" }}
                                         />
 
                                         <Area
                                             isAnimationActive={false}
-                                            className="text-brand-600"
+                                            className="text-[#BEFF00]"
                                             dataKey="net"
                                             name="Valeur nette"
                                             type="monotone"
                                             stroke="currentColor"
                                             strokeWidth={3}
                                             fill="url(#gradientNet)"
-                                            activeDot={{ className: "fill-bg-primary stroke-brand-600 stroke-2" }}
+                                            activeDot={{ className: "fill-white stroke-[#BEFF00] stroke-2" }}
                                         />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -724,6 +711,6 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                     </Dialog>
                 </Modal>
             </ModalOverlay>
-        </div>
+        </PageTransition>
     );
 }

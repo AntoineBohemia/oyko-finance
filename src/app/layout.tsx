@@ -1,20 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Space_Grotesk } from "next/font/google";
+import { Fraunces } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { RouteProvider } from "@/providers/router-provider";
-import { Theme } from "@/providers/theme";
+import { QueryProvider } from "@/providers/query-provider";
 import "@/styles/globals.css";
+import { Toaster } from "sonner";
 import { cx } from "@/utils/cx";
+import { DevModeWidget } from "@/components/dev/dev-mode-widget";
 
-const dmSans = DM_Sans({
+const fraunces = Fraunces({
     subsets: ["latin"],
     display: "swap",
-    variable: "--font-dm-sans",
-});
-
-const spaceGrotesk = Space_Grotesk({
-    subsets: ["latin"],
-    display: "swap",
-    variable: "--font-space-grotesk",
+    variable: "--font-fraunces",
+    axes: ["WONK", "SOFT"],
 });
 
 export const metadata: Metadata = {
@@ -26,8 +25,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-    themeColor: "#7f56d9",
-    colorScheme: "light dark",
+    themeColor: "#1C1917",
+    colorScheme: "light",
 };
 
 export default function RootLayout({
@@ -36,10 +35,26 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" suppressHydrationWarning>
-            <body className={cx(dmSans.variable, spaceGrotesk.variable, "bg-primary antialiased")}>
+        <html lang="fr" suppressHydrationWarning>
+            <body className={cx(fraunces.variable, GeistSans.variable, GeistMono.variable, "bg-primary antialiased")}>
                 <RouteProvider>
-                    <Theme>{children}</Theme>
+                    <QueryProvider>
+                        {children}
+                        <DevModeWidget />
+                        <Toaster
+                            position="bottom-right"
+                            toastOptions={{
+                                style: {
+                                    background: "#1C1917",
+                                    color: "#FAFAF9",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    fontFamily: "var(--font-body)",
+                                    fontSize: "14px",
+                                },
+                            }}
+                        />
+                    </QueryProvider>
                 </RouteProvider>
             </body>
         </html>

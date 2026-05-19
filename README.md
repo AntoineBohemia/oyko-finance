@@ -1,56 +1,168 @@
-# Untitled UI starter kit for Next.js
+# Oyko Frontend
 
-This is an official Untitled UI starter kit for Next.js. Kickstart your Untitled UI project with Next.js in seconds.
+Application Next.js de gestion de finances personnelles : budget, transactions, patrimoine, charges fixes, avec integration bancaire DSP2-ready.
 
-## Untitled UI React
+## Stack technique
 
-[Untitled UI React](https://www.untitledui.com/react) is the world’s largest collection of open-source React UI components. Everything you need to design and develop modern, beautiful interfaces—fast.
+| Composant | Version |
+|-----------|---------|
+| Next.js | 16 (App Router, React 19) |
+| TypeScript | 5.9 |
+| Tailwind CSS | 4.1 |
+| TanStack Query | 5 (cache client-side) |
+| Zustand | 5 (auth state) |
+| Zod | 4 (validation formulaires) |
+| React Aria | 3.44 (composants accessibles) |
+| Recharts | 3 (graphiques) |
+| Vitest + MSW | Tests unitaires |
+| Playwright | Tests E2E |
 
-Built with React 19.1, Tailwind CSS v4.1, TypeScript 5.8, and React Aria, Untitled UI React components deliver modern performance, type safety, and maintainability.
+## Architecture
 
-[Learn more](https://www.untitledui.com/react) • [Documentation](https://www.untitledui.com/react/docs/introduction) • [Figma](https://www.untitledui.com/figma) • [FAQs](https://www.untitledui.com/faqs)
-
-## Getting started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+src/
+├── app/                    # App Router Next.js
+│   ├── (app)/              # Pages protegees (dashboard, budget, patrimoine, parametres)
+│   ├── (auth)/             # Pages auth (login, signup, onboarding)
+│   ├── api/                # Route handlers
+│   │   ├── auth/           # Login, register, logout, refresh (gestion cookies httpOnly)
+│   │   ├── bank/           # Connect, sync (agregation bancaire)
+│   │   └── v1/[...path]/   # Proxy generique vers le backend Spring Boot
+│   └── layout.tsx          # Root layout (providers: Query, Router, Theme)
+├── hooks/
+│   ├── api/                # Hooks TanStack Query (11 modules CRUD)
+│   ├── use-auth.ts         # Auth hook (login, logout, fetchUser)
+│   └── use-api-error.ts    # Helpers erreurs utilisateur
+├── lib/
+│   ├── api/
+│   │   ├── client.ts       # Fetch wrapper (ProblemDetail, URL duale server/client)
+│   │   └── query-keys.ts   # Factory de cles de cache TanStack Query
+│   ├── data/               # Data layer (8 modules, dev mode + API calls)
+│   ├── dev/                # Mock data + config dev mode
+│   └── validation/         # Schemas Zod (9 schemas)
+├── providers/              # React providers (QueryProvider, RouteProvider, Theme)
+├── stores/                 # Zustand stores (auth-store)
+├── types/                  # Types API (42 schemas)
+└── components/             # Composants UI (Untitled UI + custom)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Auth : architecture cookie-only
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Les tokens ne sont **jamais accessibles en JavaScript client**. Tout passe par des cookies httpOnly :
 
-## Resources
+```
+Client (browser)
+  |
+  |--- fetch("/api/v1/dashboard")     <-- URL relative, same-origin
+  |          cookies: access_token, refresh_token (auto, httpOnly)
+  |
+  v
+Proxy Next.js (/api/v1/[...path])     <-- Server-side, lit les cookies
+  |
+  |--- fetch("http://backend:8080/api/v1/dashboard")
+  |          Authorization: Bearer <access_token>
+  |
+  v
+Spring Boot backend
+```
 
-Untitled UI React is built on top of [Untitled UI Figma](https://www.untitledui.com/figma), the world's largest and most popular Figma UI kit and design system. Explore more:
+**Auto-refresh** : si le backend renvoie 401, le proxy tente un refresh avec le `refresh_token`, rejoue la requete, et met a jour les cookies dans la reponse HTTP (transparent pour le client).
 
-**[Untitled UI Figma:](https://www.untitledui.com/react/resources/figma-files)** The world's largest Figma UI kit and design system.
-<br/>
-**[Untitled UI Icons:](https://www.untitledui.com/react/resources/icons)** A clean, consistent, and neutral icon library crafted specifically for modern UI design.
-<br/>
-**[Untitled UI file icons:](https://www.untitledui.com/react/resources/file-icons)** Free file format icons, designed specifically for modern web and UI design.
-<br/>
-**[Untitled UI flag icons:](https://www.untitledui.com/react/resources/flag-icons)** Free country flag icons, designed specifically for modern web and UI design.
-<br/>
-**[Untitled UI avatars:](https://www.untitledui.com/react/resources/avatars)** Free placeholder user avatars and profile pictures to use in your projects.
-<br/>
-**[Untitled UI logos:](https://www.untitledui.com/react/resources/logos)** Free fictional company logos to use in your projects.
+## Demarrage
+
+### Prerequis
+
+- Node.js 20+
+- pnpm 10+
+- Backend Spring Boot sur `http://localhost:8080` (ou configurer `NEXT_PUBLIC_API_URL`)
+
+### Installation
+
+```bash
+pnpm install
+```
+
+### Variables d'environnement
+
+```bash
+cp .env.local.example .env.local
+```
+
+```env
+# API Spring Boot
+NEXT_PUBLIC_API_URL=http://localhost:8080
+
+# Dev mode : "true" pour mock data sans backend
+NEXT_PUBLIC_DEV_MODE=true
+```
+
+### Lancement
+
+```bash
+# Mode dev (avec Turbopack)
+pnpm dev
+
+# Build production
+pnpm build && pnpm start
+```
+
+### Tests
+
+```bash
+# Tests unitaires (Vitest + MSW)
+pnpm test:run
+
+# Tests E2E (Playwright, necessite le backend)
+pnpm test:e2e
+```
+
+## Dev mode
+
+Mettre `NEXT_PUBLIC_DEV_MODE=true` dans `.env.local` pour acceder a l'app sans backend :
+- Toutes les pages sont accessibles sans login
+- Les donnees proviennent de `src/lib/dev/mock-data.ts`
+- Profil mock : Antoine Dev, 3200 EUR/mois, 5 categories, 8 charges fixes
+
+## Modules fonctionnels
+
+| Module | Page | Description |
+|--------|------|-------------|
+| Dashboard | `/dashboard` | Vue d'ensemble : budget semaine/mois, enveloppes, transactions recentes |
+| Budget | `/budget` | Enveloppes variables, charges fixes, vue par semaine |
+| Transactions | `/budget?tab=transactions` | CRUD transactions, import CSV/Excel, filtres |
+| Charges fixes | `/budget?tab=charges-fixes` | CRUD abonnements, toggle actif/inactif |
+| Patrimoine | `/patrimoine` | Comptes, investissements, dettes, evolution |
+| Investissements | `/patrimoine/investissements` | Portfolio, plus-values, repartition par type |
+| Dettes | `/patrimoine/dettes` | Prets, echeancier, progress remboursement |
+| Parametres | `/parametres` | Profil, categories, comptes, export, reset |
+| Onboarding | `/onboarding` | Wizard 6 etapes pour les nouveaux utilisateurs |
+
+## Hooks TanStack Query
+
+11 modules dans `src/hooks/api/` avec invalidation de cache automatique :
+
+```typescript
+// Exemple d'utilisation
+import { useDashboard, useCreateTransaction } from "@/hooks/api";
+
+function MyComponent() {
+  const { data, isLoading } = useDashboard();
+  const createTx = useCreateTransaction();
+
+  const handleAdd = () => {
+    createTx.mutate({ montant: 42, type: "depense", ... });
+    // Invalide automatiquement : transactions, budget, dashboard
+  };
+}
+```
+
+## Lien avec le backend
+
+Le frontend communique avec [oyko-backend](../oyko-backend/) (Spring Boot) via :
+- **Server Components** : appels directs `http://localhost:8080/api/v1/*` avec le cookie lu server-side
+- **Client Components** : URL relatives `/api/v1/*` -> proxy Next.js -> backend
+- **Auth** : route handlers `/api/auth/*` qui gerent les cookies httpOnly
 
 ## License
 
-Untitled UI React open-source components are licensed under the MIT license, which means you can use them for free in unlimited commercial projects.
-
-> [!NOTE]
-> This license applies only to the starter kit and to the components included in this open-source repository. [Untitled UI React PRO](https://www.untitledui.com/react) includes hundreds more advanced UI components and page examples and is subject to a separate [license agreement](https://www.untitledui.com/license).
-
-[Untitled UI license agreement →](https://www.untitledui.com/license)
-
-[Frequently asked questions →](https://www.untitledui.com/faqs)
+MIT (composants Untitled UI open-source). Voir [Untitled UI license](https://www.untitledui.com/license) pour les composants PRO.

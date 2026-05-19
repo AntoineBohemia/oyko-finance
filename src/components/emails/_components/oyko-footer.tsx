@@ -20,7 +20,7 @@ export const OykoFooter = ({ email }: OykoFooterProps) => {
 
             <Row className="mt-8">
                 <Column>
-                    <Text className="text-display-xs font-bold text-brand-600">Oyko</Text>
+                    <Text className="font-display text-display-xs font-bold text-gray-900">Oyko</Text>
                 </Column>
             </Row>
 

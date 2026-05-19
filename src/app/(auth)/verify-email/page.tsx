@@ -1,8 +1,8 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
-import { ArrowLeft, Mail01, Send01, CursorClick01, Rocket01 } from "@untitledui/icons";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { ArrowLeft, ArrowRight, Mail01, Send01, CursorClick01, Rocket01 } from "@untitledui/icons";
 import Link from "next/link";
 import { Button } from "@/components/base/buttons/button";
 import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
@@ -11,7 +11,24 @@ import { GradientBackground } from "@/app/(landing)/gradient-bg";
 
 function VerifyEmailContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const email = searchParams.get("email") || "";
+    const [isSkipping, setIsSkipping] = useState(false);
+
+    const handleSkipVerification = async () => {
+        setIsSkipping(true);
+        try {
+            // Tente de vérifier automatiquement via le backend
+            await fetch("/api/auth/skip-verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+        } catch {
+            // Ignore les erreurs - on redirige vers login dans tous les cas
+        }
+        router.push("/login");
+    };
 
     return (
         <GradientBackground variant="mesh" noise noiseOpacity={0.015} className="min-h-screen">
@@ -58,7 +75,7 @@ function VerifyEmailContent() {
                             </FeaturedIcon>
                             <div>
                                 <p className="font-semibold text-primary">Ouvrez votre boîte de réception</p>
-                                <p className="text-sm text-tertiary">Cherchez un email de Oyko</p>
+                                <p className="text-sm text-tertiary">Cherchez un email de <span className="font-display">Oyko</span></p>
                             </div>
                         </div>
                         <div className="ml-5 h-6 w-px bg-brand-200 dark:bg-brand-800" />
@@ -83,7 +100,17 @@ function VerifyEmailContent() {
                         </div>
                     </div>
 
-                    <div className="z-10 flex flex-col gap-4">
+                    <div className="z-10 flex flex-col gap-3">
+                        <Button
+                            size="lg"
+                            onClick={handleSkipVerification}
+                            isDisabled={isSkipping}
+                            iconTrailing={ArrowRight}
+                            className="w-full justify-center"
+                        >
+                            {isSkipping ? "Redirection..." : "Passer la vérification"}
+                        </Button>
+
                         <p className="text-center text-sm text-tertiary">
                             Vous n'avez pas reçu l'email ? Vérifiez vos spams ou{" "}
                             <Link href="/signup" className="font-medium text-brand-600 hover:text-brand-700">
@@ -103,7 +130,7 @@ function VerifyEmailContent() {
             {/* Footer */}
             <footer className="absolute bottom-0 left-0 right-0 p-8">
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-tertiary">© Oyko 2025</p>
+                    <p className="text-sm text-tertiary">© <span className="font-display">Oyko</span> 2025</p>
                     <a href="mailto:contact@oyko.fr" className="flex items-center gap-2 text-sm text-tertiary hover:text-secondary">
                         <Mail01 className="size-4" />
                         contact@oyko.fr

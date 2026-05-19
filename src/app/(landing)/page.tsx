@@ -1,7 +1,7 @@
 import { Header } from "@/components/marketing/header-navigation/header";
-import { CTAIPhoneMockup04 } from "@/components/marketing/cta/cta-iphone-mockup-04";
+import { BentoSection } from "./bento-section";
+import { CtaSection } from "./cta-section";
 import { FaqSection } from "./faq-section";
-import { FeaturesCarousel } from "./features-carousel";
 import { FeaturesGrid } from "./features-grid";
 import { Footer } from "./footer";
 import { GradientBackground } from "./gradient-bg";
@@ -15,10 +15,10 @@ export default function LandingPage() {
                 <GradientBackground variant="mesh" noise noiseOpacity={0.015} className="pt-16 md:pt-20">
                     <HeroSection />
                 </GradientBackground>
-                <FeaturesCarousel />
+                <BentoSection />
                 <FeaturesGrid />
                 <FaqSection />
-                <CTAIPhoneMockup04 />
+                <CtaSection />
             </main>
             <Footer />
         </>

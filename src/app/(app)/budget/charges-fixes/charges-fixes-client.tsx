@@ -29,9 +29,14 @@ import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { cx } from "@/utils/cx";
-import { createClient } from "@/lib/supabase/client";
 import type { RepartitionCategorie } from "@/lib/data/charges-fixes";
-import type { Profile, Compte, Categorie } from "@/types/database.types";
+import type { Profile, Compte } from "@/types/api";
+
+interface Categorie {
+    id: string;
+    nom: string;
+    [key: string]: unknown;
+}
 
 // ============================================
 // TYPES
@@ -291,21 +296,19 @@ export default function ChargesFixesClient({ initialData }: ChargesFixesClientPr
         if (!profile || !newChargeFix.nom || !newChargeFix.montant || !newChargeFix.jourPrelevement) return;
 
         setIsSaving(true);
-        const supabase = createClient();
 
-        const { error } = await supabase.from("charges_fixes").insert({
-            user_id: profile.id,
+        const { addChargeFix } = await import("@/lib/data/charges-fixes");
+        const result = await addChargeFix({
             nom: newChargeFix.nom,
             montant: parseFloat(newChargeFix.montant),
             frequence: newChargeFix.frequence,
             jour_prelevement: parseInt(newChargeFix.jourPrelevement),
-            categorie_id: newChargeFix.categorieId || null,
-            compte_id: newChargeFix.compteId || null,
-            notes: newChargeFix.notes || null,
-            est_actif: true,
+            categorie_id: newChargeFix.categorieId || undefined,
+            compte_id: newChargeFix.compteId || undefined,
+            notes: newChargeFix.notes || undefined,
         });
 
-        if (!error) {
+        if (result.success) {
             setIsModalOpen(false);
             resetNewChargeFix();
             window.location.reload();
@@ -317,22 +320,19 @@ export default function ChargesFixesClient({ initialData }: ChargesFixesClientPr
     const handleDelete = async (id: string) => {
         if (!confirm("Supprimer cette charge fixe ?")) return;
 
-        const supabase = createClient();
-        const { error } = await supabase.from("charges_fixes").delete().eq("id", id);
+        const { deleteChargeFix } = await import("@/lib/data/charges-fixes");
+        const success = await deleteChargeFix(id);
 
-        if (!error) {
+        if (success) {
             window.location.reload();
         }
     };
 
     const handleToggleActive = async (id: string, estActif: boolean) => {
-        const supabase = createClient();
-        const { error } = await supabase
-            .from("charges_fixes")
-            .update({ est_actif: !estActif })
-            .eq("id", id);
+        const { toggleChargeFixActive } = await import("@/lib/data/charges-fixes");
+        const success = await toggleChargeFixActive(id, !estActif);
 
-        if (!error) {
+        if (success) {
             window.location.reload();
         }
     };

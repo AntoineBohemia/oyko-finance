@@ -4,15 +4,21 @@ import { useState } from "react";
 import { AlertCircle, Check, Mail01 } from "@untitledui/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MockFrame } from "react-mockframe";
+import "react-mockframe/styles/mockframe-laptops.min.css";
 import { Button } from "@/components/base/buttons/button";
+import { OykoDesktopScreen } from "@/components/shared-assets/oyko-desktop-screen";
 import { SocialButton } from "@/components/base/buttons/social-button";
 import { Form } from "@/components/base/form/form";
 import { Input } from "@/components/base/input/input";
 import { PasswordInput } from "@/components/base/input/input-password";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
-import { createClient } from "@/lib/supabase/client";
 import { cx } from "@/utils/cx";
+
+// =============================================================================
+// PASSWORD REQUIREMENTS
+// =============================================================================
 
 const PASSWORD_REQUIREMENTS = [
     { id: "length", label: "Au moins 8 caractères", check: (p: string) => p.length >= 8 },
@@ -20,6 +26,10 @@ const PASSWORD_REQUIREMENTS = [
     { id: "lowercase", label: "Une minuscule", check: (p: string) => /[a-z]/.test(p) },
     { id: "number", label: "Un chiffre", check: (p: string) => /[0-9]/.test(p) },
 ];
+
+// =============================================================================
+// SIGNUP PAGE
+// =============================================================================
 
 export default function SignupPage() {
     const router = useRouter();
@@ -31,8 +41,6 @@ export default function SignupPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
-
-    const supabase = createClient();
 
     const passwordChecks = PASSWORD_REQUIREMENTS.map((req) => ({
         ...req,
@@ -51,7 +59,6 @@ export default function SignupPage() {
             return;
         }
 
-        // Validation email basique
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             setError("Veuillez entrer une adresse email valide");
@@ -79,79 +86,50 @@ export default function SignupPage() {
         setIsLoading(true);
 
         try {
-            // Séparer le nom en prénom et nom
             const nameParts = name.trim().split(" ");
             const prenom = nameParts[0];
             const nom = nameParts.slice(1).join(" ") || "";
 
-            const { data, error: signUpError } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        prenom,
-                        nom,
-                    },
-                    emailRedirectTo: `${window.location.origin}/auth/callback?type=signup&next=/onboarding`,
-                },
+            const res = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, prenom, nom }),
             });
 
-            if (signUpError) {
-                if (signUpError.message.includes("already registered")) {
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                if (data.detail?.includes("already") || data.detail?.includes("existe")) {
                     setError("Un compte existe déjà avec cet email. Connectez-vous plutôt.");
                 } else {
-                    setError(signUpError.message);
+                    setError(data.detail || "Erreur lors de l'inscription");
                 }
                 setIsLoading(false);
                 return;
             }
 
-            // Vérifier si la confirmation email est requise
-            if (data.user && !data.session) {
-                // Email de confirmation envoyé - rediriger vers la page de vérification
-                router.push(`/verify-email?email=${encodeURIComponent(email)}`);
-            } else if (data.session) {
-                // Connexion directe (si confirmation email désactivée)
-                router.push("/onboarding");
-                router.refresh();
-            }
-        } catch (err) {
+            router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        } catch {
             setError("Une erreur est survenue. Veuillez réessayer.");
             setIsLoading(false);
         }
     };
 
     const handleGoogleSignUp = async () => {
-        setIsLoading(true);
-        setError("");
-
-        try {
-            const { error: oauthError } = await supabase.auth.signInWithOAuth({
-                provider: "google",
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
-                },
-            });
-
-            if (oauthError) {
-                setError("Erreur lors de l'inscription avec Google");
-                setIsLoading(false);
-            }
-        } catch (err) {
-            setError("Une erreur est survenue. Veuillez réessayer.");
-            setIsLoading(false);
-        }
+        setError("L'inscription Google sera disponible prochainement.");
     };
 
     return (
-        <section className="grid min-h-screen grid-cols-1 bg-primary lg:grid-cols-[640px_1fr]">
+        <section className="grid min-h-screen grid-cols-1 bg-primary lg:grid-cols-2">
+            {/* Left — Form */}
             <div className="flex flex-col bg-primary">
-                <header className="hidden pt-8 pl-8 lg:block">
+                <header className="hidden p-8 md:block">
                     <Link href="/">
                         <UntitledLogo />
                     </Link>
                 </header>
-                <div className="flex flex-1 justify-center px-4 py-12 md:items-center md:px-8 md:py-0">
+
+                <div className="flex flex-1 justify-center px-4 py-12 md:items-center md:px-8">
                     <div className="flex w-full flex-col gap-8 sm:max-w-90">
                         <div className="flex flex-col gap-6">
                             <Link href="/" className="lg:hidden">
@@ -159,7 +137,7 @@ export default function SignupPage() {
                             </Link>
 
                             <div className="flex flex-col gap-2 md:gap-3">
-                                <h1 className="text-display-xs font-semibold text-primary md:text-display-md">
+                                <h1 className="text-xl font-semibold text-primary md:text-display-xs">
                                     {step === 1 ? "Créer un compte" : "Choisir un mot de passe"}
                                 </h1>
                                 <p className="text-md text-tertiary">
@@ -170,21 +148,21 @@ export default function SignupPage() {
 
                         {/* Progress indicator */}
                         <div className="flex items-center gap-2">
-                            <div className={cx("h-2 flex-1 rounded-full", step >= 1 ? "bg-brand-600" : "bg-gray-200 dark:bg-gray-700")} />
-                            <div className={cx("h-2 flex-1 rounded-full", step >= 2 ? "bg-brand-600" : "bg-gray-200 dark:bg-gray-700")} />
+                            <div className={cx("h-2 flex-1 rounded-full", step >= 1 ? "bg-brand-600" : "bg-gray-200")} />
+                            <div className={cx("h-2 flex-1 rounded-full", step >= 2 ? "bg-brand-600" : "bg-gray-200")} />
                         </div>
 
                         {error && (
-                            <div className="flex items-center gap-3 rounded-lg bg-error-50 p-4 dark:bg-error-900/20">
-                                <AlertCircle className="h-5 w-5 shrink-0 text-error-600 dark:text-error-400" />
-                                <p className="text-sm text-error-700 dark:text-error-300">{error}</p>
+                            <div className="flex items-center gap-3 rounded-lg bg-error-50 p-4">
+                                <AlertCircle className="h-5 w-5 shrink-0 text-error-600" />
+                                <p className="text-sm text-error-700">{error}</p>
                             </div>
                         )}
 
                         {success && (
-                            <div className="flex items-center gap-3 rounded-lg bg-success-50 p-4 dark:bg-success-900/20">
-                                <Check className="h-5 w-5 shrink-0 text-success-600 dark:text-success-400" />
-                                <p className="text-sm text-success-700 dark:text-success-300">{success}</p>
+                            <div className="flex items-center gap-3 rounded-lg bg-success-50 p-4">
+                                <Check className="h-5 w-5 shrink-0 text-success-600" />
+                                <p className="text-sm text-success-700">{success}</p>
                             </div>
                         )}
 
@@ -220,7 +198,7 @@ export default function SignupPage() {
                                         Continuer
                                     </Button>
                                     <SocialButton social="google" theme="color" onClick={handleGoogleSignUp}>
-                                        S'inscrire avec Google
+                                        S&apos;inscrire avec Google
                                     </SocialButton>
                                 </div>
                             </Form>
@@ -246,13 +224,13 @@ export default function SignupPage() {
                                                     key={check.id}
                                                     className={cx(
                                                         "flex items-center gap-2 text-sm transition-colors",
-                                                        check.passed ? "text-success-600 dark:text-success-400" : "text-tertiary",
+                                                        check.passed ? "text-success-600" : "text-tertiary",
                                                     )}
                                                 >
                                                     <div
                                                         className={cx(
                                                             "flex h-4 w-4 items-center justify-center rounded-full transition-colors",
-                                                            check.passed ? "bg-success-100 dark:bg-success-900/30" : "bg-gray-100 dark:bg-gray-800",
+                                                            check.passed ? "bg-success-100" : "bg-gray-100",
                                                         )}
                                                     >
                                                         {check.passed && <Check className="h-3 w-3" />}
@@ -273,10 +251,10 @@ export default function SignupPage() {
                                         onChange={setConfirmPassword}
                                     />
                                     {confirmPassword && !passwordsMatch && (
-                                        <p className="text-sm text-error-600 dark:text-error-400">Les mots de passe ne correspondent pas</p>
+                                        <p className="text-sm text-error-600">Les mots de passe ne correspondent pas</p>
                                     )}
                                     {passwordsMatch && (
-                                        <p className="flex items-center gap-2 text-sm text-success-600 dark:text-success-400">
+                                        <p className="flex items-center gap-2 text-sm text-success-600">
                                             <Check className="h-4 w-4" />
                                             Les mots de passe correspondent
                                         </p>
@@ -303,9 +281,8 @@ export default function SignupPage() {
                     </div>
                 </div>
 
-                <footer className="hidden justify-between px-8 pt-4 pb-8 lg:flex">
-                    <p className="text-sm text-tertiary">© Oyko 2025</p>
-
+                <footer className="hidden justify-between p-8 pt-11 lg:flex">
+                    <p className="text-sm text-tertiary">© <span className="font-display">Oyko</span> 2025</p>
                     <a href="mailto:contact@oyko.fr" className="flex items-center gap-2 text-sm text-tertiary">
                         <Mail01 className="size-4 text-fg-quaternary" />
                         contact@oyko.fr
@@ -313,24 +290,12 @@ export default function SignupPage() {
                 </footer>
             </div>
 
-            <div className="relative hidden items-center overflow-hidden bg-tertiary pl-24 lg:flex">
-                <div className="rounded-[9.03px] bg-primary p-[0.9px] shadow-lg ring-[0.56px] ring-utility-gray-300 ring-inset md:rounded-[26.95px] md:p-[3.5px] md:ring-[1.68px]">
-                    <div className="rounded-[7.9px] bg-primary p-0.5 shadow-modern-mockup-inner-md md:rounded-[23.58px] md:p-1 md:shadow-modern-mockup-inner-lg">
-                        <div className="relative overflow-hidden rounded-[6.77px] bg-utility-gray-50 ring-[0.56px] ring-utility-gray-200 md:rounded-[20.21px] md:ring-[1.68px]">
-                            {/* Light mode image (hidden in dark mode) */}
-                            <img
-                                src="https://www.untitledui.com/marketing/screen-mockups/dashboard-desktop-mockup-light-01.webp"
-                                className="max-h-168.5 max-w-none object-cover object-left-top dark:hidden"
-                                alt="Dashboard mockup showing application interface"
-                            />
-                            {/* Dark mode image (hidden in light mode) */}
-                            <img
-                                src="https://www.untitledui.com/marketing/screen-mockups/dashboard-desktop-mockup-dark-01.webp"
-                                className="max-h-168.5 max-w-none object-cover object-left-top not-dark:hidden"
-                                alt="Dashboard mockup showing application interface"
-                            />
-                        </div>
-                    </div>
+            {/* Right — MacBook Pro mockup */}
+            <div className="relative hidden items-center overflow-hidden bg-secondary py-12 pr-12 pl-20 lg:flex">
+                <div className="pointer-events-none w-full">
+                    <MockFrame device="MacBook Pro 2020">
+                        <OykoDesktopScreen />
+                    </MockFrame>
                 </div>
             </div>
         </section>

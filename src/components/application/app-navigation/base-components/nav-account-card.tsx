@@ -32,7 +32,7 @@ const placeholderAccounts: NavAccountType[] = [
         id: "antoine",
         name: "Antoine Moulin",
         email: "antoine@email.com",
-        avatar: "https://www.untitledui.com/images/avatars/olivia-rhye?fm=webp&q=80",
+        avatar: "",
         status: "online",
     },
 ];
@@ -44,7 +44,7 @@ export const NavAccountMenu = ({
 }: AriaDialogProps & { className?: string; accounts?: NavAccountType[]; selectedAccountId?: string }) => {
     const focusManager = useFocusManager();
     const dialogRef = useRef<HTMLDivElement>(null);
-    const { signOut } = useAuth();
+    const { logout } = useAuth();
 
     const onKeyDown = useCallback(
         (e: KeyboardEvent) => {
@@ -111,7 +111,7 @@ export const NavAccountMenu = ({
             </div>
 
             <div className="pt-1 pb-1.5">
-                <NavAccountCardMenuItem label="Déconnexion" icon={LogOut01} shortcut="⌥⇧Q" onClick={signOut} />
+                <NavAccountCardMenuItem label="Déconnexion" icon={LogOut01} shortcut="⌥⇧Q" onClick={logout} />
             </div>
         </AriaDialog>
     );
@@ -136,7 +136,6 @@ const NavAccountCardMenuItem = ({
                     "outline-focus-ring group-focus-visible/item:outline-2 group-focus-visible/item:outline-offset-2",
                 )}
             >
-                Supabase Auth will send a HTTPS POST request to this URL each time the hook is triggered.
                 <div className="flex gap-2 text-sm font-semibold text-secondary group-hover/item:text-secondary_hover">
                     {Icon && <Icon className="size-5 text-fg-quaternary" />} {label}
                 </div>

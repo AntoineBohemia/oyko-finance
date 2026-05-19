@@ -1,9 +1,11 @@
 "use client";
 
+import { motion } from "motion/react";
 import { cx } from "@/utils/cx";
 
 /**
- * GradientBackground - Fond avec gradient subtil et effet grain
+ * GradientBackground — Oyko identity
+ * Subtle warm stone + lime tints on pierre background
  */
 
 type GradientVariant = "mesh" | "radial" | "linear" | "aurora";
@@ -16,10 +18,6 @@ interface GradientBackgroundProps {
     children?: React.ReactNode;
 }
 
-// =============================================================================
-// NOISE SVG
-// =============================================================================
-
 const NoiseSvg = ({ opacity = 0.03 }: { opacity?: number }) => (
     <svg className="pointer-events-none absolute inset-0 z-[1] h-full w-full" style={{ opacity }} aria-hidden="true">
         <filter id="noise-filter">
@@ -29,163 +27,99 @@ const NoiseSvg = ({ opacity = 0.03 }: { opacity?: number }) => (
     </svg>
 );
 
-// =============================================================================
-// GRADIENT BLOBS - Composants réels au lieu de pseudo-éléments
-// =============================================================================
-
+/* Mesh: subtle lime tint top-left + warm stone top-right — breathing + drift */
 const MeshGradient = () => (
     <>
-        {/* Blob en haut à gauche - brand-200 */}
-        <div
+        <motion.div
             className="pointer-events-none absolute inset-0"
             style={{
-                background: "radial-gradient(ellipse 80% 60% at 0% 0%, rgba(233,215,254,0.5), transparent 50%)",
+                background: "radial-gradient(ellipse 80% 60% at 0% 0%, rgba(190,255,0,0.18), transparent 55%)",
+            }}
+            animate={{
+                scale: [1, 1.08, 1],
+                opacity: [1, 0.7, 1],
+                x: [0, 15, -10, 0],
+                y: [0, -10, 8, 0],
+            }}
+            transition={{
+                scale: { duration: 8, repeat: Infinity, ease: "easeInOut" },
+                opacity: { duration: 8, repeat: Infinity, ease: "easeInOut" },
+                x: { duration: 20, repeat: Infinity, ease: "easeInOut" },
+                y: { duration: 20, repeat: Infinity, ease: "easeInOut" },
             }}
             aria-hidden="true"
         />
-        {/* Blob en haut à droite - brand-100 */}
-        <div
+        <motion.div
             className="pointer-events-none absolute inset-0"
             style={{
-                background: "radial-gradient(ellipse 60% 50% at 100% 10%, rgba(244,235,255,0.4), transparent 45%)",
+                background: "radial-gradient(ellipse 60% 50% at 100% 10%, rgba(190,255,0,0.12), transparent 50%)",
+            }}
+            animate={{
+                scale: [1, 1.08, 1],
+                opacity: [1, 0.7, 1],
+                x: [0, -10, 15, 0],
+                y: [0, 8, -10, 0],
+            }}
+            transition={{
+                scale: { duration: 10, repeat: Infinity, ease: "easeInOut" },
+                opacity: { duration: 10, repeat: Infinity, ease: "easeInOut" },
+                x: { duration: 25, repeat: Infinity, ease: "easeInOut" },
+                y: { duration: 25, repeat: Infinity, ease: "easeInOut" },
             }}
             aria-hidden="true"
         />
     </>
 );
 
-const MeshGradientDark = () => (
-    <>
-        {/* Blob en haut à gauche - brand-900 */}
-        <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-                background: "radial-gradient(ellipse 80% 60% at 0% 0%, rgba(105,65,198,0.25), transparent 50%)",
-            }}
-            aria-hidden="true"
-        />
-        {/* Blob en haut à droite - brand-800 */}
-        <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-                background: "radial-gradient(ellipse 60% 50% at 100% 10%, rgba(127,86,217,0.2), transparent 45%)",
-            }}
-            aria-hidden="true"
-        />
-    </>
-);
-
+/* Radial: centered lime glow */
 const RadialGradient = () => (
     <div
         className="pointer-events-none absolute inset-0"
         style={{
-            background: "radial-gradient(ellipse at center, rgba(158,119,237,0.15) 0%, transparent 70%)",
+            background: "radial-gradient(ellipse at center, rgba(190,255,0,0.06) 0%, transparent 70%)",
         }}
         aria-hidden="true"
     />
 );
 
-const RadialGradientDark = () => (
-    <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-            background: "radial-gradient(ellipse at center, rgba(127,86,217,0.25) 0%, transparent 70%)",
-        }}
-        aria-hidden="true"
-    />
-);
-
+/* Linear: warm stone diagonal */
 const LinearGradient = () => (
     <div
         className="pointer-events-none absolute inset-0"
         style={{
-            background: "linear-gradient(to bottom right, rgba(249,245,255,0.7), transparent 50%, rgba(239,246,255,0.5))",
+            background: "linear-gradient(to bottom right, rgba(245,243,239,0.7), transparent 50%, rgba(250,255,228,0.15))",
         }}
         aria-hidden="true"
     />
 );
 
+/* Aurora: very subtle conic with lime + stone */
 const AuroraGradient = () => (
     <div
         className="pointer-events-none absolute inset-0 blur-[100px]"
         style={{
             background:
-                "conic-gradient(from 230.29deg at 51.63% 52.16%, rgba(158,119,237,0.15) 0deg, rgba(59,130,246,0.08) 67.5deg, rgba(139,92,246,0.15) 198.75deg, rgba(59,130,246,0.08) 251.25deg, rgba(158,119,237,0.15) 301.88deg, rgba(139,92,246,0.08) 360deg)",
+                "conic-gradient(from 230.29deg at 51.63% 52.16%, rgba(190,255,0,0.06) 0deg, rgba(214,211,209,0.08) 67.5deg, rgba(190,255,0,0.06) 198.75deg, rgba(214,211,209,0.08) 251.25deg, rgba(190,255,0,0.06) 301.88deg, rgba(214,211,209,0.06) 360deg)",
         }}
         aria-hidden="true"
     />
 );
 
-// =============================================================================
-// GRADIENT COMPONENT MAP
-// =============================================================================
-
-const GradientComponents: Record<GradientVariant, { light: React.FC; dark: React.FC }> = {
-    mesh: { light: MeshGradient, dark: MeshGradientDark },
-    radial: { light: RadialGradient, dark: RadialGradientDark },
-    linear: { light: LinearGradient, dark: LinearGradient },
-    aurora: { light: AuroraGradient, dark: AuroraGradient },
+const GradientComponents: Record<GradientVariant, React.FC> = {
+    mesh: MeshGradient,
+    radial: RadialGradient,
+    linear: LinearGradient,
+    aurora: AuroraGradient,
 };
 
-// =============================================================================
-// MAIN COMPONENT
-// =============================================================================
-
 export const GradientBackground = ({ variant = "mesh", noise = true, noiseOpacity = 0.02, className, children }: GradientBackgroundProps) => {
-    const { light: LightGradient, dark: DarkGradient } = GradientComponents[variant];
+    const Gradient = GradientComponents[variant];
 
     return (
         <div className={cx("relative overflow-hidden bg-primary", className)}>
-            {/* Gradients - light mode */}
-            <div className="dark:hidden">
-                <LightGradient />
-            </div>
-            {/* Gradients - dark mode */}
-            <div className="hidden dark:block">
-                <DarkGradient />
-            </div>
-            {/* Noise overlay */}
+            <Gradient />
             {noise && <NoiseSvg opacity={noiseOpacity} />}
-            {/* Content */}
             <div className="relative z-[2]">{children}</div>
         </div>
     );
 };
-
-// =============================================================================
-// USAGE EXAMPLES (commentés pour référence)
-// =============================================================================
-
-/*
-// 1. Utilisation basique sur toute la page
-<GradientBackground variant="mesh" noise>
-    <Header />
-    <main>...</main>
-    <Footer />
-</GradientBackground>
-
-// 2. Seulement sur le hero
-<GradientBackground variant="aurora" noiseOpacity={0.02} className="min-h-screen">
-    <HeroSection />
-</GradientBackground>
-
-// 3. Sans noise
-<GradientBackground variant="radial" noise={false}>
-    ...
-</GradientBackground>
-
-// 4. Personnalisation des couleurs via className
-<GradientBackground 
-    variant="linear" 
-    className="before:from-amber-50/50 before:to-rose-50/30"
->
-    ...
-</GradientBackground>
-
-// 5. Composant wrapper réutilisable pour ton projet
-export const PageWrapper = ({ children }) => (
-    <GradientBackground variant="mesh" noise noiseOpacity={0.025}>
-        {children}
-    </GradientBackground>
-);
-*/

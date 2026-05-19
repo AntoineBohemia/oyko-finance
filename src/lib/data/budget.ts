@@ -1,192 +1,128 @@
-import { createClient } from "@/lib/supabase/server";
-import type {
-    Profile,
-    Categorie,
-    Transaction,
-} from "@/types/database.types";
+import { api } from "@/lib/api/client";
+import { isDevModeActive } from "@/lib/dev/config";
+import { getMockBudgetData } from "@/lib/dev/mock-data";
+import type { Profile } from "@/types/api";
 
-// Types pour les données du budget
+// Types pour les donnees du budget
 export interface BudgetData {
-    profile: Profile | null;
-    revenusMois: number;
-    enveloppes: Enveloppe[];
-    chargesFixes: ChargeFixBudget[];
-    transactions: TransactionBudget[];
-    totalChargesFixes: number;
+  profile: Profile | null;
+  revenusMois: number;
+  enveloppes: Enveloppe[];
+  chargesFixes: ChargeFixBudget[];
+  transactions: TransactionBudget[];
+  totalChargesFixes: number;
 }
 
 export interface Enveloppe {
-    id: string;
-    nom: string;
-    icone: string;
-    couleur: string;
-    budgetMensuel: number;
+  id: string;
+  nom: string;
+  icone: string;
+  couleur: string;
+  budgetMensuel: number;
 }
 
 export interface ChargeFixBudget {
-    id: string;
-    nom: string;
-    icone: string;
-    montant: number;
-    jourPrelevement: number;
-    estPreleve: boolean;
+  id: string;
+  nom: string;
+  icone: string;
+  montant: number;
+  jourPrelevement: number;
+  estPreleve: boolean;
 }
 
 export interface TransactionBudget {
-    id: string;
-    description: string;
-    montant: number;
-    date: Date;
-    categorieId: string;
-    type: "variable" | "fixe" | "revenu";
+  id: string;
+  description: string;
+  montant: number;
+  date: Date;
+  categorieId: string;
+  type: "variable" | "fixe" | "revenu";
 }
 
-// Récupérer toutes les données du budget pour un mois donné
-export async function getBudgetData(month: number, year: number): Promise<BudgetData> {
-    const supabase = await createClient();
+// Map des icones string vers emoji (meme map que dashboard)
+const ICON_TO_EMOJI: Record<string, string> = {
+  "briefcase": "💼", "shopping-cart": "🛒", "trending-up": "📈",
+  "home": "🏠", "car": "🚗", "heart": "❤️", "coffee": "☕",
+  "film": "🎬", "music": "🎵", "book": "📚", "gift": "🎁",
+  "smartphone": "📱", "wifi": "🌐", "zap": "⚡", "shield": "🛡️",
+  "activity": "💪", "dollar-sign": "💰", "credit-card": "💳",
+  "tv": "📺", "truck": "🚚", "plane": "✈️", "scissors": "✂️",
+  "shirt": "👕", "tool": "🔧", "umbrella": "☂️", "users": "👥",
+  "phone": "📞", "mail": "📧", "map-pin": "📍", "tag": "🏷️",
+  "percent": "💸", "package": "📦", "star": "⭐", "award": "🏆",
+};
 
-    // Récupérer l'utilisateur connecté
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return {
-            profile: null,
-            revenusMois: 0,
-            enveloppes: [],
-            chargesFixes: [],
-            transactions: [],
-            totalChargesFixes: 0,
-        };
-    }
-
-    // Dates du mois
-    const startOfMonth = new Date(year, month, 1);
-    const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
-    const today = new Date();
-
-    // Récupérer toutes les données en parallèle
-    const [
-        profileResult,
-        categoriesResult,
-        chargesFixesResult,
-        transactionsResult,
-    ] = await Promise.all([
-        // Profile
-        supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", user.id)
-            .single(),
-
-        // Catégories variables (enveloppes)
-        supabase
-            .from("categories")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("type", "depense")
-            .eq("est_fixe", false)
-            .eq("est_actif", true)
-            .order("ordre"),
-
-        // Charges fixes
-        supabase
-            .from("charges_fixes")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("est_actif", true)
-            .order("jour_prelevement"),
-
-        // Transactions du mois
-        supabase
-            .from("transactions")
-            .select("*, categories(*)")
-            .eq("user_id", user.id)
-            .gte("date_transaction", startOfMonth.toISOString())
-            .lte("date_transaction", endOfMonth.toISOString())
-            .order("date_transaction", { ascending: false }),
-    ]);
-
-    const profile = profileResult.data;
-    const revenusMois = profile?.revenus_mensuels ?? 0;
-
-    // Transformer les catégories en enveloppes
-    const enveloppes: Enveloppe[] = (categoriesResult.data ?? []).map((cat) => ({
-        id: cat.id,
-        nom: cat.nom,
-        icone: cat.icone ?? "📦",
-        couleur: cat.couleur ?? "#6b7280",
-        budgetMensuel: cat.budget_mensuel ?? 0,
-    }));
-
-    // Déterminer quelles charges ont été prélevées ce mois
-    const transactionsChargesFixes = (transactionsResult.data ?? []).filter(
-        (t) => t.charge_fixe_id !== null
-    );
-    const chargesFixesPrelevees = new Set(
-        transactionsChargesFixes.map((t) => t.charge_fixe_id)
-    );
-
-    // Transformer les charges fixes
-    const chargesFixes: ChargeFixBudget[] = (chargesFixesResult.data ?? []).map((charge) => {
-        // Vérifier si prélevé ce mois
-        const estPreleve = chargesFixesPrelevees.has(charge.id) ||
-            // Ou si le jour de prélèvement est passé et qu'il y a une transaction correspondante
-            (charge.jour_prelevement !== null &&
-             charge.jour_prelevement <= today.getDate() &&
-             today.getMonth() === month &&
-             today.getFullYear() === year);
-
-        return {
-            id: charge.id,
-            nom: charge.nom,
-            icone: charge.icone ?? "💸",
-            montant: charge.montant,
-            jourPrelevement: charge.jour_prelevement ?? 1,
-            estPreleve,
-        };
-    });
-
-    const totalChargesFixes = chargesFixes.reduce((acc, c) => acc + c.montant, 0);
-
-    // Transformer les transactions
-    const transactions: TransactionBudget[] = (transactionsResult.data ?? []).map((t) => {
-        const cat = t.categories as Categorie | null;
-        let type: "variable" | "fixe" | "revenu" = "variable";
-
-        if (t.type === "revenu") {
-            type = "revenu";
-        } else if (t.charge_fixe_id || cat?.est_fixe) {
-            type = "fixe";
-        }
-
-        return {
-            id: t.id,
-            description: t.description ?? "",
-            montant: t.montant,
-            date: new Date(t.date_transaction),
-            categorieId: t.categorie_id ?? "",
-            type,
-        };
-    });
-
-    return {
-        profile,
-        revenusMois,
-        enveloppes,
-        chargesFixes,
-        transactions,
-        totalChargesFixes,
-    };
+function mapIcone(icone: string | null): string {
+  if (!icone) return "📦";
+  if (/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]/u.test(icone)) return icone;
+  return ICON_TO_EMOJI[icone] || "📦";
 }
 
-// Mettre à jour le budget d'une catégorie
-export async function updateCategoryBudget(categoryId: string, newBudget: number): Promise<boolean> {
-    const supabase = await createClient();
+// Recuperer toutes les donnees du budget pour un mois donne
+export async function getBudgetData(
+  month: number,
+  year: number,
+): Promise<BudgetData> {
+  if (await isDevModeActive()) return getMockBudgetData();
 
-    const { error } = await supabase
-        .from("categories")
-        .update({ budget_mensuel: newBudget })
-        .eq("id", categoryId);
+  const raw = await api<Record<string, unknown>>("/api/v1/budget", {
+    params: { month, year },
+  });
 
-    return !error;
+  const rawEnvs = (raw.enveloppes as Array<Record<string, unknown>>) || [];
+  const rawCfs = (raw.chargesFixes as Array<Record<string, unknown>>) || [];
+  const rawTxs = (raw.transactions as Array<Record<string, unknown>>) || [];
+
+  const enveloppes: Enveloppe[] = rawEnvs.map((e) => ({
+    id: e.id as string,
+    nom: e.nom as string,
+    icone: mapIcone(e.icone as string | null),
+    couleur: (e.couleur as string) || "#6b7280",
+    budgetMensuel: ((e.budgetMensuel ?? e.budget_mensuel ?? e.budgetMensuelEuros ?? 0) as number),
+  }));
+
+  const chargesFixes: ChargeFixBudget[] = rawCfs.map((cf) => ({
+    id: cf.id as string,
+    nom: (cf.nom as string) || "",
+    icone: mapIcone(cf.icone as string | null),
+    montant: ((cf.montantEuros ?? cf.montant ?? 0) as number),
+    jourPrelevement: ((cf.jourPrelevement ?? cf.jour_prelevement ?? 1) as number),
+    estPreleve: (cf.estPreleve ?? cf.est_preleve ?? false) as boolean,
+  }));
+
+  const transactions: TransactionBudget[] = rawTxs.map((t) => ({
+    id: t.id as string,
+    description: (t.description as string) || "",
+    montant: ((t.montantEuros ?? t.montant ?? 0) as number),
+    date: (() => { const d = new Date((t.date ?? t.dateTransaction ?? "") as string); return isNaN(d.getTime()) ? new Date() : d; })(),
+    categorieId: ((t.categorieId ?? t.categorie_id ?? "") as string),
+    type: ((t.type as string) === "revenu" ? "revenu" : (t.type as string) === "fixe" ? "fixe" : "variable") as "variable" | "fixe" | "revenu",
+  }));
+
+  return {
+    profile: raw.profile as Profile | null,
+    revenusMois: (raw.revenusMois ?? 0) as number,
+    enveloppes,
+    chargesFixes,
+    transactions,
+    totalChargesFixes: (raw.totalChargesFixes ?? 0) as number,
+  };
+}
+
+// Mettre a jour le budget d'une categorie
+export async function updateCategoryBudget(
+  categoryId: string,
+  newBudget: number,
+): Promise<boolean> {
+  if (await isDevModeActive()) return true;
+
+  try {
+    await api("/api/v1/categories/" + categoryId, {
+      method: "PUT",
+      body: { budget_mensuel: newBudget },
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -1,22 +1,18 @@
 "use client";
 
 import type { FC, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     Bell01,
     HomeLine,
     LogOut01,
     Menu01,
-    Moon01,
-    PieChart01,
     Receipt,
     SearchLg,
     Settings01,
-    Sun,
     Wallet02,
     X,
 } from "@untitledui/icons";
-import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarNavigationSlim } from "@/components/application/app-navigation/sidebar-navigation/sidebar-slim";
@@ -34,11 +30,9 @@ interface NavItem {
     href: string;
     icon: FC<{ className?: string }>;
     badge?: string;
-    /** Affiche un indicateur de notification (point rouge) */
     hasNotification?: boolean;
 }
 
-// Exemple: passer à true si budget dépassé ou alertes en cours
 const hasHomeNotifications = false;
 
 const navItems: NavItem[] = [
@@ -49,14 +43,9 @@ const navItems: NavItem[] = [
         hasNotification: hasHomeNotifications,
     },
     {
-        label: "Dépenses",
-        href: "/depenses",
-        icon: Receipt,
-    },
-    {
-        label: "Budget",
+        label: "Mon budget",
         href: "/budget",
-        icon: PieChart01,
+        icon: Receipt,
     },
     {
         label: "Patrimoine",
@@ -83,20 +72,10 @@ const pageMetadata: Record<string, { title: string; description: string; showSea
         description: "Vue d'ensemble de vos finances",
         showSearch: false,
     },
-    "/depenses": {
-        title: "Dépenses",
-        description: "Gérez vos dépenses et transactions",
-        showSearch: true,
-    },
     "/budget": {
-        title: "Budget",
-        description: "Suivez vos budgets par catégorie",
+        title: "Mon budget",
+        description: "Gérez vos dépenses, enveloppes et charges fixes",
         showSearch: false,
-    },
-    "/budget/charges-fixes": {
-        title: "Charges fixes",
-        description: "Gérez vos abonnements et charges récurrentes",
-        showSearch: true,
     },
     "/patrimoine": {
         title: "Patrimoine",
@@ -121,36 +100,7 @@ const pageMetadata: Record<string, { title: string; description: string; showSea
 };
 
 // ============================================
-// THEME TOGGLE COMPONENT
-// ============================================
-
-const ThemeToggle = () => {
-    const [mounted, setMounted] = useState(false);
-    const { theme, setTheme } = useTheme();
-    const isDark = theme === "dark";
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    // Avoid hydration mismatch by rendering a placeholder until mounted
-    if (!mounted) {
-        return <ButtonUtility size="sm" color="tertiary" icon={Moon01} tooltip="Mode sombre" />;
-    }
-
-    return (
-        <ButtonUtility
-            size="sm"
-            color="tertiary"
-            icon={isDark ? Sun : Moon01}
-            tooltip={isDark ? "Mode clair" : "Mode sombre"}
-            onClick={() => setTheme(isDark ? "light" : "dark")}
-        />
-    );
-};
-
-// ============================================
-// MOBILE NAV COMPONENT
+// MOBILE NAV — Dark drawer (matches sidebar)
 // ============================================
 
 const MobileNav = ({ isOpen, onClose, pathname }: { isOpen: boolean; onClose: () => void; pathname: string }) => {
@@ -159,19 +109,16 @@ const MobileNav = ({ isOpen, onClose, pathname }: { isOpen: boolean; onClose: ()
     return (
         <>
             {/* Backdrop */}
-            <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" onClick={onClose} />
+            <div className="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm lg:hidden" onClick={onClose} />
 
-            {/* Drawer */}
-            <div className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-primary shadow-xl lg:hidden">
+            {/* Drawer — dark background matching sidebar */}
+            <div className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-gray-900 shadow-xl lg:hidden">
                 {/* Header */}
-                <div className="flex h-16 items-center justify-between border-b border-secondary px-4">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
-                            <span className="text-sm font-bold text-white">F</span>
-                        </div>
-                        <span className="text-lg font-semibold text-primary">Finance</span>
-                    </div>
-                    <ButtonUtility size="sm" color="tertiary" icon={X} onClick={onClose} />
+                <div className="flex h-16 items-center justify-between border-b border-gray-700 px-4">
+                    <span className="font-display text-lg font-semibold text-white">Oyko</span>
+                    <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:text-gray-200">
+                        <X className="size-5" />
+                    </button>
                 </div>
 
                 {/* Navigation */}
@@ -188,13 +135,13 @@ const MobileNav = ({ isOpen, onClose, pathname }: { isOpen: boolean; onClose: ()
                                         onClick={onClose}
                                         className={cx(
                                             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                                            isActive ? "bg-brand-50 text-brand-700" : "text-tertiary hover:bg-secondary hover:text-primary",
+                                            isActive ? "text-[#BEFF00]" : "text-gray-400 hover:text-gray-200",
                                         )}
                                     >
                                         <span className="relative">
                                             <Icon className="h-5 w-5" />
                                             {item.hasNotification && (
-                                                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-error-500" />
+                                                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#BEFF00]" />
                                             )}
                                         </span>
                                         <span className="flex-1">{item.label}</span>
@@ -209,7 +156,7 @@ const MobileNav = ({ isOpen, onClose, pathname }: { isOpen: boolean; onClose: ()
                         })}
                     </ul>
 
-                    <div className="my-4 border-t border-secondary" />
+                    <div className="my-4 border-t border-gray-700" />
 
                     <ul className="flex flex-col gap-1">
                         {footerItems.map((item) => {
@@ -223,7 +170,7 @@ const MobileNav = ({ isOpen, onClose, pathname }: { isOpen: boolean; onClose: ()
                                         onClick={onClose}
                                         className={cx(
                                             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                                            isActive ? "bg-brand-50 text-brand-700" : "text-tertiary hover:bg-secondary hover:text-primary",
+                                            isActive ? "text-[#BEFF00]" : "text-gray-400 hover:text-gray-200",
                                         )}
                                     >
                                         <Icon className="h-5 w-5" />
@@ -236,15 +183,16 @@ const MobileNav = ({ isOpen, onClose, pathname }: { isOpen: boolean; onClose: ()
                 </nav>
 
                 {/* User */}
-                <div className="border-t border-secondary p-4">
+                <div className="border-t border-gray-700 p-4">
                     <div className="flex items-center gap-3">
                         <Avatar size="md" alt="Antoine" initials="AN" />
                         <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-primary">Antoine</p>
-                            <p className="truncate text-xs text-tertiary">antoine@email.com</p>
+                            <p className="truncate text-sm font-medium text-gray-200">Antoine</p>
+                            <p className="truncate text-xs text-gray-500">antoine@email.com</p>
                         </div>
-                        <ThemeToggle />
-                        <ButtonUtility size="sm" color="tertiary" icon={LogOut01} tooltip="Déconnexion" />
+                        <button className="rounded-lg p-1.5 text-gray-500 transition-colors hover:text-gray-300">
+                            <LogOut01 className="size-5" />
+                        </button>
                     </div>
                 </div>
             </div>
@@ -261,7 +209,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
     const currentPage = pageMetadata[pathname] || {
-        title: "Finance",
+        title: "Oyko",
         description: "",
         showSearch: false,
     };
@@ -277,10 +225,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* Main Content */}
             <div className="flex min-h-screen flex-1 flex-col lg:pl-[68px]">
                 {/* Mobile Header */}
-                <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-secondary bg-primary px-4 lg:hidden">
+                <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[#E5E2DC] bg-[#F5F3EF] px-4 lg:hidden">
                     <div className="flex items-center gap-3">
                         <ButtonUtility size="sm" color="tertiary" icon={Menu01} onClick={() => setMobileNavOpen(true)} />
-                        <span className="text-sm font-semibold text-primary">{currentPage.title}</span>
+                        <span className="text-sm font-semibold text-gray-900">{currentPage.title}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <ButtonUtility size="sm" color="tertiary" icon={SearchLg} />

@@ -226,27 +226,61 @@ export const calculateYearlyCost = (montant: number, frequence: string): number 
 };
 
 /**
- * Détermine la couleur d'une progress bar selon le pourcentage
- * Gradation plus fine pour une meilleure UX
+ * Détermine la couleur d'une progress bar selon le pourcentage.
+ * Oyko identity: anthracite par défaut, warning quand ça chauffe.
+ * Jamais de rouge — on ne juge pas.
  */
 export const getProgressColor = (percent: number): string => {
-    if (percent > 100) return "bg-error-500";
-    if (percent > 90) return "bg-orange-500";
-    if (percent > 75) return "bg-warning-500";
-    if (percent > 50) return "bg-success-500";
-    return "bg-success-400";
+    if (percent > 100) return "bg-gray-900";     // Dépassé — anthracite neutre
+    if (percent > 80) return "bg-[#D97706]";     // Warning — orange chaud
+    return "bg-gray-900";                         // Normal — anthracite
 };
 
 /**
  * Détermine la couleur d'une progress bar pour les fonds sombres (hero cards)
- * Utilise des couleurs plus vives et contrastées
  */
 export const getProgressColorOnDark = (percent: number): string => {
-    if (percent > 100) return "bg-red-400";
-    if (percent > 90) return "bg-orange-400";
-    if (percent > 75) return "bg-amber-400";
-    if (percent > 50) return "bg-lime-400";
-    return "bg-emerald-400";
+    if (percent > 100) return "bg-gray-400";     // Dépassé
+    if (percent > 80) return "bg-[#D97706]";     // Warning
+    return "bg-[#BEFF00]";                       // Lime — tout va bien
+};
+
+/**
+ * Calcule le nombre de jours entre aujourd'hui et une date cible
+ * @example getDaysUntil(demain) // 1
+ * @example getDaysUntil(hier) // -1
+ */
+export const getDaysUntil = (date: Date): number => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+    return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+/**
+ * Retourne un label et une couleur de badge J-X pour les prochains prélèvements
+ */
+export const getJMoinsBadge = (date: Date): { label: string; color: "success" | "warning" | "error" | "gray" } => {
+    const days = getDaysUntil(date);
+    if (days < 0) return { label: "Passé", color: "gray" };
+    if (days === 0) return { label: "Aujourd'hui", color: "warning" };
+    if (days <= 3) return { label: `J-${days}`, color: "warning" };
+    if (days <= 7) return { label: `J-${days}`, color: "gray" };
+    return { label: `J-${days}`, color: "success" };
+};
+
+/**
+ * Retourne un label de fréquence compact
+ * @example getFrequenceLabel("annuel") // "/an"
+ */
+export const getFrequenceLabel = (freq: string): string => {
+    switch (freq) {
+        case "annuel": return "/an";
+        case "trimestriel": return "/trim.";
+        case "hebdo": return "/sem.";
+        default: return "/mois";
+    }
 };
 
 /**

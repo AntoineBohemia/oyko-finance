@@ -1,13 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Moon01, Sun } from "@untitledui/icons";
+import { useEffect, useId, useRef, useState } from "react";
+import { ChevronDown } from "@untitledui/icons";
 import { motion } from "motion/react";
-import { useTheme } from "next-themes";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import { Button } from "@/components/base/buttons/button";
-import { ButtonUtility } from "@/components/base/buttons/button-utility";
+
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
 import { cx } from "@/utils/cx";
@@ -28,30 +27,6 @@ const springConfig = {
 // =============================================================================
 // COMPONENTS
 // =============================================================================
-
-const ThemeToggle = ({ size = "sm" }: { size?: "sm" | "md" }) => {
-    const [mounted, setMounted] = useState(false);
-    const { theme, setTheme } = useTheme();
-    const isDark = theme === "dark";
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    if (!mounted) {
-        return <ButtonUtility size={size} color="tertiary" icon={Moon01} tooltip="Thème sombre" />;
-    }
-
-    return (
-        <ButtonUtility
-            size={size}
-            color="tertiary"
-            icon={isDark ? Sun : Moon01}
-            tooltip={isDark ? "Thème clair" : "Thème sombre"}
-            onClick={() => setTheme(isDark ? "light" : "dark")}
-        />
-    );
-};
 
 type HeaderNavItem = {
     label: string;
@@ -104,12 +79,6 @@ const MobileNavItem = (props: { label: string; href?: string; children?: ReactNo
 const MobileFooter = () => {
     return (
         <div className="mt-auto border-t border-secondary px-5 py-6">
-            {/* Theme toggle row */}
-            <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-tertiary">Apparence</span>
-                <ThemeToggle size="md" />
-            </div>
-
             {/* CTA buttons */}
             <div className="mt-5 flex flex-row gap-3">
                 <Button color="secondary" size="lg" href="/login" className="flex-1 justify-center">
@@ -130,6 +99,7 @@ interface HeaderProps {
 }
 
 export const Header = ({ items = headerNavItems, isFullWidth, className }: HeaderProps) => {
+    const mobileMenuTriggerId = useId();
     const headerRef = useRef<HTMLElement>(null);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -264,7 +234,6 @@ export const Header = ({ items = headerNavItems, isFullWidth, className }: Heade
 
                     {/* Desktop actions */}
                     <div className="hidden items-center gap-3 md:flex">
-                        <ThemeToggle />
                         <Button color="secondary" size="md" href="/login">
                             Connexion
                         </Button>
@@ -276,6 +245,7 @@ export const Header = ({ items = headerNavItems, isFullWidth, className }: Heade
                     {/* Mobile menu trigger */}
                     <AriaDialogTrigger>
                         <AriaButton
+                            id={mobileMenuTriggerId}
                             aria-label="Menu de navigation"
                             className={({ isFocusVisible }) =>
                                 cx(
