@@ -491,7 +491,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                 {/* ============================================ */}
                 <div className="mb-6 flex flex-col gap-4 border-b border-secondary pb-5 lg:mb-8 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex flex-col gap-1">
-                        <h1 className="text-xl font-semibold text-primary lg:text-display-xs">Dépenses</h1>
+                        <h1 className="font-display text-xl font-semibold text-primary lg:text-display-xs">Dépenses</h1>
                         <p className="text-sm text-tertiary">Enregistrez et suivez vos dépenses</p>
                     </div>
                     <Button size="md" color="secondary" iconLeading={Download04} onClick={handleExport}>
@@ -655,7 +655,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                                                         className={cx(
                                                                             "flex flex-col items-center gap-1 rounded-lg px-4 py-3 text-sm font-medium transition-all",
                                                                             revenuCategorieId === cat.id
-                                                                                ? "bg-success-50 text-success-700 ring-2 ring-success-500"
+                                                                                ? "bg-[#FAFFE4] text-[#608B00] ring-2 ring-[#608B00]"
                                                                                 : "bg-secondary text-tertiary hover:bg-secondary_hover"
                                                                         )}
                                                                     >
@@ -872,7 +872,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                                                 <span
                                                                     className={cx(
                                                                         "text-sm font-semibold whitespace-nowrap",
-                                                                        isRevenu ? "text-finance-gain" : "text-primary"
+                                                                        isRevenu ? "text-[#608B00]" : "text-primary"
                                                                     )}
                                                                 >
                                                                     {isRevenu ? "+" : ""}{formatCurrencySimple(Math.abs(t.montant))}
@@ -925,13 +925,13 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                             <div className="flex flex-col gap-3">
                                 <div className="flex justify-between">
                                     <span className="text-sm text-tertiary">Dépenses</span>
-                                    <span className="text-sm font-semibold text-finance-loss">
+                                    <span className="text-sm font-semibold text-primary">
                                         -{formatCurrencySimple(totals.depenses)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-tertiary">Revenus</span>
-                                    <span className="text-sm font-semibold text-finance-gain">
+                                    <span className="text-sm font-semibold text-[#608B00]">
                                         +{formatCurrencySimple(totals.revenus)}
                                     </span>
                                 </div>
@@ -941,7 +941,7 @@ export default function DepensesClient({ initialData, initialPeriode }: Depenses
                                         <span
                                             className={cx(
                                                 "text-sm font-bold",
-                                                totals.balance >= 0 ? "text-finance-gain" : "text-finance-loss"
+                                                totals.balance >= 0 ? "text-[#608B00]" : "text-primary"
                                             )}
                                         >
                                             {totals.balance >= 0 ? "+" : ""}

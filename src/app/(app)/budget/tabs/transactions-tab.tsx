@@ -635,7 +635,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                                                                     className={cx(
                                                                         "flex flex-col items-center gap-1 rounded-lg px-4 py-3 text-sm font-medium transition-all",
                                                                         revenuCategorieId === cat.id
-                                                                            ? "bg-success-50 text-success-700 ring-2 ring-success-500"
+                                                                            ? "bg-[#FAFFE4] text-[#608B00] ring-2 ring-[#608B00]"
                                                                             : "bg-secondary text-tertiary hover:bg-secondary_hover"
                                                                     )}
                                                                 >
@@ -700,14 +700,14 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                         <div className="w-px bg-tertiary/20" />
                         <div className="flex flex-1 flex-col items-center gap-0.5">
                             <span className="text-xs text-tertiary">Revenus</span>
-                            <span className="text-sm font-semibold text-finance-gain">
+                            <span className="text-sm font-semibold text-[#608B00]">
                                 {formatCurrencySimple(totals.revenus)}
                             </span>
                         </div>
                         <div className="w-px bg-tertiary/20" />
                         <div className="flex flex-1 flex-col items-center gap-0.5">
                             <span className="text-xs text-tertiary">Balance</span>
-                            <span className={cx("text-sm font-bold", totals.balance >= 0 ? "text-finance-gain" : "text-tertiary")}>
+                            <span className={cx("text-sm font-bold", totals.balance >= 0 ? "text-[#608B00]" : "text-primary")}>
                                 {totals.balance >= 0 ? "+" : ""}{formatCurrencySimple(totals.balance)}
                             </span>
                         </div>
@@ -825,8 +825,9 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                                     <p className="text-sm text-tertiary">Chargement...</p>
                                 </div>
                             ) : transactionsByDay.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center gap-4 py-12">
-                                    <p className="text-sm text-tertiary">Aucune transaction trouvée</p>
+                                <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-[#E5E2DC] bg-white py-16 px-8">
+                                    <p className="font-display text-lg font-semibold text-primary">Aucune transaction</p>
+                                    <p className="max-w-sm text-center text-sm text-tertiary">Aucune transaction ne correspond a vos filtres. Essayez de modifier vos criteres de recherche.</p>
                                 </div>
                             ) : (
                                 transactionsByDay.map((group) => (
@@ -872,7 +873,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                                                             <span
                                                                 className={cx(
                                                                     "text-sm font-semibold whitespace-nowrap",
-                                                                    isRevenu ? "text-finance-gain" : "text-primary"
+                                                                    isRevenu ? "text-[#608B00]" : "text-primary"
                                                                 )}
                                                             >
                                                                 {isRevenu ? "+" : ""}{formatCurrencySimple(Math.abs(t.montant))}
@@ -923,13 +924,13 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                         <div className="flex flex-col gap-3">
                             <div className="flex justify-between">
                                 <span className="text-sm text-tertiary">Dépenses</span>
-                                <span className="text-sm font-semibold text-finance-loss">
+                                <span className="text-sm font-semibold text-primary">
                                     -{formatCurrencySimple(totals.depenses)}
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-sm text-tertiary">Revenus</span>
-                                <span className="text-sm font-semibold text-finance-gain">
+                                <span className="text-sm font-semibold text-[#608B00]">
                                     +{formatCurrencySimple(totals.revenus)}
                                 </span>
                             </div>
@@ -939,7 +940,7 @@ export default function TransactionsTab({ initialData, initialPeriode }: Transac
                                     <span
                                         className={cx(
                                             "text-sm font-bold",
-                                            totals.balance >= 0 ? "text-finance-gain" : "text-finance-loss"
+                                            totals.balance >= 0 ? "text-[#608B00]" : "text-primary"
                                         )}
                                     >
                                         {totals.balance >= 0 ? "+" : ""}

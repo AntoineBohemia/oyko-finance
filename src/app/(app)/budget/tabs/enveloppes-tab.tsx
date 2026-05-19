@@ -272,7 +272,7 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                                                 </div>
                                                 <div className="flex justify-between text-sm">
                                                     <span className="text-tertiary">Non attribué :</span>
-                                                    <span className={cx("font-semibold", nonAttribue < 0 ? "text-finance-loss" : "text-finance-gain")}>
+                                                    <span className={cx("font-semibold", nonAttribue < 0 ? "text-primary" : "text-[#608B00]")}>
                                                         {formatCurrencySimple(nonAttribue)}
                                                         {nonAttribue < 0 && " ⚠️"}
                                                     </span>
@@ -335,7 +335,7 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                                                     <span className="text-sm font-medium text-primary">{formatCurrencySimple(env.depense)}</span>
                                                 </Table.Cell>
                                                 <Table.Cell>
-                                                    <span className={cx("text-sm font-semibold", env.reste >= 0 ? "text-finance-gain" : "text-finance-loss")}>
+                                                    <span className={cx("text-sm font-semibold", env.reste >= 0 ? "text-[#608B00]" : "text-primary")}>
                                                         {env.reste >= 0 ? formatCurrencySimple(env.reste) : `-${formatCurrencySimple(Math.abs(env.reste))}`}
                                                     </span>
                                                 </Table.Cell>
@@ -395,7 +395,7 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                                     <p className="text-lg font-semibold text-primary">{formatCurrencySimple(env.depense)}</p>
                                     <p className="text-xs text-tertiary">sur {formatCurrencySimple(env.budgetMensuel)}</p>
                                     <ProgressBar value={Math.min(env.pourcentage, 100)} className="h-1.5" progressClassName={getProgressColor(env.pourcentage)} />
-                                    <p className={cx("text-xs font-medium", env.reste >= 0 ? "text-finance-gain" : "text-tertiary")}>
+                                    <p className={cx("text-xs font-medium", env.reste >= 0 ? "text-[#608B00]" : "text-primary")}>
                                         {env.reste >= 0 ? `${formatCurrencySimple(env.reste)} restant` : `${formatCurrencySimple(Math.abs(env.reste))} au-delà`}
                                     </p>
                                 </div>
@@ -403,12 +403,11 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                         </div>
                     </>
                 ) : (
-                    <div className="rounded-xl bg-white border border-[#E5E2DC] p-8 text-center">
-                        <p className="text-tertiary">Aucune catégorie de dépense configurée.</p>
+                    <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-[#E5E2DC] bg-white py-16 px-8">
+                        <p className="font-display text-lg font-semibold text-primary">Aucune enveloppe</p>
+                        <p className="max-w-sm text-center text-sm text-tertiary">Configurez vos categories de depenses pour repartir votre budget en enveloppes.</p>
                         <Link href="/parametres">
-                            <Button size="sm" color="link-color" className="mt-2">
-                                Configurer les catégories
-                            </Button>
+                            <Button size="sm" color="link-color">Configurer les categories</Button>
                         </Link>
                     </div>
                 )}
@@ -476,12 +475,11 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                         </Table>
                     </TableCard.Root>
                 ) : (
-                    <div className="rounded-xl bg-white border border-[#E5E2DC] p-8 text-center">
-                        <p className="text-tertiary">Aucune charge fixe configurée.</p>
+                    <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-[#E5E2DC] bg-white py-16 px-8">
+                        <p className="font-display text-lg font-semibold text-primary">Aucune charge fixe</p>
+                        <p className="max-w-sm text-center text-sm text-tertiary">Ajoutez vos abonnements et prelevements recurrents pour mieux planifier votre budget.</p>
                         <Link href="/budget?tab=charges-fixes">
-                            <Button size="sm" color="link-color" className="mt-2">
-                                Ajouter des charges fixes
-                            </Button>
+                            <Button size="sm" color="link-color">Ajouter des charges fixes</Button>
                         </Link>
                     </div>
                 )}
@@ -528,7 +526,7 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
                                     <span
                                         className={cx(
                                             "font-semibold",
-                                            weeksData[selectedWeek - 1].reste >= 0 ? "text-finance-gain" : "text-finance-loss",
+                                            weeksData[selectedWeek - 1].reste >= 0 ? "text-[#608B00]" : "text-primary",
                                         )}
                                     >
                                         {formatCurrencySimple(Math.abs(weeksData[selectedWeek - 1].reste))}

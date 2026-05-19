@@ -127,7 +127,7 @@ const getCompteIcon = (type: string) => {
 
 const getCompteIconColor = (type: string) => {
     switch (type) {
-        case "epargne": return "text-success-600 bg-success-50";
+        case "epargne": return "text-[#608B00] bg-[#FAFFE4]";
         case "cash": return "text-warning-600 bg-amber-50";
         default: return "text-gray-600 bg-gray-100";
     }
@@ -274,9 +274,9 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                     <div className="mt-8 flex flex-col gap-3">
                         <div className="flex justify-between text-sm">
                             <div className="flex items-center gap-2">
-                                <TrendUp01 className="h-4 w-4 text-success-500" />
+                                <TrendUp01 className="h-4 w-4 text-stone-600" />
                                 <span className="text-tertiary">Actifs</span>
-                                <span className="font-semibold text-finance-gain">{formatCurrency(totaux.totalActifs)}</span>
+                                <span className="font-semibold text-[#608B00]">{formatCurrency(totaux.totalActifs)}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="font-semibold text-primary">{formatCurrency(totaux.totalDettes)}</span>
@@ -285,7 +285,7 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                             </div>
                         </div>
                         <div className="flex h-3 w-full overflow-hidden rounded-full bg-stone-200">
-                            <div className="h-full bg-success-500 transition-all" style={{ width: `${pctActifs}%` }} />
+                            <div className="h-full bg-gray-900 transition-all" style={{ width: `${pctActifs}%` }} />
                         </div>
                         <div className="flex justify-between text-xs text-tertiary">
                             <span>{pctActifs.toFixed(0)}% actifs</span>
@@ -362,8 +362,9 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                                     </div>
                                 );
                             }) : (
-                                <div className="flex flex-1 items-center justify-center p-6">
-                                    <p className="text-sm text-tertiary">Aucun compte</p>
+                                <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16 px-8">
+                                    <p className="font-display text-lg font-semibold text-primary">Aucun compte</p>
+                                    <p className="max-w-sm text-center text-sm text-tertiary">Ajoutez un compte bancaire pour suivre vos liquidites.</p>
                                 </div>
                             )}
                         </div>
@@ -402,19 +403,20 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                                     <div className="text-right">
                                         <p className="font-mono text-sm font-semibold tabular-nums text-primary">{formatCurrency(inv.valeurActuelle)}</p>
                                         <div className="flex items-center justify-end gap-1">
-                                            <span className={cx("font-mono text-xs font-semibold tabular-nums", inv.plusValuePercent >= 0 ? "text-finance-gain" : "text-primary")}>
+                                            <span className={cx("font-mono text-xs font-semibold tabular-nums", inv.plusValuePercent >= 0 ? "text-[#608B00]" : "text-primary")}>
                                                 {formatPercent(inv.plusValuePercent)}
                                             </span>
                                             {inv.plusValuePercent >= 0
-                                                ? <ArrowUp className="size-3 text-finance-gain" />
+                                                ? <ArrowUp className="size-3 text-[#608B00]" />
                                                 : <ArrowDown className="size-3 text-primary" />
                                             }
                                         </div>
                                     </div>
                                 </div>
                             )) : (
-                                <div className="flex flex-1 items-center justify-center p-6">
-                                    <p className="text-sm text-tertiary">Aucun investissement</p>
+                                <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16 px-8">
+                                    <p className="font-display text-lg font-semibold text-primary">Aucun investissement</p>
+                                    <p className="max-w-sm text-center text-sm text-tertiary">Ajoutez vos placements pour suivre la performance de votre portefeuille.</p>
                                 </div>
                             )}
                         </div>
@@ -478,8 +480,9 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                                     </div>
                                 );
                             }) : (
-                                <div className="flex flex-1 items-center justify-center p-6">
-                                    <p className="text-sm text-tertiary">Aucune dette</p>
+                                <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16 px-8">
+                                    <p className="font-display text-lg font-semibold text-primary">Aucune dette</p>
+                                    <p className="max-w-sm text-center text-sm text-tertiary">Ajoutez vos credits et emprunts pour un suivi complet de votre patrimoine.</p>
                                 </div>
                             )}
                         </div>

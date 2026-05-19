@@ -305,7 +305,7 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
                         <p className="text-sm font-medium text-warning-700">
                             {prochainPrel.nom} dans {getDaysUntil(prochainPrel.prochainPrelevementDate)} jour(s)
                         </p>
-                        <p className="text-xs text-warning-600">{formatCurrency(prochainPrel.montant)}</p>
+                        <p className="text-xs text-primary">{formatCurrency(prochainPrel.montant)}</p>
                     </div>
                 </div>
             )}
@@ -470,9 +470,12 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
                     })}
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-[#E5E2DC] bg-white py-16">
-                    <p className="text-sm text-tertiary">
-                        {searchQuery ? "Aucun résultat" : "Aucune charge fixe configurée"}
+                <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-[#E5E2DC] bg-white py-16 px-8">
+                    <p className="font-display text-lg font-semibold text-primary">
+                        {searchQuery ? "Aucun resultat" : "Aucune charge fixe"}
+                    </p>
+                    <p className="max-w-sm text-center text-sm text-tertiary">
+                        {searchQuery ? "Aucune charge fixe ne correspond a votre recherche." : "Ajoutez vos abonnements et prelevements recurrents pour mieux planifier votre budget."}
                     </p>
                     {!searchQuery && (
                         <Button size="sm" color="link-color" onClick={() => setIsModalOpen(true)}>

@@ -59,7 +59,7 @@ export const ChartLegendContent = ({ reversed, payload, align, layout, className
             )}
         >
             {payload?.map((entry, index) => (
-                <li className="flex items-center gap-2 text-sm text-tertiary" key={index}>
+                <li className="flex items-center gap-2 text-sm text-stone-500" key={index}>
                     <span className={cx("h-2 w-2 rounded-full bg-current", (entry.payload as { className?: string })?.className)} />
                     {entry.value}
                 </li>
@@ -100,19 +100,19 @@ export const ChartTooltipContent = ({ active, payload, label, isRadialChart, isP
     secondaryTitle = isSingleDataPoint && labelFormatter ? labelFormatter(secondaryTitle, payload) : secondaryTitle;
 
     return (
-        <div className="flex flex-col gap-0.5 rounded-lg bg-primary-solid px-3 py-2 shadow-lg">
-            <p className="text-xs font-semibold text-white">{title}</p>
+        <div className="flex flex-col gap-0.5 rounded-lg bg-[#1C1917] px-3 py-2 font-sans text-[13px] shadow-[0px_4px_12px_rgba(28,25,23,0.15)]">
+            <p className="font-semibold text-[#FAFAF9]">{title}</p>
 
             {!secondaryTitle ? null : Array.isArray(secondaryTitle) ? (
                 <div>
                     {secondaryTitle.map((entry, index) => (
-                        <p key={index} className={cx("text-xs text-tooltip-supporting-text")}>
+                        <p key={index} className="text-[#A8A29E]">
                             {`${entry.name}: ${formatter ? formatter(entry.value, entry.name, entry, index, entry.payload) : entry.value}`}
                         </p>
                     ))}
                 </div>
             ) : (
-                <p className="text-xs text-tooltip-supporting-text">{secondaryTitle}</p>
+                <p className="text-[#A8A29E]">{secondaryTitle}</p>
             )}
         </div>
     );

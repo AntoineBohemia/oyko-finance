@@ -349,11 +349,11 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 {/* COMPTES (cartes horizontales) */}
                 {/* ============================================ */}
                 {comptes.length > 0 ? (
-                    <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <StaggerList className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {comptes.slice(0, 4).map((compte) => {
                             const Icon = getCompteIcon(compte.type);
                             return (
-                                <div key={compte.id} className="flex items-center gap-4 rounded-lg border border-[#E5E2DC] bg-white p-5 shadow-xs">
+                                <StaggerItem key={compte.id} className="flex items-center gap-4 rounded-lg border border-[#E5E2DC] bg-white p-5 shadow-xs">
                                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100">
                                         <Icon className="h-6 w-6 text-gray-600" />
                                     </div>
@@ -361,10 +361,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                                         <p className="truncate text-sm text-tertiary">{compte.label}</p>
                                         <p className="text-xl font-bold text-primary">{formatCurrencySimple(compte.solde)}</p>
                                     </div>
-                                </div>
+                                </StaggerItem>
                             );
                         })}
-                    </div>
+                    </StaggerList>
                 ) : (
                     <div className="mb-8 flex items-center justify-between rounded-lg border border-[#E5E2DC] bg-white p-6">
                         <div>
@@ -501,8 +501,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                                 ))}
                             </div>
                         ) : (
-                            <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg bg-secondary/50 p-8">
-                                <p className="text-sm text-tertiary">Aucune transaction</p>
+                            <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-[#E5E2DC] bg-white py-16 px-8">
+                                <p className="font-display text-lg font-semibold text-primary">Aucune transaction</p>
+                                <p className="max-w-sm text-center text-sm text-tertiary">Ajoutez votre premiere depense ou importez vos transactions pour commencer le suivi.</p>
                                 <div className="flex gap-2">
                                     <Button size="sm" color="link-color" onClick={() => setIsExpenseModalOpen(true)}>Ajouter</Button>
                                     <Button size="sm" color="link-color" onClick={() => setIsImportModalOpen(true)}>Importer</Button>
@@ -533,8 +534,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                                 ))}
                             </div>
                         ) : (
-                            <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg bg-secondary/50 p-8">
-                                <p className="text-sm text-tertiary">Aucun prélèvement configuré</p>
+                            <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-[#E5E2DC] bg-white py-16 px-8">
+                                <p className="font-display text-lg font-semibold text-primary">Aucun prelevement</p>
+                                <p className="max-w-sm text-center text-sm text-tertiary">Configurez vos charges fixes pour suivre vos prelevements a venir.</p>
                                 <Link href="/budget?tab=charges-fixes">
                                     <Button size="sm" color="link-color">Configurer</Button>
                                 </Link>
