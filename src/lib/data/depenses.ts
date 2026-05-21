@@ -96,7 +96,12 @@ export async function getDepensesData(
       date: (() => { const d = new Date((t.date ?? t.dateTransaction ?? "") as string); return isNaN(d.getTime()) ? new Date() : d; })(),
       categorieId: ((t.categorieId ?? t.categorie_id ?? null) as string | null),
       compteId: ((t.compteId ?? t.compte_id ?? null) as string | null),
-      type: ((t.type as string) === "revenu" ? "revenu" : (t.type as string) === "fixe" ? "fixe" : "depense") as "depense" | "revenu" | "fixe",
+      type: (() => {
+        const raw = (t.type as string) || "";
+        if (raw === "revenu" || raw === "CREDIT") return "revenu";
+        if (raw === "fixe" || raw === "RECURRING") return "fixe";
+        return "depense";
+      })() as "depense" | "revenu" | "fixe",
       categorieNom: (t.categorieNom ?? null) as string | null,
       categorieIcone: t.categorieIcone ? mapIcone(t.categorieIcone as string) : null,
       compteNom: (t.compteNom ?? null) as string | null,
@@ -123,7 +128,7 @@ export async function addTransaction(data: {
         categorieId: data.categorieId,
         compteId: data.compteId,
         description: data.description || null,
-        type: data.type,
+        type: data.type === "depense" ? "DEBIT" : data.type === "revenu" ? "CREDIT" : "OTHER",
         dateTransaction: data.date.toISOString(),
       },
     });

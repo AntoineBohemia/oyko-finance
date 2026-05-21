@@ -96,7 +96,12 @@ export async function getBudgetData(
     montant: ((t.montantEuros ?? t.montant ?? 0) as number),
     date: (() => { const d = new Date((t.date ?? t.dateTransaction ?? "") as string); return isNaN(d.getTime()) ? new Date() : d; })(),
     categorieId: ((t.categorieId ?? t.categorie_id ?? "") as string),
-    type: ((t.type as string) === "revenu" ? "revenu" : (t.type as string) === "fixe" ? "fixe" : "variable") as "variable" | "fixe" | "revenu",
+    type: (() => {
+      const raw = (t.type as string) || "";
+      if (raw === "revenu" || raw === "CREDIT") return "revenu";
+      if (raw === "fixe" || raw === "RECURRING") return "fixe";
+      return "variable";
+    })() as "variable" | "fixe" | "revenu",
   }));
 
   return {

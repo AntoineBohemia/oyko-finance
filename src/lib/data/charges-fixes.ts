@@ -66,15 +66,26 @@ export async function getChargesFixesData(): Promise<ChargesFixesData> {
     return isNaN(d.getTime()) ? new Date() : d;
   };
 
-  const convertDates = (cf: ChargeFixePortfolio) => ({
-    ...cf,
-    prochainPrelevement: safeDate(cf.prochainPrelevement),
-    dateDebut: cf.dateDebut ? safeDate(cf.dateDebut) : null,
-    dateFin: cf.dateFin ? safeDate(cf.dateFin) : null,
-  });
+  const convertAndNormalize = (cf: ChargeFixePortfolio) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = cf as any;
+    return {
+      ...cf,
+      // Backend returns "actif", frontend expects "estActif"
+      estActif: (raw.estActif ?? raw.actif ?? true) as boolean,
+      // Backend returns "jourDuMois", frontend expects "jourPrelevement"
+      jourPrelevement: (raw.jourPrelevement ?? raw.jourDuMois ?? 1) as number,
+      // Backend may return "categorieNom" or "description" differently
+      categorieNom: (raw.categorieNom ?? raw.categorie ?? "") as string,
+      compteNom: (raw.compteNom ?? raw.compte ?? "") as string,
+      prochainPrelevement: safeDate(cf.prochainPrelevement),
+      dateDebut: cf.dateDebut ? safeDate(cf.dateDebut) : null,
+      dateFin: cf.dateFin ? safeDate(cf.dateFin) : null,
+    };
+  };
 
-  const chargesFixes = ((raw.chargesFixes ?? []) as ChargeFixePortfolio[]).map(convertDates);
-  const timeline = ((raw.timeline ?? []) as ChargeFixePortfolio[]).map(convertDates);
+  const chargesFixes = ((raw.chargesFixes ?? []) as ChargeFixePortfolio[]).map(convertAndNormalize);
+  const timeline = ((raw.timeline ?? []) as ChargeFixePortfolio[]).map(convertAndNormalize);
   const repartitionCategories = (raw.repartitionCategories ?? []) as RepartitionCategorie[];
   const rawTotaux = (raw.totaux ?? {}) as Record<string, unknown>;
 
@@ -91,7 +102,7 @@ export async function getChargesFixesData(): Promise<ChargesFixesData> {
       totalMensuel: (rawTotaux.totalMensuel ?? 0) as number,
       totalAnnuel: (rawTotaux.totalAnnuel ?? 0) as number,
       prochainPrelevement: rawTotaux.prochainPrelevement
-        ? convertDates(rawTotaux.prochainPrelevement as ChargeFixePortfolio)
+        ? convertAndNormalize(rawTotaux.prochainPrelevement as ChargeFixePortfolio)
         : (chargesFixes[0] ?? null),
     },
   };
