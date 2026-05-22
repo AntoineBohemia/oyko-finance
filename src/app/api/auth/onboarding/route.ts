@@ -92,9 +92,10 @@ export async function POST(request: NextRequest) {
         const catList = Array.isArray(categories) ? categories : categories.categories || [];
 
         for (const env of body.enveloppes) {
-          // Trouver la catégorie par nom
+          // Trouver la catégorie par nom (fuzzy: ignore pluriel, accents)
+          const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/s$/, "");
           const cat = catList.find(
-            (c: { nom: string }) => c.nom.toLowerCase() === env.nom.toLowerCase(),
+            (c: { nom: string }) => normalize(c.nom) === normalize(env.nom),
           );
           if (cat) {
             await fetch(`${API_URL}/api/v1/categories/${cat.id}`, {

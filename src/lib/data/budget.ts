@@ -78,7 +78,7 @@ export async function getBudgetData(
     nom: e.nom as string,
     icone: mapIcone(e.icone as string | null),
     couleur: (e.couleur as string) || "#6b7280",
-    budgetMensuel: ((e.budgetMensuel ?? e.budget_mensuel ?? e.budgetMensuelEuros ?? 0) as number),
+    budgetMensuel: ((e.budgetMensuel ?? e.budget_mensuel ?? e.budget ?? e.budgetMensuelEuros ?? 0) as number),
   }));
 
   const chargesFixes: ChargeFixBudget[] = rawCfs.map((cf) => ({
