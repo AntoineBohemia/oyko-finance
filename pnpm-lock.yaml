@@ -4,12 +4,15 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@internationalized/date': 3.10.1
+
 importers:
 
   .:
     dependencies:
       '@internationalized/date':
-        specifier: ^3.10.0
+        specifier: 3.10.1
         version: 3.10.1
       '@nivo/bar':
         specifier: ^0.99.0
@@ -511,9 +514,6 @@ packages:
 
   '@internationalized/date@3.10.1':
     resolution: {integrity: sha512-oJrXtQiAXLvT9clCf1K4kxp3eKsQhIaZqxEyowkBcsvZDdZkbWrVmnGknxs5flTD0VGsxrxKgBCZty1EzoiMzA==}
-
-  '@internationalized/date@3.12.1':
-    resolution: {integrity: sha512-6IedsVWXyq4P9Tj+TxuU8WGWM70hYLl12nbYU8jkikVpa6WXapFazPUcHUMDMoWftIDE2ILDkFFte6W2nFCkRQ==}
 
   '@internationalized/message@3.1.8':
     resolution: {integrity: sha512-Rwk3j/TlYZhn3HQ6PyXUV0XP9Uv42jqZGNegt0BXlxjE6G3+LwHjbQZAGHhCnCPdaA6Tvd3ma/7QzLlLkJxAWA==}
@@ -3813,10 +3813,6 @@ snapshots:
     dependencies:
       '@swc/helpers': 0.5.18
 
-  '@internationalized/date@3.12.1':
-    dependencies:
-      '@swc/helpers': 0.5.18
-
   '@internationalized/message@3.1.8':
     dependencies:
       '@swc/helpers': 0.5.18
@@ -6510,7 +6506,7 @@ snapshots:
 
   react-aria-components@1.17.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
-      '@internationalized/date': 3.12.1
+      '@internationalized/date': 3.10.1
       '@react-types/shared': 3.34.0(react@19.2.3)
       '@swc/helpers': 0.5.18
       client-only: 0.0.1
@@ -6568,7 +6564,7 @@ snapshots:
 
   react-aria@3.48.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
-      '@internationalized/date': 3.12.1
+      '@internationalized/date': 3.10.1
       '@internationalized/number': 3.6.6
       '@internationalized/string': 3.2.8
       '@react-types/shared': 3.34.0(react@19.2.3)
@@ -6662,7 +6658,7 @@ snapshots:
 
   react-stately@3.46.0(react@19.2.3):
     dependencies:
-      '@internationalized/date': 3.12.1
+      '@internationalized/date': 3.10.1
       '@internationalized/number': 3.6.6
       '@internationalized/string': 3.2.8
       '@react-types/shared': 3.34.0(react@19.2.3)

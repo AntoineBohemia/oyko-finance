@@ -372,7 +372,7 @@ export const Dashboard10 = () => {
                                     defaultValue={{
                                         start: parseDate("2025-01-10"),
                                         end: parseDate("2025-01-16"),
-                                    }}
+                                    } as any}
                                 />
                                 <Button size="md" color="secondary" iconLeading={FilterLines} className="hidden lg:inline-flex">
                                     Filters
