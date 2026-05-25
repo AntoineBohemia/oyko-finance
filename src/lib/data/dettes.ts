@@ -1,6 +1,4 @@
 import { api } from "@/lib/api/client";
-import { isDevModeActive } from "@/lib/dev/config";
-import { getMockDettesData } from "@/lib/dev/mock-data";
 import type { Profile } from "@/types/api";
 
 // Types pour les donnees des dettes
@@ -39,8 +37,6 @@ export interface DettesPageData {
 
 // Recuperer toutes les donnees pour la page dettes
 export async function getDettesData(): Promise<DettesPageData> {
-  if (await isDevModeActive()) return getMockDettesData();
-
   const data = await api<DettesPageData>("/api/v1/liabilities");
 
   // Convertir les dates string en Date objects
@@ -70,8 +66,6 @@ export async function addDette(data: {
   compteId: string;
   notes?: string;
 }): Promise<{ success: boolean; error?: string }> {
-  if (await isDevModeActive()) return { success: true };
-
   try {
     await api("/api/v1/liabilities", { method: "POST", body: data });
     return { success: true };
@@ -93,8 +87,6 @@ export async function updateDette(
     notes: string;
   }>,
 ): Promise<{ success: boolean; error?: string }> {
-  if (await isDevModeActive()) return { success: true };
-
   try {
     await api("/api/v1/liabilities/" + detteId, { method: "PUT", body: data });
     return { success: true };
@@ -110,8 +102,6 @@ export async function updateDette(
 export async function deleteDette(
   detteId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  if (await isDevModeActive()) return { success: true };
-
   try {
     await api("/api/v1/liabilities/" + detteId, { method: "DELETE" });
     return { success: true };

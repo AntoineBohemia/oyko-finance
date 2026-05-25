@@ -1,6 +1,4 @@
 import { api } from "@/lib/api/client";
-import { isDevModeActive } from "@/lib/dev/config";
-import { getMockDashboardData } from "@/lib/dev/mock-data";
 import type { Profile, Compte } from "@/types/api";
 
 // Types pour les donnees du dashboard
@@ -76,8 +74,6 @@ function mapIcone(icone: string | null): string {
 
 // Recuperer toutes les donnees du dashboard
 export async function getDashboardData(): Promise<DashboardData> {
-  if (await isDevModeActive()) return getMockDashboardData();
-
   // Le backend retourne un format brut, on le mappe vers le format frontend
   const raw = await api<Record<string, unknown>>("/api/v1/dashboard");
 

@@ -1,6 +1,4 @@
 import { api } from "@/lib/api/client";
-import { isDevModeActive } from "@/lib/dev/config";
-import { getMockBudgetData } from "@/lib/dev/mock-data";
 import type { Profile } from "@/types/api";
 
 // Types pour les donnees du budget
@@ -63,8 +61,6 @@ export async function getBudgetData(
   month: number,
   year: number,
 ): Promise<BudgetData> {
-  if (await isDevModeActive()) return getMockBudgetData();
-
   const raw = await api<Record<string, unknown>>("/api/v1/budget", {
     params: { month, year },
   });
@@ -119,8 +115,6 @@ export async function updateCategoryBudget(
   categoryId: string,
   newBudget: number,
 ): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/categories/" + categoryId, {
       method: "PUT",

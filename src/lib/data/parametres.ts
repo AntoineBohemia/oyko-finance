@@ -1,6 +1,4 @@
 import { api } from "@/lib/api/client";
-import { isDevModeActive } from "@/lib/dev/config";
-import { getMockParametresData } from "@/lib/dev/mock-data";
 import type { Profile } from "@/types/api";
 
 // Types pour les donnees des parametres
@@ -46,8 +44,6 @@ export interface TotauxParametres {
 
 // Recuperer toutes les donnees des parametres (compose depuis plusieurs endpoints)
 export async function getParametresData(): Promise<ParametresData> {
-  if (await isDevModeActive()) return getMockParametresData();
-
   type ChargeRaw = { id: string; nom: string; montant: number; jourPrelevement?: number; jour_prelevement?: number; icone?: string; couleur?: string; categorieNom?: string; estActif?: boolean; est_actif?: boolean };
 
   const [profile, categoriesRaw, chargesResponse, comptesRaw] = await Promise.all([
@@ -109,8 +105,6 @@ export async function updateProfile(data: {
   objectifEpargne?: number;
   modeGestion?: "semaine" | "mois";
 }): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/profile", { method: "PUT", body: data });
     return true;
@@ -127,8 +121,6 @@ export async function addChargeFix(data: {
   categorieId?: string;
   icone?: string;
 }): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/recurring-charges", { method: "POST", body: data });
     return true;
@@ -139,8 +131,6 @@ export async function addChargeFix(data: {
 
 // Supprimer une charge fixe
 export async function deleteChargeFix(id: string): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/recurring-charges/" + id, { method: "DELETE" });
     return true;
@@ -156,8 +146,6 @@ export async function addCompte(data: {
   solde: number;
   type: "courant" | "epargne" | "cash";
 }): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/accounts", { method: "POST", body: data });
     return true;
@@ -168,8 +156,6 @@ export async function addCompte(data: {
 
 // Supprimer un compte
 export async function deleteCompte(id: string): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/accounts/" + id, { method: "DELETE" });
     return true;
@@ -187,8 +173,6 @@ export async function updateCategorie(
     icone?: string;
   },
 ): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/categories/" + id, { method: "PUT", body: data });
     return true;
@@ -203,8 +187,6 @@ export async function addCategorie(data: {
   budgetMensuel: number;
   icone: string;
 }): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/categories", { method: "POST", body: data });
     return true;
@@ -215,8 +197,6 @@ export async function addCategorie(data: {
 
 // Supprimer une categorie
 export async function deleteCategorie(id: string): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/categories/" + id, { method: "DELETE" });
     return true;

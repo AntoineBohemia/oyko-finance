@@ -1,6 +1,4 @@
 import { api } from "@/lib/api/client";
-import { isDevModeActive } from "@/lib/dev/config";
-import { getMockPatrimoineData } from "@/lib/dev/mock-data";
 import type { Profile } from "@/types/api";
 
 // Types pour les donnees du patrimoine
@@ -66,8 +64,6 @@ export interface TotauxPatrimoine {
 
 // Recuperer toutes les donnees du patrimoine (compose depuis dashboard)
 export async function getPatrimoineData(): Promise<PatrimoineData> {
-  if (await isDevModeActive()) return getMockPatrimoineData();
-
   // Le backend n'a pas d'endpoint /patrimoine dedie
   // On compose depuis les endpoints individuels
   const [profile, accounts, investments, liabilities] = await Promise.all([
@@ -142,8 +138,6 @@ export async function updateCompteSolde(
   compteId: string,
   nouveauSolde: number,
 ): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/accounts/" + compteId, {
       method: "PUT",

@@ -1,6 +1,4 @@
 import { api } from "@/lib/api/client";
-import { isDevModeActive } from "@/lib/dev/config";
-import { getMockInvestissementsData } from "@/lib/dev/mock-data";
 import type { Profile } from "@/types/api";
 
 // Types pour les donnees des investissements
@@ -63,8 +61,6 @@ export interface TotauxInvestissements {
 
 // Recuperer toutes les donnees des investissements
 export async function getInvestissementsData(): Promise<InvestissementsData> {
-  if (await isDevModeActive()) return getMockInvestissementsData();
-
   const data = await api<InvestissementsData>("/api/v1/investments");
 
   // Convertir les dates string en Date objects
@@ -90,8 +86,6 @@ export async function addInvestissement(data: {
   dateAchat?: string;
   notes?: string;
 }): Promise<{ success: boolean; id?: string }> {
-  if (await isDevModeActive()) return { success: true, id: "mock-id" };
-
   try {
     const result = await api<{ id: string }>("/api/v1/investments", {
       method: "POST",
@@ -117,8 +111,6 @@ export async function updateInvestissement(
     notes?: string;
   },
 ): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/investments/" + id, { method: "PUT", body: data });
     return true;
@@ -129,8 +121,6 @@ export async function updateInvestissement(
 
 // Supprimer un investissement
 export async function deleteInvestissement(id: string): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/investments/" + id, { method: "DELETE" });
     return true;
@@ -144,8 +134,6 @@ export async function addPosition(
   id: string,
   data: { quantite: number; prix: number },
 ): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/investments/" + id, {
       method: "PUT",
@@ -162,8 +150,6 @@ export async function updatePrixActuel(
   id: string,
   prixActuel: number,
 ): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/investments/" + id, {
       method: "PUT",

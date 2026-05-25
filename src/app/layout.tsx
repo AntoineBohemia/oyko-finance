@@ -7,7 +7,6 @@ import { QueryProvider } from "@/providers/query-provider";
 import "@/styles/globals.css";
 import { Toaster } from "sonner";
 import { cx } from "@/utils/cx";
-import { DevModeWidget } from "@/components/dev/dev-mode-widget";
 
 const fraunces = Fraunces({
     subsets: ["latin"],
@@ -40,7 +39,6 @@ export default function RootLayout({
                 <RouteProvider>
                     <QueryProvider>
                         {children}
-                        <DevModeWidget />
                         <Toaster
                             position="bottom-right"
                             toastOptions={{

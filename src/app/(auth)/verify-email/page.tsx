@@ -1,22 +1,18 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { ArrowLeft, ArrowRight, Mail01, Send01, CursorClick01, Rocket01, RefreshCw01 } from "@untitledui/icons";
+import { ArrowLeft, Mail01, Send01, CursorClick01, Rocket01, RefreshCw01 } from "@untitledui/icons";
 import Link from "next/link";
 import { Button } from "@/components/base/buttons/button";
 import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { GradientBackground } from "@/app/(landing)/gradient-bg";
 
-const IS_DEV = process.env.NEXT_PUBLIC_DEV_MODE === "true";
-
 function VerifyEmailContent() {
     const searchParams = useSearchParams();
-    const router = useRouter();
     const email = searchParams.get("email") || "";
     const errorParam = searchParams.get("error") || "";
-    const [isSkipping, setIsSkipping] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [resendSuccess, setResendSuccess] = useState(false);
     const [resendError, setResendError] = useState(errorParam);
@@ -45,20 +41,6 @@ function VerifyEmailContent() {
         } finally {
             setIsResending(false);
         }
-    };
-
-    const handleSkipVerification = async () => {
-        setIsSkipping(true);
-        try {
-            await fetch("/api/auth/skip-verify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
-            });
-        } catch {
-            // Ignore - redirect to login anyway
-        }
-        router.push("/login");
     };
 
     return (
@@ -153,19 +135,6 @@ function VerifyEmailContent() {
                             <p className="text-center text-sm text-error-600">
                                 {resendError}
                             </p>
-                        )}
-
-                        {/* Skip verification — dev only */}
-                        {IS_DEV && (
-                            <Button
-                                size="lg"
-                                onClick={handleSkipVerification}
-                                isDisabled={isSkipping}
-                                iconTrailing={ArrowRight}
-                                className="w-full justify-center"
-                            >
-                                {isSkipping ? "Redirection..." : "Passer la vérification (dev)"}
-                            </Button>
                         )}
 
                         <p className="text-center text-sm text-tertiary">

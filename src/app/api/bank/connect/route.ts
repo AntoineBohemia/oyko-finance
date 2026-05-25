@@ -4,21 +4,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
-  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE !== "false" || request.cookies.get("dev_mode")?.value === "true";
 
-  if (!token && !isDevMode) {
+  if (!token) {
     return NextResponse.json(
       { detail: "Non authentifie" },
       { status: 401 },
     );
-  }
-
-  // En dev mode sans token, retourner une URL mock
-  if (!token) {
-    return NextResponse.json({
-      connectUrl: "https://mock-bank.oyko.space/connect?dev=true",
-      connectionId: "dev-connection",
-    });
   }
 
   const body = await request.json().catch(() => ({}));

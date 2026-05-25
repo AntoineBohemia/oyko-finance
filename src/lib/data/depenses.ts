@@ -1,6 +1,4 @@
 import { api } from "@/lib/api/client";
-import { isDevModeActive } from "@/lib/dev/config";
-import { getMockDepensesData } from "@/lib/dev/mock-data";
 import type { Profile } from "@/types/api";
 
 // Types pour les donnees des depenses
@@ -58,8 +56,6 @@ function mapIcone(icone: string | null): string {
 export async function getDepensesData(
   periodeFilter: string = "this-week",
 ): Promise<DepensesData> {
-  if (await isDevModeActive()) return getMockDepensesData();
-
   // Le backend /transactions ne retourne pas profile/comptes/categories
   // On fetch en parallele
   const [raw, profile, categoriesRaw, comptesRaw] = await Promise.all([
@@ -118,8 +114,6 @@ export async function addTransaction(data: {
   type: "depense" | "revenu";
   date: Date;
 }): Promise<{ success: boolean; error?: string }> {
-  if (await isDevModeActive()) return { success: true };
-
   try {
     await api("/api/v1/transactions", {
       method: "POST",
@@ -145,8 +139,6 @@ export async function addTransaction(data: {
 export async function deleteTransaction(
   transactionId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  if (await isDevModeActive()) return { success: true };
-
   try {
     await api("/api/v1/transactions/" + transactionId, { method: "DELETE" });
     return { success: true };

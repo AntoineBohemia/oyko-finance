@@ -1,6 +1,4 @@
 import { api } from "@/lib/api/client";
-import { isDevModeActive } from "@/lib/dev/config";
-import { getMockChargesFixesData } from "@/lib/dev/mock-data";
 import type {
   Profile,
   Compte as CompteDB,
@@ -56,8 +54,6 @@ export interface TotauxChargesFixes {
 
 // Recuperer toutes les donnees des charges fixes
 export async function getChargesFixesData(): Promise<ChargesFixesData> {
-  if (await isDevModeActive()) return getMockChargesFixesData();
-
   const raw = await api<Record<string, unknown>>("/api/v1/recurring-charges");
 
   // Convertir les dates string en Date objects
@@ -120,8 +116,6 @@ export async function addChargeFix(data: {
   compteId?: string;
   notes?: string;
 }): Promise<{ success: boolean; id?: string }> {
-  if (await isDevModeActive()) return { success: true, id: "mock-id" };
-
   try {
     const result = await api<{ id: string }>("/api/v1/recurring-charges", {
       method: "POST",
@@ -147,8 +141,6 @@ export async function updateChargeFix(
     notes?: string;
   },
 ): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/recurring-charges/" + id, { method: "PUT", body: data });
     return true;
@@ -159,8 +151,6 @@ export async function updateChargeFix(
 
 // Supprimer une charge fixe
 export async function deleteChargeFix(id: string): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/recurring-charges/" + id, { method: "DELETE" });
     return true;
@@ -174,8 +164,6 @@ export async function toggleChargeFixActive(
   id: string,
   estActif: boolean,
 ): Promise<boolean> {
-  if (await isDevModeActive()) return true;
-
   try {
     await api("/api/v1/recurring-charges/" + id + "/toggle", {
       method: "PATCH",
