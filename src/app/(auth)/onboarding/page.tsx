@@ -148,6 +148,7 @@ function OnboardingContent() {
     const [isBankConnecting, setIsBankConnecting] = useState(false);
     const [bankConnected, setBankConnected] = useState(false);
     const [isDemoLoading, setIsDemoLoading] = useState(false);
+    const [demoError, setDemoError] = useState("");
     const [bankConnectionError, setBankConnectionError] = useState("");
     const [connectedBankAccounts, setConnectedBankAccounts] = useState<{id: string; name: string; balance: number; iban: string | null}[]>([]);
 
@@ -494,15 +495,20 @@ function OnboardingContent() {
                                 type="button"
                                 onClick={async () => {
                                     setIsDemoLoading(true);
+                                    setDemoError("");
                                     try {
                                         const res = await fetch("/api/auth/demo-onboarding", { method: "POST" });
                                         if (res.ok) {
                                             router.push("/dashboard");
                                             router.refresh();
+                                        } else {
+                                            const data = await res.json().catch(() => ({}));
+                                            setDemoError(data.detail || "Une erreur est survenue lors de la création du compte démo.");
+                                            setIsDemoLoading(false);
                                         }
                                     } catch (e) {
                                         console.error("Demo onboarding failed:", e);
-                                    } finally {
+                                        setDemoError("Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.");
                                         setIsDemoLoading(false);
                                     }
                                 }}
@@ -518,6 +524,12 @@ function OnboardingContent() {
                                     <>Découvrir avec des données de démo</>
                                 )}
                             </button>
+                            {demoError && (
+                                <div className="flex items-start gap-2 rounded-lg border border-error-300 bg-error-25 p-3 dark:border-error-700 dark:bg-error-900/20">
+                                    <AlertCircle className="h-4 w-4 shrink-0 text-error-600 dark:text-error-400" />
+                                    <p className="text-sm text-error-700 dark:text-error-300">{demoError}</p>
+                                </div>
+                            )}
                         </div>
                     )}
 
