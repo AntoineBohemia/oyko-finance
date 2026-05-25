@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC, ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Bell01,
     HomeLine,
@@ -207,6 +207,21 @@ const MobileNav = ({ isOpen, onClose, pathname }: { isOpen: boolean; onClose: ()
 export function AppShell({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
+    const [isDemoMode, setIsDemoMode] = useState(false);
+
+    useEffect(() => {
+        setIsDemoMode(document.cookie.includes("demo_mode=true"));
+    }, []);
+
+    const handleExitDemo = async () => {
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+            document.cookie = "demo_mode=; path=/; max-age=0";
+            window.location.href = "/login";
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     const currentPage = pageMetadata[pathname] || {
         title: "Oyko",
@@ -246,6 +261,20 @@ export function AppShell({ children }: { children: ReactNode }) {
                         </filter>
                         <rect width="100%" height="100%" filter="url(#grain-noise)" />
                     </svg>
+                    {isDemoMode && (
+                        <div className="relative z-20 flex items-center justify-between gap-4 border-b border-[#E5E2DC] bg-[#1C1917] px-4 py-2.5 text-sm lg:px-8">
+                            <p className="text-gray-300">
+                                <span className="mr-2">🎭</span>
+                                Vous explorez Oyko avec des données fictives.
+                            </p>
+                            <button
+                                onClick={handleExitDemo}
+                                className="shrink-0 rounded-md bg-[#BEFF00] px-3 py-1 text-xs font-semibold text-[#1C1917] transition-colors hover:bg-[#A7E600]"
+                            >
+                                Quitter la démo
+                            </button>
+                        </div>
+                    )}
                     <div className="relative z-10">{children}</div>
                 </main>
             </div>

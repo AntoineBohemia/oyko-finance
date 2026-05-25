@@ -147,6 +147,7 @@ function OnboardingContent() {
     // États connexion bancaire
     const [isBankConnecting, setIsBankConnecting] = useState(false);
     const [bankConnected, setBankConnected] = useState(false);
+    const [isDemoLoading, setIsDemoLoading] = useState(false);
     const [bankConnectionError, setBankConnectionError] = useState("");
     const [connectedBankAccounts, setConnectedBankAccounts] = useState<{id: string; name: string; balance: number; iban: string | null}[]>([]);
 
@@ -480,6 +481,43 @@ function OnboardingContent() {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Separator */}
+                            <div className="flex items-center gap-4 pt-4">
+                                <div className="h-px flex-1 bg-secondary" />
+                                <span className="text-xs text-tertiary">ou</span>
+                                <div className="h-px flex-1 bg-secondary" />
+                            </div>
+
+                            {/* Demo mode button */}
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    setIsDemoLoading(true);
+                                    try {
+                                        const res = await fetch("/api/auth/demo-onboarding", { method: "POST" });
+                                        if (res.ok) {
+                                            router.push("/dashboard");
+                                            router.refresh();
+                                        }
+                                    } catch (e) {
+                                        console.error("Demo onboarding failed:", e);
+                                    } finally {
+                                        setIsDemoLoading(false);
+                                    }
+                                }}
+                                disabled={isDemoLoading}
+                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#E5E2DC] bg-white px-4 py-3 text-sm font-medium text-tertiary transition-all hover:bg-gray-50 hover:text-primary disabled:opacity-50"
+                            >
+                                {isDemoLoading ? (
+                                    <>
+                                        <svg className="size-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                                        Création du compte démo...
+                                    </>
+                                ) : (
+                                    <>Découvrir avec des données de démo</>
+                                )}
+                            </button>
                         </div>
                     )}
 
