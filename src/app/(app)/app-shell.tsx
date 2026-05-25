@@ -103,7 +103,7 @@ const pageMetadata: Record<string, { title: string; description: string; showSea
 // MOBILE NAV — Dark drawer (matches sidebar)
 // ============================================
 
-const MobileNav = ({ isOpen, onClose, pathname }: { isOpen: boolean; onClose: () => void; pathname: string }) => {
+const MobileNav = ({ isOpen, onClose, pathname, onLogout }: { isOpen: boolean; onClose: () => void; pathname: string; onLogout: () => void }) => {
     if (!isOpen) return null;
 
     return (
@@ -190,7 +190,7 @@ const MobileNav = ({ isOpen, onClose, pathname }: { isOpen: boolean; onClose: ()
                             <p className="truncate text-sm font-medium text-gray-200">Antoine</p>
                             <p className="truncate text-xs text-gray-500">antoine@email.com</p>
                         </div>
-                        <button className="rounded-lg p-1.5 text-gray-500 transition-colors hover:text-gray-300">
+                        <button onClick={onLogout} className="rounded-lg p-1.5 text-gray-500 transition-colors hover:text-gray-300">
                             <LogOut01 className="size-5" />
                         </button>
                     </div>
@@ -213,7 +213,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         setIsDemoMode(document.cookie.includes("demo_mode=true"));
     }, []);
 
-    const handleExitDemo = async () => {
+    const handleLogout = async () => {
         try {
             await fetch("/api/auth/logout", { method: "POST" });
             document.cookie = "demo_mode=; path=/; max-age=0";
@@ -235,7 +235,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <SidebarNavigationSlim items={navItems} footerItems={footerItems} activeUrl={pathname} />
 
             {/* Mobile Nav */}
-            <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} pathname={pathname} />
+            <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} pathname={pathname} onLogout={handleLogout} />
 
             {/* Main Content */}
             <div className="flex min-h-screen flex-1 flex-col lg:pl-[68px]">
@@ -268,7 +268,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                                 Vous explorez Oyko avec des données fictives.
                             </p>
                             <button
-                                onClick={handleExitDemo}
+                                onClick={handleLogout}
                                 className="shrink-0 rounded-md bg-[#BEFF00] px-3 py-1 text-xs font-semibold text-[#1C1917] transition-colors hover:bg-[#A7E600]"
                             >
                                 Quitter la démo

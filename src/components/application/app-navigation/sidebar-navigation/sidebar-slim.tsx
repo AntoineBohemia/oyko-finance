@@ -9,6 +9,7 @@ import { Avatar } from "@/components/base/avatar/avatar";
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
+import { useAuth } from "@/hooks/use-auth";
 import { cx } from "@/utils/cx";
 import { MobileNavigationHeader } from "../base-components/mobile-header";
 import { NavAccountMenu } from "../base-components/nav-account-card";
@@ -72,6 +73,7 @@ const SidebarNavButton = ({
 };
 
 export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hideBorder, hideRightBorder }: SidebarNavigationSlimProps) => {
+    const { logout } = useAuth();
     const activeItem = [...items, ...footerItems].find((item) => item.href === activeUrl || item.items?.some((subItem) => subItem.href === activeUrl));
     const [currentItem, setCurrentItem] = useState(activeItem || items[1]);
     const [isHovering, setIsHovering] = useState(false);
@@ -275,6 +277,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                     color="tertiary"
                                     iconLeading={<LogOut01 className="size-5 text-gray-500 transition-inherit-all group-hover:text-gray-300" />}
                                     className="p-1.5!"
+                                    onClick={logout}
                                 />
                             </div>
                         </div>
