@@ -17,6 +17,7 @@ const AUTH_ROUTES = [
   "/forgot-password",
   "/verify-email",
   "/email-confirmed",
+  "/api/auth/verify-callback",
 ];
 
 export async function middleware(request: NextRequest) {

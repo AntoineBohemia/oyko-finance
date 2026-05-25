@@ -131,6 +131,10 @@ function LoginForm() {
 
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
+                if (res.status === 403 && data.code === "EMAIL_NOT_VERIFIED") {
+                    router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+                    return;
+                }
                 if (res.status === 401) {
                     setError("Email ou mot de passe incorrect");
                 } else {

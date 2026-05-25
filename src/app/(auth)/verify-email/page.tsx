@@ -2,30 +2,61 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
-import { ArrowLeft, ArrowRight, Mail01, Send01, CursorClick01, Rocket01 } from "@untitledui/icons";
+import { ArrowLeft, ArrowRight, Mail01, Send01, CursorClick01, Rocket01, RefreshCw01 } from "@untitledui/icons";
 import Link from "next/link";
 import { Button } from "@/components/base/buttons/button";
 import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { GradientBackground } from "@/app/(landing)/gradient-bg";
 
+const IS_DEV = process.env.NEXT_PUBLIC_DEV_MODE === "true";
+
 function VerifyEmailContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const email = searchParams.get("email") || "";
+    const errorParam = searchParams.get("error") || "";
     const [isSkipping, setIsSkipping] = useState(false);
+    const [isResending, setIsResending] = useState(false);
+    const [resendSuccess, setResendSuccess] = useState(false);
+    const [resendError, setResendError] = useState(errorParam);
+
+    const handleResendEmail = async () => {
+        if (!email || isResending) return;
+        setIsResending(true);
+        setResendError("");
+        setResendSuccess(false);
+
+        try {
+            const res = await fetch("/api/auth/resend-verification", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+
+            if (res.ok) {
+                setResendSuccess(true);
+            } else {
+                const data = await res.json().catch(() => ({}));
+                setResendError(data.detail || "Impossible de renvoyer l'email. Réessayez plus tard.");
+            }
+        } catch {
+            setResendError("Erreur réseau. Vérifiez votre connexion.");
+        } finally {
+            setIsResending(false);
+        }
+    };
 
     const handleSkipVerification = async () => {
         setIsSkipping(true);
         try {
-            // Tente de vérifier automatiquement via le backend
             await fetch("/api/auth/skip-verify", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),
             });
         } catch {
-            // Ignore les erreurs - on redirige vers login dans tous les cas
+            // Ignore - redirect to login anyway
         }
         router.push("/login");
     };
@@ -68,7 +99,7 @@ function VerifyEmailContent() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-4 rounded-2xl bg-primary/60 backdrop-blur-md p-6 shadow-lg ring-1 ring-white/10 dark:ring-white/5">
+                    <div className="flex flex-col gap-4 rounded-2xl bg-white p-6 shadow-lg ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-white/10">
                         <div className="flex items-start gap-4">
                             <FeaturedIcon color="brand" theme="light" size="md" className="shrink-0">
                                 <Send01 className="size-5" />
@@ -101,21 +132,44 @@ function VerifyEmailContent() {
                     </div>
 
                     <div className="z-10 flex flex-col gap-3">
+                        {/* Resend email button */}
                         <Button
                             size="lg"
-                            onClick={handleSkipVerification}
-                            isDisabled={isSkipping}
-                            iconTrailing={ArrowRight}
+                            color="secondary"
+                            onClick={handleResendEmail}
+                            isDisabled={isResending || resendSuccess}
+                            iconLeading={RefreshCw01}
                             className="w-full justify-center"
                         >
-                            {isSkipping ? "Redirection..." : "Passer la vérification"}
+                            {isResending ? "Envoi en cours..." : resendSuccess ? "Email renvoyé !" : "Renvoyer l'email"}
                         </Button>
 
+                        {resendSuccess && (
+                            <p className="text-center text-sm text-success-600">
+                                Un nouvel email a été envoyé. Vérifiez votre boîte de réception.
+                            </p>
+                        )}
+                        {resendError && (
+                            <p className="text-center text-sm text-error-600">
+                                {resendError}
+                            </p>
+                        )}
+
+                        {/* Skip verification — dev only */}
+                        {IS_DEV && (
+                            <Button
+                                size="lg"
+                                onClick={handleSkipVerification}
+                                isDisabled={isSkipping}
+                                iconTrailing={ArrowRight}
+                                className="w-full justify-center"
+                            >
+                                {isSkipping ? "Redirection..." : "Passer la vérification (dev)"}
+                            </Button>
+                        )}
+
                         <p className="text-center text-sm text-tertiary">
-                            Vous n'avez pas reçu l'email ? Vérifiez vos spams ou{" "}
-                            <Link href="/signup" className="font-medium text-brand-600 hover:text-brand-700">
-                                réessayez
-                            </Link>
+                            Vous n'avez pas reçu l'email ? Vérifiez vos spams ou cliquez sur renvoyer.
                         </p>
                     </div>
 
