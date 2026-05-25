@@ -1054,7 +1054,7 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                                         type="password"
                                         placeholder="Mot de passe"
                                         value={resetPassword}
-                                        onChange={(e) => setResetPassword(e.target.value)}
+                                        onChange={(value) => setResetPassword(value)}
                                     />
                                 </div>
 
