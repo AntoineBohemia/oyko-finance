@@ -3,7 +3,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Upload01, X, AlertCircle, CheckCircle } from "@untitledui/icons";
-import * as XLSX from "xlsx";
 import { Dialog, DialogTrigger, Modal, ModalOverlay } from "@/components/application/modals/modal";
 import { Button } from "@/components/base/buttons/button";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
@@ -134,6 +133,7 @@ export function ImportCSVModal({ isOpen, onOpenChange, profile, categories, comp
                 }
 
                 if (headerIndex === -1) {
+                    const XLSX = await import("xlsx");
                     const workbook = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
                     const sheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[sheetName];
@@ -156,6 +156,7 @@ export function ImportCSVModal({ isOpen, onOpenChange, profile, categories, comp
                     }
                 }
             } else {
+                const XLSX = await import("xlsx");
                 const data = await file.arrayBuffer();
                 const workbook = XLSX.read(data, { type: "array", cellDates: true });
                 const sheetName = workbook.SheetNames[0];
