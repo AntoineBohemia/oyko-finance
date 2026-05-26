@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-const ENV_DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE !== "false";
+const ENV_DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
 const PROTECTED_ROUTES = [
   "/dashboard",
