@@ -13,6 +13,8 @@ import { PageTransition } from "@/components/base/page-transition/page-transitio
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { Select } from "@/components/base/select/select";
 import { StaggerList, StaggerItem } from "@/components/base/stagger-list/stagger-list";
+import { useCreateTransaction } from "@/hooks/api";
+import { useQueryClient } from "@tanstack/react-query";
 import { cx } from "@/utils/cx";
 import { formatCurrencySimple, formatDateRelative, getProgressColor, getProgressColorOnDark } from "@/utils/format";
 import type { CategorieVariable, PatrimoineData } from "@/lib/data/dashboard";
@@ -89,6 +91,8 @@ const getCompteIcon = (type: string) => {
 // ============================================
 
 export default function DashboardClient({ initialData }: DashboardClientProps) {
+    const queryClient = useQueryClient();
+    const createTransaction = useCreateTransaction();
     const today = new Date();
     const currentYear = today.getFullYear();
     const currentWeekNum = getWeekNumber(today);
@@ -229,7 +233,11 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 return;
             }
             const syncRes = await fetch("/api/bank/sync", { method: "POST" });
-            if (syncRes.ok) window.location.reload();
+            if (syncRes.ok) {
+                queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+                queryClient.invalidateQueries({ queryKey: ["transactions"] });
+                queryClient.invalidateQueries({ queryKey: ["accounts"] });
+            }
         } catch (error) {
             console.error("Bank connection error:", error);
             setIsBankConnecting(false);
@@ -241,18 +249,21 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         setExpenseCompte(comptes[0]?.id ?? ""); setExpenseDate("today");
     };
 
-    const handleAddExpense = async () => {
+    const handleAddExpense = () => {
         if (!expenseAmount || !expenseCategory || !profile) return;
         let transactionDate = new Date();
         if (expenseDate === "yesterday") transactionDate.setDate(transactionDate.getDate() - 1);
-        const { addTransaction } = await import("@/lib/data/depenses");
-        const result = await addTransaction({
+        createTransaction.mutate({
             montant: parseFloat(expenseAmount), categorieId: expenseCategory,
             compteId: expenseCompte, description: expenseDescription || undefined,
             type: "depense", date: transactionDate,
+        }, {
+            onSuccess: () => {
+                setIsExpenseModalOpen(false);
+                resetModal();
+            },
+            onError: (error) => console.error("Erreur:", error),
         });
-        if (!result.success) { console.error("Erreur:", result.error); return; }
-        setIsExpenseModalOpen(false); resetModal(); window.location.reload();
     };
 
     // Total solde comptes
@@ -331,7 +342,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                                             </div>
                                             <div className="flex justify-end gap-3 border-t border-secondary px-6 py-4">
                                                 <Button size="md" color="secondary" onClick={() => { setIsExpenseModalOpen(false); resetModal(); }}>Annuler</Button>
-                                                <Button size="md" onClick={handleAddExpense} isDisabled={!expenseAmount || !expenseCategory}>Ajouter</Button>
+                                                <Button size="md" onClick={handleAddExpense} isDisabled={!expenseAmount || !expenseCategory || createTransaction.isPending}>{createTransaction.isPending ? "Ajout..." : "Ajouter"}</Button>
                                             </div>
                                         </div>
                                     </Dialog>

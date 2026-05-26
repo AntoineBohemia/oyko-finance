@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Check, ChevronRight, Plus, Settings01, X } from "@untitledui/icons";
 import Link from "next/link";
 import { Dialog, DialogTrigger, Modal, ModalOverlay } from "@/components/application/modals/modal";
@@ -14,6 +14,7 @@ import { cx } from "@/utils/cx";
 import { formatCurrencySimple, getProgressColor } from "@/utils/format";
 import type { Enveloppe, ChargeFixBudget } from "@/lib/data/budget";
 import type { Profile } from "@/types/api";
+import { useUpdateCategoryBudget } from "@/hooks/api";
 
 // Types pour les données sérialisées
 interface SerializedBudgetData {
@@ -183,26 +184,27 @@ export default function EnveloppesTab({ initialData, currentMonth, currentYear }
             .filter((e) => e.depense > 0);
     }, [selectedWeek, weeksData, enveloppes, transactions]);
 
+    // Hooks React Query
+    const updateCategoryBudget = useUpdateCategoryBudget();
+
     // Handlers
-    const handleSaveEnvelopes = async () => {
+    const handleSaveEnvelopes = useCallback(async () => {
         if (!profile) return;
 
         setIsSaving(true);
 
         try {
-            const { updateCategoryBudget } = await import("@/lib/data/budget");
             for (const env of editEnvelopes) {
-                await updateCategoryBudget(env.id, env.budget);
+                await updateCategoryBudget.mutateAsync({ categoryId: env.id, budget: env.budget });
             }
 
             setIsEditModalOpen(false);
-            window.location.reload();
         } catch (error) {
             console.error("Erreur lors de la sauvegarde:", error);
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [profile, editEnvelopes, updateCategoryBudget]);
 
     const totalEditEnvelopes = editEnvelopes.reduce((acc, e) => acc + e.budget, 0);
     const nonAttribue = disponiblePourVariables - totalEditEnvelopes;

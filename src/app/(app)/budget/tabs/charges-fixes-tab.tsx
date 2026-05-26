@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     AlertCircle,
     Edit01,
@@ -23,6 +23,7 @@ import { formatCurrencySimple, formatDateShort, getDaysUntil, getJMoinsBadge, ge
 import type { RepartitionCategorie } from "@/lib/data/charges-fixes";
 import type { Profile, Compte } from "@/types/api";
 import type { CategoryResponse as Categorie } from "@/types/api";
+import { useCreateRecurringCharge, useDeleteRecurringCharge, useToggleRecurringCharge } from "@/hooks/api";
 
 // ============================================
 // TYPES
@@ -224,15 +225,19 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
         });
     };
 
+    // Hooks React Query
+    const createRecurringCharge = useCreateRecurringCharge();
+    const deleteRecurringCharge = useDeleteRecurringCharge();
+    const toggleRecurringCharge = useToggleRecurringCharge();
+
     // Handlers
-    const handleCreateChargeFix = async () => {
+    const handleCreateChargeFix = useCallback(async () => {
         if (!profile || !newChargeFix.nom || !newChargeFix.montant || !newChargeFix.jourPrelevement) return;
 
         setIsSaving(true);
 
         try {
-            const { addChargeFix } = await import("@/lib/data/charges-fixes");
-            await addChargeFix({
+            await createRecurringCharge.mutateAsync({
                 nom: newChargeFix.nom,
                 montant: parseFloat(newChargeFix.montant),
                 frequence: newChargeFix.frequence,
@@ -244,35 +249,30 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
 
             setIsModalOpen(false);
             resetNewChargeFix();
-            window.location.reload();
         } catch (error) {
             console.error("Erreur création charge fixe:", error);
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [profile, newChargeFix, createRecurringCharge]);
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = useCallback(async (id: string) => {
         if (!confirm("Supprimer cette charge fixe ?")) return;
 
         try {
-            const { deleteChargeFix } = await import("@/lib/data/charges-fixes");
-            await deleteChargeFix(id);
-            window.location.reload();
+            await deleteRecurringCharge.mutateAsync(id);
         } catch (error) {
             console.error("Erreur suppression charge fixe:", error);
         }
-    };
+    }, [deleteRecurringCharge]);
 
-    const handleToggleActive = async (id: string, estActif: boolean) => {
+    const handleToggleActive = useCallback(async (id: string, estActif: boolean) => {
         try {
-            const { toggleChargeFixActive } = await import("@/lib/data/charges-fixes");
-            await toggleChargeFixActive(id, !estActif);
-            window.location.reload();
+            await toggleRecurringCharge.mutateAsync({ id, estActif: !estActif });
         } catch (error) {
             console.error("Erreur toggle charge fixe:", error);
         }
-    };
+    }, [toggleRecurringCharge]);
 
     if (!profile) {
         return (

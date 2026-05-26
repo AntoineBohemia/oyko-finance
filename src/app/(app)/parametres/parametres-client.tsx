@@ -33,6 +33,17 @@ import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { cx } from "@/utils/cx";
+import {
+    useUpdateProfile,
+    useUpdateCategory,
+    useCreateRecurringCharge,
+    useDeleteRecurringCharge,
+    useCreateAccount,
+    useDeleteAccount,
+    useResetData,
+    useConnectBank,
+    useSyncBank,
+} from "@/hooks/api";
 import type {
     ParametresData,
     CategorieParametres,
@@ -135,8 +146,16 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
     const [isBankConnecting, setIsBankConnecting] = useState(false);
     const [bankSyncResult, setBankSyncResult] = useState<{ accountsSynced: number; transactionsImported: number } | null>(null);
 
-    // États sauvegarde
-    const [isSaving, setIsSaving] = useState(false);
+    // Mutations
+    const updateProfile = useUpdateProfile();
+    const updateCategory = useUpdateCategory();
+    const createRecurringCharge = useCreateRecurringCharge();
+    const deleteRecurringCharge = useDeleteRecurringCharge();
+    const createAccount = useCreateAccount();
+    const deleteAccount = useDeleteAccount();
+    const resetData = useResetData();
+    const connectBank = useConnectBank();
+    const syncBank = useSyncBank();
 
     // États formulaires
     const [newCharge, setNewCharge] = useState({
@@ -162,147 +181,114 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
     const [importFormat, setImportFormat] = useState("");
 
     // Handlers
-    const handleSaveRevenus = async () => {
+    const handleSaveRevenus = () => {
         if (!profile) return;
-        setIsSaving(true);
-
-        const { updateProfile } = await import("@/lib/data/parametres");
-        const success = await updateProfile({ revenusMensuels: parseFloat(revenus) || 0 });
-
-        setIsSaving(false);
-        if (success) {
-            setIsEditRevenusOpen(false);
-            window.location.reload();
-        }
+        updateProfile.mutate(
+            { revenusMensuels: parseFloat(revenus) || 0 },
+            { onSuccess: () => setIsEditRevenusOpen(false) }
+        );
     };
 
-    const handleSaveEpargne = async () => {
+    const handleSaveEpargne = () => {
         if (!profile) return;
-        setIsSaving(true);
-
-        const { updateProfile } = await import("@/lib/data/parametres");
-        const success = await updateProfile({ objectifEpargne: parseFloat(objectifEpargne) || 0 });
-
-        setIsSaving(false);
-        if (success) {
-            setIsEditEpargneOpen(false);
-            window.location.reload();
-        }
+        updateProfile.mutate(
+            { objectifEpargne: parseFloat(objectifEpargne) || 0 },
+            { onSuccess: () => setIsEditEpargneOpen(false) }
+        );
     };
 
-    const handleSaveMode = async () => {
+    const handleSaveMode = () => {
         if (!profile) return;
-        setIsSaving(true);
-
-        const { updateProfile } = await import("@/lib/data/parametres");
-        const success = await updateProfile({ modeGestion: modeGestion as "semaine" | "mois" });
-
-        setIsSaving(false);
-        if (success) {
-            setIsEditModeOpen(false);
-            window.location.reload();
-        }
+        updateProfile.mutate(
+            { modeGestion: modeGestion as "semaine" | "mois" },
+            { onSuccess: () => setIsEditModeOpen(false) }
+        );
     };
 
     const handleSaveCategories = async () => {
         if (!profile) return;
-        setIsSaving(true);
-
-        const { updateCategorie } = await import("@/lib/data/parametres");
         for (const cat of editCategories) {
-            await updateCategorie(cat.id, { nom: cat.nom, budgetMensuel: cat.budget, icone: cat.icone });
+            await updateCategory.mutateAsync({
+                id: cat.id,
+                data: { nom: cat.nom, budgetMensuel: cat.budget, icone: cat.icone },
+            });
         }
-
-        setIsSaving(false);
         setIsEditCategoriesOpen(false);
-        window.location.reload();
     };
 
-    const handleAddCharge = async () => {
+    const handleAddCharge = () => {
         if (!profile) return;
-        setIsSaving(true);
-
-        const { addChargeFix } = await import("@/lib/data/parametres");
-        const success = await addChargeFix({
-            nom: newCharge.nom,
-            montant: parseFloat(newCharge.montant) || 0,
-            jourDuMois: parseInt(newCharge.jourPrelevement) || 1,
-            icone: "💸",
-        });
-
-        setIsSaving(false);
-        if (success) {
-            setIsAddChargeOpen(false);
-            setNewCharge({ nom: "", montant: "", jourPrelevement: "", categorie: "" });
-            window.location.reload();
-        }
+        createRecurringCharge.mutate(
+            {
+                nom: newCharge.nom,
+                montant: parseFloat(newCharge.montant) || 0,
+                frequence: "mensuel",
+                jourDuMois: parseInt(newCharge.jourPrelevement) || 1,
+            },
+            {
+                onSuccess: () => {
+                    setIsAddChargeOpen(false);
+                    setNewCharge({ nom: "", montant: "", jourPrelevement: "", categorie: "" });
+                },
+            }
+        );
     };
 
-    const handleDeleteCharge = async (id: string) => {
-        const { deleteChargeFix } = await import("@/lib/data/parametres");
-        const success = await deleteChargeFix(id);
-        if (success) {
-            window.location.reload();
-        }
+    const handleDeleteCharge = (id: string) => {
+        deleteRecurringCharge.mutate(id);
     };
 
-    const handleConnectBank = async () => {
+    const handleConnectBank = () => {
         setIsBankConnecting(true);
         setBankSyncResult(null);
-        try {
-            // 1. Créer la connexion bancaire
-            const connectRes = await fetch("/api/bank/connect", { method: "POST" });
-            if (!connectRes.ok) throw new Error("Erreur de connexion");
+        connectBank.mutate(undefined, {
+            onSuccess: (data) => {
+                const connectUrl = data.connect_url;
 
-            const connectData = await connectRes.json();
-            const connectUrl = connectData.connectUrl;
+                // Si l'URL est une vraie URL Bridge (pas mock), rediriger l'utilisateur
+                if (connectUrl && !connectUrl.includes("mock-bank")) {
+                    window.location.href = connectUrl;
+                    return;
+                }
 
-            // 2. Si l'URL est une vraie URL Bridge (pas mock), rediriger l'utilisateur
-            if (connectUrl && !connectUrl.includes("mock-bank")) {
-                window.location.href = connectUrl;
-                return;
-            }
-
-            // 3. Mode mock : sync immédiat
-            const syncRes = await fetch("/api/bank/sync", { method: "POST" });
-            if (!syncRes.ok) throw new Error("Erreur de synchronisation");
-
-            const result = await syncRes.json();
-            setBankSyncResult(result);
-
-            window.location.reload();
-        } catch (error) {
-            console.error("Bank connection error:", error);
-            setIsBankConnecting(false);
-        }
-    };
-
-    const handleAddCompte = async () => {
-        if (!profile) return;
-        setIsSaving(true);
-
-        const { addCompte } = await import("@/lib/data/parametres");
-        const success = await addCompte({
-            nom: newCompte.nom,
-            banque: newCompte.banque,
-            solde: parseFloat(newCompte.solde) || 0,
-            type: newCompte.type as "courant" | "epargne" | "cash",
+                // Mode mock : sync immédiat
+                syncBank.mutate(undefined, {
+                    onSuccess: (result) => {
+                        setBankSyncResult(result);
+                        setIsBankConnecting(false);
+                    },
+                    onError: () => {
+                        setIsBankConnecting(false);
+                    },
+                });
+            },
+            onError: (error) => {
+                console.error("Bank connection error:", error);
+                setIsBankConnecting(false);
+            },
         });
-
-        setIsSaving(false);
-        if (success) {
-            setIsAddCompteOpen(false);
-            setNewCompte({ nom: "", banque: "", solde: "", type: "" });
-            window.location.reload();
-        }
     };
 
-    const handleDeleteCompte = async (id: string) => {
-        const { deleteCompte } = await import("@/lib/data/parametres");
-        const success = await deleteCompte(id);
-        if (success) {
-            window.location.reload();
-        }
+    const handleAddCompte = () => {
+        if (!profile) return;
+        createAccount.mutate(
+            {
+                nom: newCompte.nom,
+                banque: newCompte.banque,
+                solde: parseFloat(newCompte.solde) || 0,
+                type: newCompte.type as "courant" | "epargne" | "cash",
+            },
+            {
+                onSuccess: () => {
+                    setIsAddCompteOpen(false);
+                    setNewCompte({ nom: "", banque: "", solde: "", type: "" });
+                },
+            }
+        );
+    };
+
+    const handleDeleteCompte = (id: string) => {
+        deleteAccount.mutate(id);
     };
 
     const handleImport = () => {
@@ -337,24 +323,14 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
         URL.revokeObjectURL(url);
     };
 
-    const handleReset = async () => {
+    const handleReset = () => {
         if (!profile || !resetPassword.trim()) return;
-        setIsSaving(true);
-
-        try {
-            const { api } = await import("@/lib/api/client");
-            await api("/api/v1/profile/reset", {
-                method: "POST",
-                body: { password: resetPassword },
-            });
-
-            setIsSaving(false);
-            setIsResetOpen(false);
-            setResetPassword("");
-            window.location.reload();
-        } catch {
-            setIsSaving(false);
-        }
+        resetData.mutate(resetPassword, {
+            onSuccess: () => {
+                setIsResetOpen(false);
+                setResetPassword("");
+            },
+        });
     };
 
     // Message si pas de données
@@ -693,8 +669,8 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                                     <Button color="secondary" onClick={close}>
                                         Annuler
                                     </Button>
-                                    <Button color="primary" onClick={handleSaveRevenus} isDisabled={isSaving}>
-                                        {isSaving ? "..." : "Enregistrer"}
+                                    <Button color="primary" onClick={handleSaveRevenus} isDisabled={updateProfile.isPending}>
+                                        {updateProfile.isPending ? "..." : "Enregistrer"}
                                     </Button>
                                 </div>
                             </div>
@@ -727,8 +703,8 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                                     <Button color="secondary" onClick={close}>
                                         Annuler
                                     </Button>
-                                    <Button color="primary" onClick={handleSaveEpargne} isDisabled={isSaving}>
-                                        {isSaving ? "..." : "Enregistrer"}
+                                    <Button color="primary" onClick={handleSaveEpargne} isDisabled={updateProfile.isPending}>
+                                        {updateProfile.isPending ? "..." : "Enregistrer"}
                                     </Button>
                                 </div>
                             </div>
@@ -764,8 +740,8 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                                     <Button color="secondary" onClick={close}>
                                         Annuler
                                     </Button>
-                                    <Button color="primary" onClick={handleSaveMode} isDisabled={isSaving}>
-                                        {isSaving ? "..." : "Enregistrer"}
+                                    <Button color="primary" onClick={handleSaveMode} isDisabled={updateProfile.isPending}>
+                                        {updateProfile.isPending ? "..." : "Enregistrer"}
                                     </Button>
                                 </div>
                             </div>
@@ -818,8 +794,8 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                                     <Button color="secondary" onClick={close}>
                                         Annuler
                                     </Button>
-                                    <Button color="primary" onClick={handleSaveCategories} isDisabled={isSaving}>
-                                        {isSaving ? "..." : "Enregistrer"}
+                                    <Button color="primary" onClick={handleSaveCategories} isDisabled={updateCategory.isPending}>
+                                        {updateCategory.isPending ? "..." : "Enregistrer"}
                                     </Button>
                                 </div>
                             </div>
@@ -875,9 +851,9 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                                     <Button
                                         color="primary"
                                         onClick={handleAddCharge}
-                                        isDisabled={!newCharge.nom || !newCharge.montant || !newCharge.jourPrelevement || isSaving}
+                                        isDisabled={!newCharge.nom || !newCharge.montant || !newCharge.jourPrelevement || createRecurringCharge.isPending}
                                     >
-                                        {isSaving ? "..." : "Ajouter"}
+                                        {createRecurringCharge.isPending ? "..." : "Ajouter"}
                                     </Button>
                                 </div>
                             </div>
@@ -946,9 +922,9 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                                     <Button
                                         color="primary"
                                         onClick={handleAddCompte}
-                                        isDisabled={!newCompte.nom || !newCompte.banque || !newCompte.solde || !newCompte.type || isSaving}
+                                        isDisabled={!newCompte.nom || !newCompte.banque || !newCompte.solde || !newCompte.type || createAccount.isPending}
                                     >
-                                        {isSaving ? "..." : "Créer le compte"}
+                                        {createAccount.isPending ? "..." : "Créer le compte"}
                                     </Button>
                                 </div>
                             </div>
@@ -1062,8 +1038,8 @@ export default function ParametresClient({ initialData }: ParametresClientProps)
                                     <Button color="secondary" onClick={() => { setResetPassword(""); close(); }} className="flex-1">
                                         Annuler
                                     </Button>
-                                    <Button color="primary-destructive" onClick={handleReset} className="flex-1" isDisabled={isSaving || !resetPassword.trim()}>
-                                        {isSaving ? "..." : "Réinitialiser"}
+                                    <Button color="primary-destructive" onClick={handleReset} className="flex-1" isDisabled={resetData.isPending || !resetPassword.trim()}>
+                                        {resetData.isPending ? "..." : "Réinitialiser"}
                                     </Button>
                                 </div>
                             </div>

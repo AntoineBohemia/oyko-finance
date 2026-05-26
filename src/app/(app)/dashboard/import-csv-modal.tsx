@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Upload01, X, AlertCircle, CheckCircle } from "@untitledui/icons";
 import * as XLSX from "xlsx";
 import { Dialog, DialogTrigger, Modal, ModalOverlay } from "@/components/application/modals/modal";
@@ -24,6 +25,7 @@ interface ImportCSVModalProps {
 }
 
 export function ImportCSVModal({ isOpen, onOpenChange, profile, categories, comptes, onCategoriesChange }: ImportCSVModalProps) {
+    const queryClient = useQueryClient();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [importedTransactions, setImportedTransactions] = useState<Array<{
@@ -390,9 +392,11 @@ export function ImportCSVModal({ isOpen, onOpenChange, profile, categories, comp
         setIsImporting(false);
 
         setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+            queryClient.invalidateQueries({ queryKey: ["budget"] });
             onOpenChange(false);
             resetImportModal();
-            window.location.reload();
         }, 1500);
     };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useUpdateAccount } from "@/hooks/api";
 import { PageTransition } from "@/components/base/page-transition/page-transition";
 import { AnimatedAmount } from "@/components/base/animated-amount/animated-amount";
 import { StaggerList, StaggerItem } from "@/components/base/stagger-list/stagger-list";
@@ -140,7 +141,7 @@ const getCompteIconColor = (type: string) => {
 export default function PatrimoineClient({ initialData }: PatrimoineClientProps) {
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [soldesUpdate, setSoldesUpdate] = useState<Record<string, string>>({});
-    const [isSaving, setIsSaving] = useState(false);
+    const updateAccount = useUpdateAccount();
 
     const profile = initialData.profile;
     const comptes = initialData.comptes;
@@ -181,18 +182,13 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
 
     const handleUpdateSoldes = async () => {
         if (!profile) return;
-        setIsSaving(true);
         try {
-            const { updateCompteSolde } = await import("@/lib/data/patrimoine");
             for (const [compteId, solde] of Object.entries(soldesUpdate)) {
-                await updateCompteSolde(compteId, parseFloat(solde) || 0);
+                await updateAccount.mutateAsync({ id: compteId, solde: parseFloat(solde) || 0 });
             }
             setIsUpdateModalOpen(false);
-            window.location.reload();
         } catch (error) {
             console.error("Erreur lors de la mise à jour:", error);
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -580,8 +576,8 @@ export default function PatrimoineClient({ initialData }: PatrimoineClientProps)
                                 </div>
                                 <div className="flex justify-end gap-3 border-t border-secondary pt-6">
                                     <Button color="secondary" onClick={close}>Annuler</Button>
-                                    <Button color="primary" onClick={handleUpdateSoldes} isDisabled={isSaving}>
-                                        {isSaving ? "Enregistrement..." : "Enregistrer"}
+                                    <Button color="primary" onClick={handleUpdateSoldes} isDisabled={updateAccount.isPending}>
+                                        {updateAccount.isPending ? "Enregistrement..." : "Enregistrer"}
                                     </Button>
                                 </div>
                             </div>

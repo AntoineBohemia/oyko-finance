@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useCreateInvestment, useUpdateInvestment, useDeleteInvestment } from "@/hooks/api";
 import {
     ArrowDown,
     ArrowUp,
@@ -141,7 +142,9 @@ export default function InvestissementsClient({ initialData }: InvestissementsCl
     const [selectedActif, setSelectedActif] = useState<SerializedInvestissement | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAddPositionOpen, setIsAddPositionOpen] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
+    const createInvestment = useCreateInvestment();
+    const updateInvestment = useUpdateInvestment();
+    const deleteInvestment = useDeleteInvestment();
 
     const [newInvestissement, setNewInvestissement] = useState({
         nom: "",
@@ -216,17 +219,14 @@ export default function InvestissementsClient({ initialData }: InvestissementsCl
         });
     };
 
-    const handleCreateInvestissement = async () => {
+    const handleCreateInvestissement = () => {
         if (!profile || !newInvestissement.nom || !newInvestissement.quantite || !newInvestissement.prixAchat) return;
-
-        setIsSaving(true);
 
         const quantite = parseFloat(newInvestissement.quantite);
         const prixAchat = parseFloat(newInvestissement.prixAchat);
         const prixActuel = newInvestissement.prixActuel ? parseFloat(newInvestissement.prixActuel) : prixAchat;
 
-        const { addInvestissement } = await import("@/lib/data/investissements");
-        const result = await addInvestissement({
+        createInvestment.mutate({
             nom: newInvestissement.nom,
             ticker: newInvestissement.ticker || undefined,
             type: newInvestissement.type,
@@ -236,46 +236,35 @@ export default function InvestissementsClient({ initialData }: InvestissementsCl
             prixActuel: prixActuel,
             dateAchat: newInvestissement.dateAchat || undefined,
             notes: newInvestissement.notes || undefined,
+        }, {
+            onSuccess: () => {
+                setIsModalOpen(false);
+                resetNewInvestissement();
+            },
         });
-
-        if (result.success) {
-            setIsModalOpen(false);
-            resetNewInvestissement();
-            window.location.reload();
-        }
-
-        setIsSaving(false);
     };
 
-    const handleAddPosition = async () => {
+    const handleAddPosition = () => {
         if (!selectedActif || !addPosition.quantite || !addPosition.prix) return;
 
-        setIsSaving(true);
-
-        const { addPosition: addPositionApi } = await import("@/lib/data/investissements");
-        const success = await addPositionApi(selectedActif.id, {
-            quantite: parseFloat(addPosition.quantite),
-            prix: parseFloat(addPosition.prix),
+        updateInvestment.mutate({
+            id: selectedActif.id,
+            data: {
+                quantite: parseFloat(addPosition.quantite),
+                prixAchatUnitaire: parseFloat(addPosition.prix),
+            },
+        }, {
+            onSuccess: () => {
+                setIsAddPositionOpen(false);
+                setAddPosition({ quantite: "", prix: "", date: "" });
+            },
         });
-
-        if (success) {
-            setIsAddPositionOpen(false);
-            setAddPosition({ quantite: "", prix: "", date: "" });
-            window.location.reload();
-        }
-
-        setIsSaving(false);
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = (id: string) => {
         if (!confirm("Supprimer cet investissement ?")) return;
 
-        const { deleteInvestissement } = await import("@/lib/data/investissements");
-        const success = await deleteInvestissement(id);
-
-        if (success) {
-            window.location.reload();
-        }
+        deleteInvestment.mutate(id);
     };
 
     // Message si pas de donnees
@@ -848,9 +837,9 @@ export default function InvestissementsClient({ initialData }: InvestissementsCl
                                         size="lg"
                                         onClick={handleCreateInvestissement}
                                         className="flex-1"
-                                        isDisabled={!newInvestissement.nom || !newInvestissement.quantite || !newInvestissement.prixAchat || isSaving}
+                                        isDisabled={!newInvestissement.nom || !newInvestissement.quantite || !newInvestissement.prixAchat || createInvestment.isPending}
                                     >
-                                        {isSaving ? "Creation..." : "Creer"}
+                                        {createInvestment.isPending ? "Creation..." : "Creer"}
                                     </Button>
                                 </div>
                             </div>
@@ -919,9 +908,9 @@ export default function InvestissementsClient({ initialData }: InvestissementsCl
                                         size="lg"
                                         onClick={handleAddPosition}
                                         className="flex-1"
-                                        isDisabled={!addPosition.quantite || !addPosition.prix || isSaving}
+                                        isDisabled={!addPosition.quantite || !addPosition.prix || updateInvestment.isPending}
                                     >
-                                        {isSaving ? "Ajout..." : "Ajouter"}
+                                        {updateInvestment.isPending ? "Ajout..." : "Ajouter"}
                                     </Button>
                                 </div>
                             </div>

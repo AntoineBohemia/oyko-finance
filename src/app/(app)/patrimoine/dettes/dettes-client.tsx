@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCreateLiability, useDeleteLiability } from "@/hooks/api";
 import {
     AlertCircle,
     Calculator,
@@ -225,7 +225,8 @@ const calculerFinAnticipee = (
 // ============================================
 
 export default function DettesClient({ initialData }: DettesClientProps) {
-    const router = useRouter();
+    const createLiability = useCreateLiability();
+    const deleteLiability = useDeleteLiability();
     const profile = initialData.profile;
     const comptes = initialData.comptes;
 
@@ -244,7 +245,7 @@ export default function DettesClient({ initialData }: DettesClientProps) {
     const [selectedDette, setSelectedDette] = useState<DetteData | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [simulateurMontant, setSimulateurMontant] = useState<string>("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const isSubmitting = createLiability.isPending;
     const [searchQuery, setSearchQuery] = useState("");
 
     const [newDette, setNewDette] = useState({
@@ -359,60 +360,50 @@ export default function DettesClient({ initialData }: DettesClientProps) {
     const handleCreateDette = async () => {
         if (!newDette.nom || !newDette.type || !newDette.capitalInitial || !newDette.mensualite) return;
 
-        setIsSubmitting(true);
-
-        try {
-            const { addDette } = await import("@/lib/data/dettes");
-            const result = await addDette({
-                nom: newDette.nom,
-                type: newDette.type as TypeDette,
-                capitalInitial: parseFloat(newDette.capitalInitial),
-                capitalRestant: parseFloat(newDette.capitalRestant || newDette.capitalInitial),
-                tauxAnnuel: parseFloat(newDette.tauxAnnuel) || 0,
-                mensualite: parseFloat(newDette.mensualite),
-                jourPrelevement: parseInt(newDette.jourPrelevement) || 5,
-                dateFin: newDette.dateFin || "",
-                preteur: newDette.preteur || "",
-                compteId: newDette.compte || "",
-                notes: newDette.notes || undefined,
-            });
-
-            if (!result.success) throw new Error(result.error || "Erreur");
-
-            setIsModalOpen(false);
-            setNewDette({
-                nom: "",
-                type: "",
-                capitalInitial: "",
-                capitalRestant: "",
-                tauxAnnuel: "",
-                mensualite: "",
-                jourPrelevement: "5",
-                dateFin: "",
-                preteur: "",
-                compte: "",
-                notes: "",
-            });
-            router.refresh();
-        } catch (error) {
-            console.error("Erreur creation dette:", error);
-        } finally {
-            setIsSubmitting(false);
-        }
+        createLiability.mutate({
+            nom: newDette.nom,
+            type: newDette.type as TypeDette,
+            capitalInitial: parseFloat(newDette.capitalInitial),
+            capitalRestant: parseFloat(newDette.capitalRestant || newDette.capitalInitial),
+            tauxAnnuel: parseFloat(newDette.tauxAnnuel) || 0,
+            mensualite: parseFloat(newDette.mensualite),
+            jourPrelevement: parseInt(newDette.jourPrelevement) || 5,
+            dateFin: newDette.dateFin || "",
+            preteur: newDette.preteur || "",
+            compteId: newDette.compte || "",
+            notes: newDette.notes || undefined,
+        }, {
+            onSuccess: () => {
+                setIsModalOpen(false);
+                setNewDette({
+                    nom: "",
+                    type: "",
+                    capitalInitial: "",
+                    capitalRestant: "",
+                    tauxAnnuel: "",
+                    mensualite: "",
+                    jourPrelevement: "5",
+                    dateFin: "",
+                    preteur: "",
+                    compte: "",
+                    notes: "",
+                });
+            },
+            onError: (error) => {
+                console.error("Erreur creation dette:", error);
+            },
+        });
     };
 
-    const handleDeleteDette = async (detteId: string) => {
-        try {
-            const { deleteDette } = await import("@/lib/data/dettes");
-            const result = await deleteDette(detteId);
-
-            if (!result.success) throw new Error(result.error || "Erreur");
-
-            setSelectedDette(null);
-            router.refresh();
-        } catch (error) {
-            console.error("Erreur suppression:", error);
-        }
+    const handleDeleteDette = (detteId: string) => {
+        deleteLiability.mutate(detteId, {
+            onSuccess: () => {
+                setSelectedDette(null);
+            },
+            onError: (error) => {
+                console.error("Erreur suppression:", error);
+            },
+        });
     };
 
     const handleExport = () => {
