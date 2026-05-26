@@ -401,15 +401,6 @@ export function ImportCSVModal({ isOpen, onOpenChange, profile, categories, comp
             onOpenChange(open);
             if (!open) resetImportModal();
         }}>
-            <Button
-                size="lg"
-                color="secondary"
-                iconLeading={Upload01}
-                className="w-full justify-center bg-white/20 text-white hover:bg-white/30 sm:ml-auto sm:w-auto"
-            >
-                Importer
-            </Button>
-
             <ModalOverlay isDismissable>
                 <Modal className="max-w-lg">
                     <Dialog>
