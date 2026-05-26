@@ -463,11 +463,11 @@ function OnboardingContent() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-start gap-3 rounded-lg bg-brand-50 p-4 dark:bg-brand-900/20">
-                                    <Lightbulb02 className="h-5 w-5 shrink-0 text-brand-600 dark:text-brand-400" />
+                                <div className="flex items-start gap-3 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/40">
+                                    <Lightbulb02 className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-sm font-medium text-brand-700 dark:text-brand-300">Conseil</p>
-                                        <p className="text-sm text-brand-600 dark:text-brand-400">
+                                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Conseil</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
                                             Incluez tous vos revenus réguliers : salaire, aides, pensions...
                                         </p>
                                     </div>
@@ -756,9 +756,9 @@ function OnboardingContent() {
                                 </div>
 
                                 {/* Conseil */}
-                                <div className="flex items-start gap-3 rounded-lg bg-brand-50 p-4 dark:bg-brand-900/20">
-                                    <Lightbulb02 className="h-5 w-5 shrink-0 text-brand-600 dark:text-brand-400" />
-                                    <p className="text-sm text-brand-700 dark:text-brand-300">
+                                <div className="flex items-start gap-3 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/40">
+                                    <Lightbulb02 className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
+                                    <p className="text-sm text-gray-700 dark:text-gray-300">
                                         Astuce : La catégorie <strong>Imprévus</strong> vous protège des dépenses inattendues. Ne la supprimez pas !
                                     </p>
                                 </div>
@@ -853,11 +853,11 @@ function OnboardingContent() {
                                 )}
 
                                 {epargneNum < revenusNum * 0.1 && epargneNum > 0 && (
-                                    <div className="flex items-start gap-3 rounded-lg bg-warning-50 p-4 dark:bg-warning-900/20">
-                                        <Lightbulb02 className="h-5 w-5 shrink-0 text-warning-600 dark:text-warning-400" />
+                                    <div className="flex items-start gap-3 rounded-lg bg-amber-50 p-4 dark:bg-amber-900/20">
+                                        <Lightbulb02 className="h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
                                         <div className="flex flex-col gap-1">
-                                            <p className="text-sm font-medium text-warning-700 dark:text-warning-300">Conseil</p>
-                                            <p className="text-sm text-warning-600 dark:text-warning-400">
+                                            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Conseil</p>
+                                            <p className="text-sm text-amber-700 dark:text-amber-400">
                                                 Essayez d'atteindre 10% de vos revenus ({formatCurrency(revenusNum * 0.1)}) pour une épargne efficace.
                                             </p>
                                         </div>
