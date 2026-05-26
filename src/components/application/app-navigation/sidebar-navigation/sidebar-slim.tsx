@@ -4,6 +4,7 @@ import type { FC } from "react";
 import { useState } from "react";
 import { LogOut01, Settings01 } from "@untitledui/icons";
 import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
 import { Button as AriaButton, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
@@ -48,8 +49,8 @@ const SidebarNavButton = ({
     onClick?: () => void;
 }) => {
     return (
-        <a
-            href={href}
+        <Link
+            href={href || "/"}
             aria-label={label}
             title={label}
             onClick={onClick}
@@ -68,17 +69,20 @@ const SidebarNavButton = ({
             {hasNotification && (
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#BEFF00]" />
             )}
-        </a>
+        </Link>
     );
 };
 
 export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hideBorder, hideRightBorder }: SidebarNavigationSlimProps) => {
     const { logout } = useAuth();
-    const activeItem = [...items, ...footerItems].find((item) => item.href === activeUrl || item.items?.some((subItem) => subItem.href === activeUrl));
-    const [currentItem, setCurrentItem] = useState(activeItem || items[1]);
+    const [hoveredItem, setHoveredItem] = useState<(typeof items)[number] | null>(null);
     const [isHovering, setIsHovering] = useState(false);
 
-    const isSecondarySidebarVisible = isHovering && Boolean(currentItem.items?.length);
+    const isActive = (item: (typeof items)[number]) =>
+        activeUrl === item.href || activeUrl?.startsWith(item.href + "/") || item.items?.some((sub) => sub.href === activeUrl);
+
+    const secondarySource = hoveredItem && hoveredItem.items?.length ? hoveredItem : null;
+    const isSecondarySidebarVisible = isHovering && Boolean(secondarySource);
 
     const MAIN_SIDEBAR_WIDTH = 68;
     const SECONDARY_SIDEBAR_WIDTH = 268;
@@ -97,14 +101,16 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                 {/* Nav items */}
                 <ul className="mt-6 flex flex-col gap-1 px-2">
                     {items.map((item) => (
-                        <li key={item.label}>
+                        <li
+                            key={item.label}
+                            onPointerEnter={() => setHoveredItem(item)}
+                        >
                             <SidebarNavButton
-                                current={currentItem.href === item.href}
+                                current={isActive(item)}
                                 href={item.href}
                                 label={item.label || ""}
                                 icon={item.icon}
                                 hasNotification={item.hasNotification}
-                                onClick={() => setCurrentItem(item)}
                             />
                         </li>
                     ))}
@@ -115,12 +121,11 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                     {footerItems.map((item) => (
                         <SidebarNavButton
                             key={item.label}
-                            current={currentItem.href === item.href}
+                            current={isActive(item)}
                             label={item.label || ""}
                             href={item.href}
                             icon={item.icon}
                             hasNotification={item.hasNotification}
-                            onClick={() => setCurrentItem(item)}
                         />
                     ))}
 
@@ -168,9 +173,9 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                     )}
                 >
                     <div style={{ width: SECONDARY_SIDEBAR_WIDTH }} className="flex h-full flex-col px-4 pt-6">
-                        <h3 className="font-display text-sm font-semibold text-gray-900">{currentItem.label}</h3>
+                        <h3 className="font-display text-sm font-semibold text-gray-900">{secondarySource?.label}</h3>
                         <ul className="py-2">
-                            {currentItem.items?.map((item) => (
+                            {secondarySource?.items?.map((item) => (
                                 <li key={item.label} className="py-0.5">
                                     <NavItemBase current={activeUrl === item.href} href={item.href} icon={item.icon} badge={item.badge} type="link">
                                         {item.label}
@@ -220,21 +225,21 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                         <ul className="flex flex-col gap-1">
                             {items.map((item) => {
                                 const Icon = item.icon;
-                                const isActive = activeUrl === item.href;
+                                const active = activeUrl === item.href || activeUrl?.startsWith(item.href + "/");
                                 return (
                                     <li key={item.label}>
-                                        <a
-                                            href={item.href}
+                                        <Link
+                                            href={item.href || "/"}
                                             className={cx(
                                                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                                                isActive
+                                                active
                                                     ? "text-[#BEFF00]"
                                                     : "text-gray-400 hover:text-gray-200",
                                             )}
                                         >
                                             <Icon className="size-5" />
                                             <span>{item.label}</span>
-                                        </a>
+                                        </Link>
                                     </li>
                                 );
                             })}
@@ -245,19 +250,19 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                         <div className="flex flex-col gap-1">
                             {footerItems.map((item) => {
                                 const Icon = item.icon;
-                                const isActive = activeUrl === item.href;
+                                const active = activeUrl === item.href;
                                 return (
-                                    <a
+                                    <Link
                                         key={item.label}
-                                        href={item.href}
+                                        href={item.href || "/"}
                                         className={cx(
                                             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                                            isActive ? "text-[#BEFF00]" : "text-gray-400 hover:text-gray-200",
+                                            active ? "text-[#BEFF00]" : "text-gray-400 hover:text-gray-200",
                                         )}
                                     >
                                         <Icon className="size-5" />
                                         <span>{item.label}</span>
-                                    </a>
+                                    </Link>
                                 );
                             })}
                         </div>
