@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ImportCSVModal } from "./import-csv-modal";
 import { Dialog, DialogTrigger, Modal, ModalOverlay } from "@/components/application/modals/modal";
 import { AnimatedAmount } from "@/components/base/animated-amount/animated-amount";
+import { EmptyState } from "@/components/application/empty-state";
 import { Button } from "@/components/base/buttons/button";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { Input } from "@/components/base/input/input";
@@ -485,14 +486,12 @@ export default function DashboardClient() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-[#E5E2DC] bg-white py-16 px-8">
-                                <p className="font-display text-lg font-semibold text-primary">Aucune transaction</p>
-                                <p className="max-w-sm text-center text-sm text-tertiary">Ajoutez votre premiere depense ou importez vos transactions pour commencer le suivi.</p>
-                                <div className="flex gap-2">
-                                    <Button size="sm" color="link-color" onClick={() => setIsExpenseModalOpen(true)}>Ajouter</Button>
-                                    <Button size="sm" color="link-color" onClick={() => setIsImportModalOpen(true)}>Importer</Button>
-                                </div>
-                            </div>
+                            <EmptyState
+                                title="Aucune transaction"
+                                message="Ajoutez votre premiere depense ou importez vos transactions pour commencer le suivi."
+                                actionText="Ajouter"
+                                onAction={() => setIsExpenseModalOpen(true)}
+                            />
                         )}
                     </div>
 

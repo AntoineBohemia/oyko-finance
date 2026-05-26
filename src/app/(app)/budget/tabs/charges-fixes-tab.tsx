@@ -18,6 +18,7 @@ import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
+import { FilterPills } from "@/components/application/filter-pills";
 import { cx } from "@/utils/cx";
 import { formatCurrencySimple, formatDateShort, getDaysUntil, getJMoinsBadge, getFrequenceLabel } from "@/utils/format";
 import type { RepartitionCategorie } from "@/lib/data/charges-fixes";
@@ -315,31 +316,15 @@ export default function ChargesFixesTab({ initialData }: ChargesFixesTabProps) {
             {/* ============================================ */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 {/* Pills de filtre */}
-                <div className="flex items-center gap-2">
-                    {FILTER_PILLS.map((pill) => (
-                        <button
-                            key={pill.id}
-                            onClick={() => setSelectedFilter(pill.id)}
-                            className={cx(
-                                "rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
-                                selectedFilter === pill.id
-                                    ? "bg-brand-50 text-brand-700 ring-1 ring-brand-200"
-                                    : "text-tertiary hover:bg-secondary hover:text-primary"
-                            )}
-                        >
-                            {pill.label}
-                            {pill.id === "all" && (
-                                <span className="ml-1.5 text-xs text-quaternary">{chargesFixes.length}</span>
-                            )}
-                            {pill.id === "actif" && (
-                                <span className="ml-1.5 text-xs text-quaternary">{totaux.nombreActifs}</span>
-                            )}
-                            {pill.id === "inactif" && (
-                                <span className="ml-1.5 text-xs text-quaternary">{totaux.nombreInactifs}</span>
-                            )}
-                        </button>
-                    ))}
-                </div>
+                <FilterPills
+                    pills={[
+                        { id: "all", label: "Tous", count: chargesFixes.length },
+                        { id: "actif", label: "Actifs", count: totaux.nombreActifs },
+                        { id: "inactif", label: "Inactifs", count: totaux.nombreInactifs },
+                    ]}
+                    selected={selectedFilter}
+                    onChange={setSelectedFilter}
+                />
 
                 <div className="flex items-center gap-3">
                     {/* Toggle Cards / Calendrier */}
