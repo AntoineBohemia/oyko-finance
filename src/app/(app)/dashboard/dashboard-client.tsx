@@ -13,41 +13,13 @@ import { PageTransition } from "@/components/base/page-transition/page-transitio
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { Select } from "@/components/base/select/select";
 import { StaggerList, StaggerItem } from "@/components/base/stagger-list/stagger-list";
-import { useCreateTransaction } from "@/hooks/api";
+import { useCreateTransaction, useDashboard } from "@/hooks/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { cx } from "@/utils/cx";
 import { formatCurrencySimple, formatDateRelative, getProgressColor, getProgressColorOnDark } from "@/utils/format";
-import type { CategorieVariable, PatrimoineData } from "@/lib/data/dashboard";
-import type { Profile, Compte } from "@/types/api";
+
 
 type ViewMode = "semaine" | "mois";
-
-// Types pour les données sérialisées (dates en string)
-interface SerializedDashboardData {
-    profile: Profile | null;
-    comptes: Compte[];
-    categories: CategorieVariable[];
-    chargesFixes: {
-        id: string;
-        nom: string;
-        montant: number;
-        icone: string;
-        dateProchain: string;
-    }[];
-    transactions: {
-        id: string;
-        description: string;
-        montant: number;
-        date: string;
-        categorieId: string;
-        type: "variable" | "fixe" | "revenu";
-    }[];
-    patrimoine: PatrimoineData;
-}
-
-interface DashboardClientProps {
-    initialData: SerializedDashboardData;
-}
 
 // ============================================
 // HELPERS
@@ -90,7 +62,8 @@ const getCompteIcon = (type: string) => {
 // COMPOSANT PRINCIPAL
 // ============================================
 
-export default function DashboardClient({ initialData }: DashboardClientProps) {
+export default function DashboardClient() {
+    const { data } = useDashboard();
     const queryClient = useQueryClient();
     const createTransaction = useCreateTransaction();
     const today = new Date();
@@ -98,43 +71,43 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     const currentWeekNum = getWeekNumber(today);
     const currentMonth = today.getMonth();
 
-    const viewMode: ViewMode = (initialData.profile?.mode_gestion === "mois" || initialData.profile?.mode_gestion === "FULL") ? "mois" : "semaine";
+    const profile = data?.profile ?? null;
+    const viewMode: ViewMode = (profile?.mode_gestion === "mois" || profile?.mode_gestion === "FULL") ? "mois" : "semaine";
     const [selectedWeek, setSelectedWeek] = useState(currentWeekNum);
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const [selectedMonth, setSelectedMonth] = useState(currentMonth);
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isBankConnecting, setIsBankConnecting] = useState(false);
-    const [localCategories, setLocalCategories] = useState(initialData.categories);
+    const [localCategories, setLocalCategories] = useState(data?.categories ?? []);
     const [expenseAmount, setExpenseAmount] = useState("");
     const [expenseCategory, setExpenseCategory] = useState<string | null>(null);
     const [expenseDescription, setExpenseDescription] = useState("");
-    const [expenseCompte, setExpenseCompte] = useState(initialData.comptes[0]?.id ?? "");
+    const [expenseCompte, setExpenseCompte] = useState(data?.comptes[0]?.id ?? "");
     const [expenseDate, setExpenseDate] = useState("today");
 
-    const profile = initialData.profile;
     const revenusMensuels = profile?.revenus_mensuels ?? 0;
     const prenom = profile?.prenom ?? "Utilisateur";
-    const categories = initialData.categories;
+    const categories = data?.categories ?? [];
     const budgetVariableMensuel = categories.reduce((acc, cat) => acc + cat.budgetMensuel, 0);
 
     const chargesFixes = useMemo(() => {
-        return initialData.chargesFixes.map((cf) => ({
+        return (data?.chargesFixes ?? []).map((cf) => ({
             ...cf,
-            dateProchain: new Date(cf.dateProchain),
+            dateProchain: new Date(cf.dateProchain as unknown as string),
         }));
-    }, [initialData.chargesFixes]);
+    }, [data?.chargesFixes]);
 
     const totalChargesFixes = chargesFixes.reduce((acc, c) => acc + c.montant, 0);
 
     const transactions = useMemo(() => {
-        return initialData.transactions.map((t) => ({
+        return (data?.transactions ?? []).map((t) => ({
             ...t,
-            date: new Date(t.date),
+            date: new Date(t.date as unknown as string),
         }));
-    }, [initialData.transactions]);
+    }, [data?.transactions]);
 
-    const comptes = initialData.comptes.map((c) => ({
+    const comptes = (data?.comptes ?? []).map((c) => ({
         id: c.id,
         label: c.nom,
         solde: c.solde ?? 0,
@@ -142,7 +115,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         banque: c.banque ?? "",
     }));
 
-    const patrimoine = initialData.patrimoine;
+    const patrimoine = data?.patrimoine ?? { valeurNette: 0, totalLiquidites: 0, totalInvestissements: 0, totalDettes: 0, variationMois: 0, repartition: [] };
     const weekDates = getWeekDates(selectedYear, selectedWeek);
     const daysRemaining = getDaysRemainingInMonth(today);
     const monthName = getMonthName(weekDates.start);
@@ -201,7 +174,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         return [...transactions].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 6);
     }, [transactions]);
 
-    const hasBankConnection = initialData.comptes.length > 0;
+    const hasBankConnection = comptes.length > 0;
 
     const prochainsPrelevements = [...chargesFixes]
         .filter((c) => c.dateProchain >= today)

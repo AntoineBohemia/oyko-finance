@@ -34,6 +34,7 @@ import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { cx } from "@/utils/cx";
 import {
+    useParametres,
     useUpdateProfile,
     useUpdateCategory,
     useCreateRecurringCharge,
@@ -44,18 +45,6 @@ import {
     useConnectBank,
     useSyncBank,
 } from "@/hooks/api";
-import type {
-    ParametresData,
-    CategorieParametres,
-    ChargeFixParametres,
-    CompteParametres,
-    TotauxParametres,
-} from "@/lib/data/parametres";
-import type { Profile } from "@/types/api";
-
-interface ParametresClientProps {
-    initialData: ParametresData;
-}
 
 // ============================================
 // HELPERS
@@ -119,12 +108,14 @@ const getChargeColor = (categorieNom: string) => {
 // COMPOSANT PRINCIPAL
 // ============================================
 
-export default function ParametresClient({ initialData }: ParametresClientProps) {
-    const profile = initialData.profile;
-    const categories = initialData.categories;
-    const chargesFixes = initialData.chargesFixes;
-    const comptes = initialData.comptes;
-    const totaux = initialData.totaux;
+export default function ParametresClient() {
+    const { data } = useParametres();
+
+    const profile = data?.profile ?? null;
+    const categories = data?.categories ?? [];
+    const chargesFixes = data?.chargesFixes ?? [];
+    const comptes = data?.comptes ?? [];
+    const totaux = data?.totaux ?? { totalChargesFixes: 0, totalComptes: 0 };
 
     // États profil
     const [revenus, setRevenus] = useState((profile?.revenus_mensuels ?? 0).toString());

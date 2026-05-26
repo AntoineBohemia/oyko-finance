@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useUpdateAccount } from "@/hooks/api";
+import { useState, useMemo } from "react";
+import { useUpdateAccount, usePatrimoine } from "@/hooks/api";
 import { PageTransition } from "@/components/base/page-transition/page-transition";
 import { AnimatedAmount } from "@/components/base/animated-amount/animated-amount";
 import { StaggerList, StaggerItem } from "@/components/base/stagger-list/stagger-list";
@@ -41,37 +41,6 @@ import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { cx } from "@/utils/cx";
-import type {
-    ComptePatrimoine,
-    InvestissementPatrimoine,
-    EvolutionPatrimoine,
-    TotauxPatrimoine,
-} from "@/lib/data/patrimoine";
-import type { Profile } from "@/types/api";
-
-// Types pour les données sérialisées
-interface SerializedPatrimoineData {
-    profile: Profile | null;
-    comptes: ComptePatrimoine[];
-    investissements: InvestissementPatrimoine[];
-    dettes: {
-        id: string;
-        nom: string;
-        type: string;
-        capitalRestant: number;
-        capitalInitial: number;
-        mensualite: number;
-        prochainPrelevement: string;
-        preteur: string;
-        imageUrl: string | null;
-    }[];
-    evolutionPatrimoine: EvolutionPatrimoine[];
-    totaux: TotauxPatrimoine;
-}
-
-interface PatrimoineClientProps {
-    initialData: SerializedPatrimoineData;
-}
 
 // ============================================
 // HELPERS
@@ -138,21 +107,33 @@ const getCompteIconColor = (type: string) => {
 // COMPOSANT PRINCIPAL
 // ============================================
 
-export default function PatrimoineClient({ initialData }: PatrimoineClientProps) {
+export default function PatrimoineClient() {
+    const { data } = usePatrimoine();
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [soldesUpdate, setSoldesUpdate] = useState<Record<string, string>>({});
     const updateAccount = useUpdateAccount();
 
-    const profile = initialData.profile;
-    const comptes = initialData.comptes;
-    const investissements = initialData.investissements;
-    const evolutionPatrimoine = initialData.evolutionPatrimoine;
-    const totaux = initialData.totaux;
+    const profile = data?.profile ?? null;
+    const comptes = data?.comptes ?? [];
+    const investissements = data?.investissements ?? [];
+    const evolutionPatrimoine = data?.evolutionPatrimoine ?? [];
+    const totaux = data?.totaux ?? {
+        totalLiquidites: 0,
+        totalInvestissements: 0,
+        totalActifs: 0,
+        totalDettes: 0,
+        valeurNette: 0,
+        totalPlusValue: 0,
+        totalPlusValuePercent: 0,
+        totalMensualitesDettes: 0,
+    };
 
-    const dettes = initialData.dettes.map((d) => ({
-        ...d,
-        prochainPrelevement: new Date(d.prochainPrelevement),
-    }));
+    const dettes = useMemo(() => {
+        return (data?.dettes ?? []).map((d) => ({
+            ...d,
+            prochainPrelevement: new Date(d.prochainPrelevement as unknown as string),
+        }));
+    }, [data?.dettes]);
 
     // Répartition pour le donut
     const repartitionActifs = [

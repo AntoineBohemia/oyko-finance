@@ -9,12 +9,10 @@ import { PageTransition } from "@/components/base/page-transition/page-transitio
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { cx } from "@/utils/cx";
 import { formatCurrencySimple, getProgressColorOnDark, getProgressColor } from "@/utils/format";
+import { useBudget, useTransactions, useRecurringCharges } from "@/hooks/api";
 import type { Enveloppe } from "@/lib/data/budget";
-import type { Profile } from "@/types/api";
 import TransactionsTab from "./tabs/transactions-tab";
-import type { TransactionsTabProps } from "./tabs/transactions-tab";
 import EnveloppesTab from "./tabs/enveloppes-tab";
-import type { EnveloppesTabProps } from "./tabs/enveloppes-tab";
 import ChargesFixesTab from "./tabs/charges-fixes-tab";
 import type { ChargesFixesTabProps } from "./tabs/charges-fixes-tab";
 
@@ -35,30 +33,11 @@ const TABS: TabConfig[] = [
     { id: "charges-fixes", label: "Charges fixes" },
 ];
 
-interface BudgetSummary {
-    profile: Profile | null;
-    revenusMois: number;
-    totalChargesFixes: number;
-    enveloppes: Enveloppe[];
-    transactions: {
-        id: string;
-        description: string;
-        montant: number;
-        date: string;
-        categorieId: string;
-        type: "variable" | "fixe" | "revenu";
-    }[];
-}
-
 export interface MonBudgetClientProps {
     activeTab: TabId;
     currentMonth: number;
     currentYear: number;
-    budgetSummary: BudgetSummary;
-    transactionsData?: TransactionsTabProps["initialData"];
     transactionsPeriode?: string;
-    enveloppesData?: EnveloppesTabProps["initialData"];
-    chargesFixesData?: ChargesFixesTabProps["initialData"];
 }
 
 // ============================================
@@ -83,11 +62,7 @@ export default function MonBudgetClient({
     activeTab,
     currentMonth,
     currentYear,
-    budgetSummary,
-    transactionsData,
     transactionsPeriode,
-    enveloppesData,
-    chargesFixesData,
 }: MonBudgetClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -96,15 +71,23 @@ export default function MonBudgetClient({
     const monthName = getMonthName(currentMonth, currentYear);
     const daysRemaining = getDaysRemainingInMonth(today);
 
-    const { profile, revenusMois, totalChargesFixes, enveloppes } = budgetSummary;
+    // Fetch data via React Query (hydrated from server)
+    const { data: budgetData } = useBudget(currentMonth, currentYear);
+    const { data: depensesData } = useTransactions(transactionsPeriode);
+    const { data: chargesFixesRaw } = useRecurringCharges();
 
-    // Calculs
+    const profile = budgetData?.profile ?? null;
+    const revenusMois = budgetData?.revenusMois ?? 0;
+    const totalChargesFixes = budgetData?.totalChargesFixes ?? 0;
+    const enveloppes: Enveloppe[] = budgetData?.enveloppes ?? [];
+
+    // Calculs — after dehydration, dates are ISO strings
     const transactions = useMemo(() => {
-        return budgetSummary.transactions.map((t) => ({
+        return (budgetData?.transactions ?? []).map((t) => ({
             ...t,
             date: new Date(t.date),
         }));
-    }, [budgetSummary.transactions]);
+    }, [budgetData?.transactions]);
 
     const disponiblePourVariables = revenusMois - totalChargesFixes;
 
@@ -343,24 +326,69 @@ export default function MonBudgetClient({
                 {/* ============================================ */}
                 {/* CONTENU DE L'ONGLET ACTIF */}
                 {/* ============================================ */}
-                {activeTab === "transactions" && transactionsData && (
+                {activeTab === "transactions" && depensesData && (
                     <TransactionsTab
-                        initialData={transactionsData}
+                        initialData={{
+                            profile: depensesData.profile,
+                            comptes: depensesData.comptes,
+                            categoriesDepense: depensesData.categoriesDepense,
+                            categoriesRevenu: depensesData.categoriesRevenu,
+                            transactions: depensesData.transactions.map((t) => ({
+                                ...t,
+                                date: typeof t.date === "string" ? t.date : (t.date as unknown as Date).toISOString(),
+                            })),
+                        }}
                         initialPeriode={transactionsPeriode || "this-week"}
                     />
                 )}
 
-                {activeTab === "enveloppes" && enveloppesData && (
+                {activeTab === "enveloppes" && budgetData && (
                     <EnveloppesTab
-                        initialData={enveloppesData}
+                        initialData={{
+                            profile: budgetData.profile,
+                            revenusMois: budgetData.revenusMois,
+                            enveloppes: budgetData.enveloppes,
+                            chargesFixes: budgetData.chargesFixes,
+                            transactions: budgetData.transactions.map((t) => ({
+                                ...t,
+                                date: typeof t.date === "string" ? t.date : (t.date as unknown as Date).toISOString(),
+                            })),
+                            totalChargesFixes: budgetData.totalChargesFixes,
+                        }}
                         currentMonth={currentMonth}
                         currentYear={currentYear}
                     />
                 )}
 
-                {activeTab === "charges-fixes" && chargesFixesData && (
-                    <ChargesFixesTab initialData={chargesFixesData as ChargesFixesTabProps["initialData"]} />
-                )}
+                {activeTab === "charges-fixes" && chargesFixesRaw && (() => {
+                    const safeIso = (v: unknown): string => {
+                        if (typeof v === "string" && v) return v;
+                        if (v instanceof Date && !isNaN(v.getTime())) return v.toISOString();
+                        return new Date().toISOString();
+                    };
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const serializeCf = (cf: any) => ({
+                        ...cf,
+                        prochainPrelevement: safeIso(cf.prochainPrelevement),
+                        dateDebut: cf.dateDebut ? safeIso(cf.dateDebut) : null,
+                        dateFin: cf.dateFin ? safeIso(cf.dateFin) : null,
+                    });
+                    const serialized = {
+                        profile: chargesFixesRaw.profile,
+                        chargesFixes: chargesFixesRaw.chargesFixes.map(serializeCf),
+                        comptes: chargesFixesRaw.comptes,
+                        categories: chargesFixesRaw.categories,
+                        timeline: chargesFixesRaw.timeline.map(serializeCf),
+                        repartitionCategories: chargesFixesRaw.repartitionCategories,
+                        totaux: {
+                            ...chargesFixesRaw.totaux,
+                            prochainPrelevement: chargesFixesRaw.totaux.prochainPrelevement
+                                ? serializeCf(chargesFixesRaw.totaux.prochainPrelevement)
+                                : null,
+                        },
+                    };
+                    return <ChargesFixesTab initialData={serialized as ChargesFixesTabProps["initialData"]} />;
+                })()}
             </div>
         </PageTransition>
     );
