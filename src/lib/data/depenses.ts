@@ -121,7 +121,7 @@ export async function addTransaction(data: {
         montant: data.type === "depense" ? -Math.abs(data.montant) : Math.abs(data.montant),
         categorieId: data.categorieId,
         compteId: data.compteId,
-        description: data.description || null,
+        description: data.description || "Transaction",
         type: data.type === "depense" ? "DEBIT" : data.type === "revenu" ? "CREDIT" : "OTHER",
         dateTransaction: data.date.toISOString(),
       },
