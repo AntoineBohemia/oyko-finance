@@ -72,9 +72,10 @@ export default function MonBudgetClient({
     const daysRemaining = getDaysRemainingInMonth(today);
 
     // Fetch data via React Query (hydrated from server)
-    const { data: budgetData } = useBudget(currentMonth, currentYear);
-    const { data: depensesData } = useTransactions(transactionsPeriode);
-    const { data: chargesFixesRaw } = useRecurringCharges();
+    const { data: budgetData, isLoading: budgetLoading } = useBudget(currentMonth, currentYear);
+    const { data: depensesData, isLoading: txLoading } = useTransactions(transactionsPeriode);
+    const { data: chargesFixesRaw, isLoading: chargesLoading } = useRecurringCharges();
+    const isLoading = budgetLoading || txLoading || chargesLoading;
 
     const profile = budgetData?.profile ?? null;
     const revenusMois = budgetData?.revenusMois ?? 0;
@@ -134,7 +135,7 @@ export default function MonBudgetClient({
         router.push(`/budget?${params.toString()}`);
     };
 
-    if (!profile) {
+    if (isLoading || !profile) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-primary">
                 <div className="text-center">

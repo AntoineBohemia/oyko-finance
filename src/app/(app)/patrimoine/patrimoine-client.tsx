@@ -108,7 +108,7 @@ const getCompteIconColor = (type: string) => {
 // ============================================
 
 export default function PatrimoineClient() {
-    const { data } = usePatrimoine();
+    const { data, isLoading } = usePatrimoine();
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [soldesUpdate, setSoldesUpdate] = useState<Record<string, string>>({});
     const updateAccount = useUpdateAccount();
@@ -172,6 +172,17 @@ export default function PatrimoineClient() {
             console.error("Erreur lors de la mise à jour:", error);
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-primary">
+                <div className="text-center">
+                    <h1 className="text-xl font-semibold text-primary">Chargement...</h1>
+                    <p className="text-tertiary">Récupération de vos données...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <PageTransition className="min-h-screen bg-primary">

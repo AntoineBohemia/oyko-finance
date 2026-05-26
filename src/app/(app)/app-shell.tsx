@@ -19,6 +19,7 @@ import { SidebarNavigationSlim } from "@/components/application/app-navigation/s
 import { Avatar } from "@/components/base/avatar/avatar";
 import { Badge } from "@/components/base/badges/badges";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
+import { AppDataPrefetch } from "@/providers/app-data-prefetch";
 import { cx } from "@/utils/cx";
 
 // ============================================
@@ -231,6 +232,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
     return (
         <div className="flex min-h-screen bg-primary">
+            <AppDataPrefetch />
             {/* Sidebar Desktop */}
             <SidebarNavigationSlim items={navItems} footerItems={footerItems} activeUrl={pathname} />
 

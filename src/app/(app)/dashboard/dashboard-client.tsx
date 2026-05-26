@@ -64,7 +64,7 @@ const getCompteIcon = (type: string) => {
 // ============================================
 
 export default function DashboardClient() {
-    const { data } = useDashboard();
+    const { data, isLoading } = useDashboard();
     const queryClient = useQueryClient();
     const createTransaction = useCreateTransaction();
     const today = new Date();
@@ -243,7 +243,7 @@ export default function DashboardClient() {
     // Total solde comptes
     const totalSolde = comptes.reduce((acc, c) => acc + c.solde, 0);
 
-    if (!profile) {
+    if (isLoading || !profile) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-primary">
                 <div className="text-center">

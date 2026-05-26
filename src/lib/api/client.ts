@@ -60,6 +60,45 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
+// Client-side 401 interceptor: refresh token and retry once
+let refreshPromise: Promise<boolean> | null = null;
+
+async function tryClientRefresh(): Promise<boolean> {
+  // Deduplicate concurrent refresh attempts
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch("/api/auth/refresh", {
+        method: "POST",
+        credentials: "include",
+      });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+  return refreshPromise;
+}
+
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  const res = await fetch(url, init);
+
+  // Client-side only: retry on 401 after refreshing token
+  if (res.status === 401 && typeof window !== "undefined") {
+    const refreshed = await tryClientRefresh();
+    if (refreshed) {
+      return fetch(url, init);
+    }
+  }
+
+  return res;
+}
+
 export async function api<T>(
   path: string,
   options: RequestOptions = {},
@@ -78,7 +117,7 @@ export async function api<T>(
 
   const authHeaders = await getAuthHeaders();
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method,
     headers: {
       "Content-Type": "application/json",

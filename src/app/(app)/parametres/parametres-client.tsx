@@ -109,7 +109,7 @@ const getChargeColor = (categorieNom: string) => {
 // ============================================
 
 export default function ParametresClient() {
-    const { data } = useParametres();
+    const { data, isLoading } = useParametres();
 
     const profile = data?.profile ?? null;
     const categories = data?.categories ?? [];
@@ -326,6 +326,17 @@ export default function ParametresClient() {
 
     // Message si pas de données
     if (!profile) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-primary">
+                <div className="text-center">
+                    <h1 className="text-xl font-semibold text-primary">Chargement...</h1>
+                    <p className="text-tertiary">Récupération de vos données...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (isLoading) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-primary">
                 <div className="text-center">
